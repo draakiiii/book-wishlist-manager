@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardián de Compras v5.6 (Escáner ISBN)</title>
+    <!-- LIBRERÍA EXTERNA PARA EL ESCÁNER DE CÓDIGOS DE BARRAS -->
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+    <style>
+        :root {
+            --color-primario: #1A5276;
+            --color-secundario: #5499C7;
+            --color-acento: #F8C471;
+            --color-wishlist: #A569BD;
+            --color-exito: #48C9B0;
+            --color-peligro: #EC7063;
+            --color-fondo: #f7f9f9;
+            --color-tarjeta: #ffffff;
+            --color-texto: #34495e;
+            --color-borde: #e0e0e0;
+            --sombra: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        body.dark-mode {
+            --color-primario: #5499C7;
+            --color-secundario: #a9cce3;
+            --color-acento: #f8c471;
+            --color-wishlist: #c39bd3;
+            --color-exito: #48c9b0;
+            --color-peligro: #ec7063;
+            --color-fondo: #1c2833;
+            --color-tarjeta: #212f3d;
+            --color-texto: #e5e8e8;
+            --color-borde: #424949;
+            --sombra: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--color-fondo); color: var(--color-texto); margin: 0; padding: 20px; line-height: 1.6; transition: background-color 0.3s, color 0.3s; }
+        #app { max-width: 800px; margin: 0 auto; }
+        h1, h2 { color: var(--color-primario); border-bottom: 3px solid var(--color-secundario); padding-bottom: 10px; }
+        h1 { text-align: center; border: none; font-size: 2.2em; }
+        h2 .icon { margin-right: 10px; }
+        .seccion { background: var(--color-tarjeta); padding: 25px; margin-bottom: 25px; border-radius: 12px; box-shadow: var(--sombra); border-top: 4px solid var(--color-secundario); transition: background-color 0.3s; }
+        .libro-card { padding: 20px; margin-bottom: 15px; border-left: 5px solid var(--color-secundario); background-color: var(--color-fondo); border-radius: 8px; position: relative; }
+        .libro-card h3 { margin: 0 0 5px 0; color: var(--color-primario); width: calc(100% - 60px); }
+        .libro-card p { margin: 0; color: #99a3a4; }
+        body.dark-mode .libro-card p { color: #bdc3c7; }
+        .libro-actual-card { border-left-color: var(--color-acento); background-color: #343026; }
+        body:not(.dark-mode) .libro-actual-card { background-color: #fffaf0; }
+        .wishlist-card { border-left-color: var(--color-wishlist); }
+        .card-controls { position: absolute; top: 15px; right: 15px; display: flex; gap: 15px; font-size: 1.3em; }
+        .card-controls .control-btn { cursor: pointer; color: #7f8c8d; transition: color 0.2s; }
+        .card-controls .control-btn:hover { color: var(--color-primario); }
+        .card-controls .delete-btn:hover { color: var(--color-peligro); }
+        .saga-tag { background-color: var(--color-secundario); opacity: 0.9; color: var(--color-fondo); padding: 3px 10px; border-radius: 15px; font-size: 0.8em; font-weight: bold; margin-top: 10px; display: inline-block; }
+        .actions { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+        button { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s ease; color: white; font-size: 0.95em; }
+        button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+        button:disabled { background-color: #797d7f !important; cursor: not-allowed; transform: none; box-shadow: none; color: #abb2b9 !important; }
+        body:not(.dark-mode) button:disabled { background-color: #bdc3c7 !important; color: white !important;}
+        .btn-principal { background-color: var(--color-secundario); } .btn-exito { background-color: var(--color-exito); } .btn-peligro { background-color: var(--color-peligro); } .btn-acento { background-color: var(--color-acento); } .btn-wishlist { background-color: var(--color-wishlist); }
+        .form-container { padding: 20px; background-color: var(--color-fondo); border-radius: 8px; border: 1px solid var(--color-borde); }
+        .form-container.locked { filter: grayscale(80%); opacity: 0.6; pointer-events: none;}
+        .form-container input { width: calc(100% - 24px); padding: 12px; margin-bottom: 12px; border: 1px solid var(--color-borde); border-radius: 5px; background-color: var(--color-tarjeta); color: var(--color-texto); }
+        .empty-message { color: #7f8c8d; text-align: center; padding: 25px; border: 2px dashed var(--color-borde); border-radius: 8px; }
+        #configuracion { border-top-color: var(--color-acento); }
+        #configuracion .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        #configuracion label { display: block; margin-bottom: 5px; font-weight: bold; }
+        #configuracion input { width: 80px; padding: 8px; border-radius: 5px; border: 1px solid var(--color-borde); background-color: var(--color-tarjeta); color: var(--color-texto);}
+        #boveda-compras { border-top-color: var(--color-exito); }
+        #boveda-compras .progreso-texto { font-size: 1.2em; font-weight: bold; color: var(--color-primario); text-align: center; }
+        #boveda-compras .progreso-barra-exterior { width: 100%; background-color: var(--color-borde); border-radius: 10px; margin-top: 10px; padding: 4px; }
+        #boveda-compras .progreso-barra-interior { height: 25px; width: 0%; background: linear-gradient(90deg, #48C9B0, #16A085); border-radius: 8px; transition: width 0.5s ease; text-align: center; line-height: 25px; color: white; font-weight: bold; }
+        .theme-switch-wrapper { display: flex; align-items: center; gap: 10px; margin-top: 20px;}
+        .theme-switch { display: inline-block; height: 26px; position: relative; width: 50px; }
+        .theme-switch input { display: none; }
+        .slider { background-color: #ccc; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; }
+        .slider:before { background-color: #fff; bottom: 4px; content: ""; height: 18px; left: 4px; position: absolute; transition: .4s; width: 18px; }
+        input:checked + .slider { background-color: var(--color-exito); }
+        input:checked + .slider:before { transform: translateX(24px); }
+        .slider.round { border-radius: 34px; }
+        .slider.round:before { border-radius: 50%; }
+        #scanner-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
+        #scanner-container { background-color: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; position: relative; }
+        #barcode-scanner { width: 100%; height: auto; border: 1px solid #ccc; }
+        #barcode-scanner video { width: 100%; height: auto; }
+        #barcode-scanner canvas.drawingBuffer { position: absolute; top: 0; left: 0; }
+        #scanner-status { text-align: center; margin-top: 10px; color: #333; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Guardián de Compras 🛡️📚</h1>
+        <section id="configuracion" class="seccion">
+            <h2><span class="icon">⚙️</span>Configuración</h2>
+            <div class="config-grid">
+                <div> <label for="puntos-libro">Puntos por Libro:</label> <input type="number" id="puntos-libro"> </div>
+                <div> <label for="puntos-pagina">Puntos por Página:</label> <input type="number" id="puntos-pagina"> </div>
+                <div> <label for="puntos-saga">Bono por Saga:</label> <input type="number" id="puntos-saga"> </div>
+                <div> <label for="puntos-objetivo">Objetivo para Comprar:</label> <input type="number" id="puntos-objetivo"> </div>
+            </div>
+             <div class="theme-switch-wrapper">
+                <label for="theme-switch-checkbox">Modo Oscuro</label>
+                <label class="theme-switch">
+                    <input type="checkbox" id="theme-switch-checkbox">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="actions" style="margin-top: 20px;"> <button id="guardar-config" class="btn-principal">Guardar y Reiniciar Progreso</button> </div>
+        </section>
+        <section id="boveda-compras" class="seccion">
+            <h2><span class="icon">💰</span>Bóveda de Recompensas</h2>
+            <div id="estado-compra"></div>
+            <div class="progreso-texto" id="progreso-texto"></div>
+            <div class="progreso-barra-exterior"> <div class="progreso-barra-interior" id="progreso-barra"></div> </div>
+        </section>
+        <section id="wishlist-seccion" class="seccion">
+             <h2><span class="icon">🎁</span>Wishlist (Tu Próxima Compra)</h2>
+             <div id="wishlist-form-container" class="form-container">
+                <form id="add-wishlist-form">
+                    <input type="text" id="wishlist-titulo-input" placeholder="Título del libro deseado" required>
+                    <input type="text" id="wishlist-autor-input" placeholder="Autor (opcional)">
+                    <button type="submit" class="btn-wishlist">Añadir a la Wishlist</button>
+                </form>
+             </div>
+             <div id="wishlist-list"></div>
+        </section>
+        <section id="libro-actual-seccion" class="seccion">
+            <h2><span class="icon">📖</span>Libro Actual</h2>
+            <div id="libro-actual-container"></div>
+        </section>
+        <section id="tbr-seccion" class="seccion">
+            <h2><span class="icon">📚</span>Mi Pila (Comprados y por Leer)</h2>
+            <div class="form-container">
+                <form id="add-tbr-form">
+                    <p>Añade aquí los libros que <strong>ya posees</strong>.</p>
+                    <button type="button" id="scan-isbn-btn" class="btn-acento" style="width: 100%; margin-bottom: 15px;">📷 Escanear Código de Barras (ISBN)</button>
+                    <input type="text" id="tbr-titulo-input" placeholder="Título" required>
+                    <input type="text" id="tbr-autor-input" placeholder="Autor (opcional)">
+                    <input type="number" id="tbr-paginas-input" placeholder="Nº de páginas" required min="1">
+                    <input type="text" id="tbr-saga-input" list="sagas-datalist" placeholder="Nombre de la Saga (opcional)">
+                    <datalist id="sagas-datalist"></datalist>
+                    <button type="submit" class="btn-principal">Añadir a mi Pila</button>
+                </form>
+            </div>
+            <div id="tbr-list"></div>
+        </section>
+        <section id="historial-seccion" class="seccion">
+            <h2><span class="icon">🏆</span>Historial de Lectura</h2>
+            <div id="historial-list"></div>
+        </section>
+    </div>
+
+    <div id="scanner-modal">
+        <div id="scanner-container">
+            <h3>Apunte al código de barras del libro</h3>
+            <div id="barcode-scanner"></div>
+            <p id="scanner-status">Iniciando cámara...</p>
+            <button id="cancel-scan-btn" class="btn-peligro" style="width: 100%; margin-top: 15px;">Cancelar</button>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let appState = {
+        config: { puntosPorLibro: 250, puntosPorPagina: 1, puntosPorSaga: 500, objetivo: 1000 },
+        progreso: 0, 
+        compraDesbloqueada: false, 
+        libroActual: null, 
+        tbr: [], 
+        historial: [], 
+        wishlist: [],
+        sagas: [],
+        darkMode: false
+    };
+    
+    // DOM Elements
+    const app = document.getElementById('app');
+    const guardarConfigBtn = document.getElementById('guardar-config');
+    const estadoCompraDiv = document.getElementById('estado-compra');
+    const progresoTexto = document.getElementById('progreso-texto');
+    const progresoBarra = document.getElementById('progreso-barra');
+    const libroActualContainer = document.getElementById('libro-actual-container');
+    const addTbrForm = document.getElementById('add-tbr-form');
+    const tbrList = document.getElementById('tbr-list');
+    const historialList = document.getElementById('historial-list');
+    const sagasDatalist = document.getElementById('sagas-datalist');
+    const wishlistFormContainer = document.getElementById('wishlist-form-container');
+    const addWishlistForm = document.getElementById('add-wishlist-form');
+    const wishlistList = document.getElementById('wishlist-list');
+    const themeSwitch = document.getElementById('theme-switch-checkbox');
+    const scanIsbnBtn = document.getElementById('scan-isbn-btn');
+    const scannerModal = document.getElementById('scanner-modal');
+    const cancelScanBtn = document.getElementById('cancel-scan-btn');
+    const scannerStatus = document.getElementById('scanner-status');
+
+    // --- LOGICA DEL ESCÁNER ---
+    async function fetchBookData(isbn) {
+        scannerStatus.textContent = `ISBN detectado: ${isbn}. Buscando...`;
+        try {
+            const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+            if (!response.ok) {
+                throw new Error('La respuesta de la red no fue correcta.');
+            }
+            const data = await response.json();
+            if (data.totalItems > 0) {
+                const book = data.items[0].volumeInfo;
+                document.getElementById('tbr-titulo-input').value = book.title || '';
+                document.getElementById('tbr-autor-input').value = book.authors ? book.authors.join(', ') : '';
+                document.getElementById('tbr-paginas-input').value = book.pageCount || '';
+                Quagga.stop();
+                scannerModal.style.display = 'none';
+                alert('¡Libro encontrado y datos rellenados!');
+            } else {
+                alert(`No se encontró ningún libro con el ISBN: ${isbn}`);
+                Quagga.stop();
+                scannerModal.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error al buscar el libro:', error);
+            alert('Ocurrió un error al buscar la información del libro.');
+            Quagga.stop();
+            scannerModal.style.display = 'none';
+        }
+    }
+
+    function initScanner() {
+        scannerModal.style.display = 'flex';
+        Quagga.init({
+            inputStream: {
+                name: "Live", type: "LiveStream", target: document.querySelector('#barcode-scanner'),
+                constraints: { width: 480, height: 320, facingMode: "environment" }
+            },
+            decoder: { readers: ["ean_reader", "ean_8_reader"] }
+        }, function (err) {
+            if (err) { console.error(err); scannerStatus.textContent = 'Error: No se pudo iniciar la cámara. Asegúrate de dar permiso y usar HTTPS.'; return; }
+            scannerStatus.textContent = 'Cámara iniciada. Apunte al código de barras.';
+            Quagga.start();
+        });
+        Quagga.onDetected(result => { Quagga.stop(); fetchBookData(result.codeResult.code); });
+    }
+    
+    scanIsbnBtn.addEventListener('click', () => { if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') { initScanner(); } else { alert('Tu navegador no soporta el acceso a la cámara.'); } });
+    cancelScanBtn.addEventListener('click', () => { Quagga.stop(); scannerModal.style.display = 'none'; });
+
+    // --- LOGICA MODO OSCURO ---
+    themeSwitch.addEventListener('change', () => {
+        appState.darkMode = themeSwitch.checked;
+        document.body.classList.toggle('dark-mode', appState.darkMode);
+        guardarEstado();
+    });
+    function aplicarTema() { document.body.classList.toggle('dark-mode', appState.darkMode); themeSwitch.checked = appState.darkMode; }
+
+    // --- LOGICA PRINCIPAL DE LA APP ---
+    function guardarEstado() { localStorage.setItem('guardianComprasState_v5_6', JSON.stringify(appState)); }
+    function cargarEstado() { const estadoGuardado = localStorage.getItem('guardianComprasState_v5_6'); if (estadoGuardado) Object.assign(appState, JSON.parse(estadoGuardado)); }
+
+    function render() {
+        actualizarContadoresSagas();
+        document.getElementById('puntos-libro').value = appState.config.puntosPorLibro;
+        document.getElementById('puntos-pagina').value = appState.config.puntosPorPagina;
+        document.getElementById('puntos-saga').value = appState.config.puntosPorSaga;
+        document.getElementById('puntos-objetivo').value = appState.config.objetivo;
+        
+        if (!appState.compraDesbloqueada && appState.progreso >= appState.config.objetivo) {
+            appState.compraDesbloqueada = true;
+        }
+        const progresoPorcentaje = appState.config.objetivo > 0 ? Math.min(100, (appState.progreso / appState.config.objetivo) * 100) : 0;
+        progresoTexto.innerText = `Progreso: ${appState.progreso} / ${appState.config.objetivo} Puntos`;
+        progresoBarra.style.width = `${progresoPorcentaje}%`;
+        progresoBarra.innerText = `${Math.round(progresoPorcentaje)}%`;
+        
+        if (appState.compraDesbloqueada) {
+            estadoCompraDiv.innerHTML = `<p class="empty-message" style="background-color: var(--color-exito); color: white;"><strong>¡COMPRA DESBLOQUEADA!</strong></p>`;
+            wishlistFormContainer.classList.remove('locked');
+        } else {
+            estadoCompraDiv.innerHTML = `<p class="empty-message" style="background-color: rgba(248, 196, 113, 0.2); border-color: var(--color-acento);"><strong>COMPRA BLOQUEADA.</strong></p>`;
+            wishlistFormContainer.classList.add('locked');
+        }
+        sagasDatalist.innerHTML = appState.sagas.map(saga => `<option value="${saga.name}">`).join('');
+        wishlistList.innerHTML = appState.wishlist.length ? appState.wishlist.map(libro => crearTarjetaLibro(libro, 'wishlist')).join('') : '<p class="empty-message">Tu lista de deseos está vacía.</p>';
+        libroActualContainer.innerHTML = appState.libroActual ? crearTarjetaLibro(appState.libroActual, 'actual') : '<p class="empty-message">Elige un libro de tu pila para empezar.</p>';
+        tbrList.innerHTML = appState.tbr.length ? appState.tbr.map(libro => crearTarjetaLibro(libro, 'tbr')).join('') : '<p class="empty-message">Tu pila está vacía.</p>';
+        historialList.innerHTML = appState.historial.length ? appState.historial.map(libro => crearTarjetaLibro(libro, 'historial')).join('') : '<p class="empty-message">Aún no has terminado ninguno.</p>';
+        guardarEstado();
+    }
+    
+    function crearTarjetaLibro(libro, listName) {
+        let acciones = '', claseExtra = '', sagaDisplay = '';
+        let controles = `<div class="card-controls"><span class="control-btn delete-btn" data-id="${libro.id}" data-list="${listName}" title="Eliminar">🗑️</span></div>`;
+        if (listName === 'historial') { controles = `<div class="card-controls"><span class="control-btn move-back-btn" data-id="${libro.id}" title="Mover a Pila por Leer">↩️</span></div>`; }
+        if (libro.sagaName) sagaDisplay = `<span class="saga-tag">${libro.sagaName}</span>`;
+        switch (listName) {
+            case 'actual': claseExtra = 'libro-actual-card'; acciones = `<button class="btn-exito" data-id="${libro.id}" data-action="terminar">¡Lo he terminado!</button><button class="btn-peligro" data-id="${libro.id}" data-action="abandonar">Devolver</button>`; break;
+            case 'tbr': acciones = `<button class="btn-acento" data-id="${libro.id}" data-action="empezar" ${appState.libroActual ? 'disabled' : ''}>Empezar</button>`; break;
+            case 'wishlist': claseExtra = 'wishlist-card'; acciones = `<button class="btn-exito" data-id="${libro.id}" data-action="comprar">¡Comprado!</button>`; break;
+        }
+        return `<div class="libro-card ${claseExtra}">${controles}<h3>${libro.titulo}</h3><p>${libro.autor || ''} ${libro.paginas ? `(${libro.paginas} págs.)` : ''}</p>${sagaDisplay}<div class="actions">${acciones}</div></div>`;
+    }
+
+    function actualizarContadoresSagas() {
+        const todosLosLibros = [...appState.tbr, ...appState.historial, ...(appState.libroActual ? [appState.libroActual] : [])];
+        appState.sagas.forEach(saga => {
+            const librosDeLaSaga = todosLosLibros.filter(libro => libro.sagaId === saga.id);
+            const librosLeidosDeLaSaga = appState.historial.filter(libro => libro.sagaId === saga.id);
+            saga.count = librosDeLaSaga.length;
+            saga.isComplete = saga.count > 0 && saga.count === librosLeidosDeLaSaga.length;
+        });
+    }
+
+    function limpiarSagasHuerfanas() {
+        const todosLosLibros = [...appState.tbr, ...appState.historial, ...(appState.libroActual ? [appState.libroActual] : [])];
+        const idsDeSagasEnUso = new Set(todosLosLibros.map(l => l.sagaId).filter(id => id));
+        appState.sagas = appState.sagas.filter(saga => idsDeSagasEnUso.has(saga.id));
+    }
+
+    guardarConfigBtn.addEventListener('click', () => {
+        appState.config.puntosPorLibro = parseInt(document.getElementById('puntos-libro').value) || 0;
+        appState.config.puntosPorPagina = parseInt(document.getElementById('puntos-pagina').value) || 0;
+        appState.config.puntosPorSaga = parseInt(document.getElementById('puntos-saga').value) || 0;
+        appState.config.objetivo = parseInt(document.getElementById('puntos-objetivo').value) || 1;
+        appState.progreso = 0; appState.compraDesbloqueada = false;
+        alert('¡Configuración guardada y progreso reiniciado!');
+        render();
+    });
+
+    addTbrForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const sagaName = document.getElementById('tbr-saga-input').value.trim();
+        let sagaId = null;
+        if (sagaName) {
+            let sagaExistente = appState.sagas.find(s => s.name.toLowerCase() === sagaName.toLowerCase());
+            if (sagaExistente) { sagaId = sagaExistente.id; } 
+            else { sagaId = Date.now() + 1; appState.sagas.push({ id: sagaId, name: sagaName, count: 0, isComplete: false }); }
+        }
+        appState.tbr.push({
+            id: Date.now(), titulo: document.getElementById('tbr-titulo-input').value, autor: document.getElementById('tbr-autor-input').value || null,
+            paginas: parseInt(document.getElementById('tbr-paginas-input').value), sagaId: sagaId, sagaName: sagaName || null
+        });
+        e.target.reset(); document.getElementById('tbr-saga-input').value = '';
+        render();
+    });
+    
+    addWishlistForm.addEventListener('submit', e => {
+        e.preventDefault();
+        if (!appState.compraDesbloqueada) return;
+        if(appState.wishlist.length > 0){ alert("Ya tienes un libro en tu wishlist. Cómpralo o elimínalo antes de añadir otro."); return; }
+        appState.wishlist.push({ id: Date.now(), titulo: document.getElementById('wishlist-titulo-input').value, autor: document.getElementById('wishlist-autor-input').value || null });
+        appState.compraDesbloqueada = false;
+        appState.progreso -= appState.config.objetivo;
+        alert("¡Libro añadido a la wishlist! Tu permiso de compra y tus puntos se han consumido.");
+        e.target.reset();
+        render();
+    });
+
+    app.addEventListener('click', (e) => {
+        const target = e.target;
+        if (target.closest('.card-controls')) {
+            const control = target.closest('.control-btn');
+            if(!control) return;
+            const id = parseInt(control.dataset.id);
+            const listName = control.dataset.list;
+            if (control.classList.contains('delete-btn')) {
+                if (confirm('¿Estás seguro de que quieres eliminar este libro permanentemente?')) {
+                    if (listName === 'wishlist') {
+                        const libroEnWishlist = appState.wishlist.find(l => l.id === id);
+                        if (libroEnWishlist) { appState.progreso += appState.config.objetivo; appState.compraDesbloqueada = true; alert("Se ha eliminado el libro de la wishlist. ¡Se han restaurado tus puntos y tu permiso de compra!"); }
+                    }
+                    if (listName === 'actual') { appState.libroActual = null; } 
+                    else { appState[listName] = appState[listName].filter(l => l.id !== id); }
+                    limpiarSagasHuerfanas(); render();
+                }
+            } else if (control.classList.contains('move-back-btn')) {
+                const libroIndex = appState.historial.findIndex(l => l.id === id);
+                if (libroIndex === -1) return;
+                const libro = appState.historial[libroIndex];
+                if (confirm(`¿Mover "${libro.titulo}" de vuelta a la Pila?\nSe restarán los puntos ganados.`)) {
+                    let puntosARestar = appState.config.puntosPorLibro + (libro.paginas * appState.config.puntosPorPagina);
+                    const sagaPreviaCompleta = libro.sagaId ? (appState.sagas.find(s => s.id === libro.sagaId)?.isComplete || false) : false;
+                    appState.tbr.unshift(libro); appState.historial.splice(libroIndex, 1);
+                    actualizarContadoresSagas();
+                    const sagaInfo = libro.sagaId ? appState.sagas.find(s => s.id === libro.sagaId) : null;
+                    if (sagaPreviaCompleta && sagaInfo && !sagaInfo.isComplete) { puntosARestar += appState.config.puntosPorSaga; }
+                    appState.progreso = Math.max(0, appState.progreso - puntosARestar);
+                    if(appState.progreso < appState.config.objetivo) appState.compraDesbloqueada = false;
+                    render();
+                }
+            }
+            return;
+        }
+        if (target.tagName !== 'BUTTON' || !target.dataset.action) return;
+        const action = target.dataset.action;
+        const id = parseInt(target.dataset.id);
+        switch(action) {
+            case 'comprar':
+                const libroCompradoIndex = appState.wishlist.findIndex(l => l.id === id); if(libroCompradoIndex === -1) return;
+                const libro = appState.wishlist[libroCompradoIndex];
+                const paginas = parseInt(prompt(`¡Felicidades! ¿Cuántas páginas tiene "${libro.titulo}"?`));
+                if (paginas && !isNaN(paginas) && paginas > 0) { libro.paginas = paginas; appState.tbr.push(libro); appState.wishlist.splice(libroCompradoIndex, 1); render(); } 
+                else { alert("Número de páginas no válido."); }
+                break;
+            case 'empezar':
+                if (appState.libroActual) return;
+                const libroIndex = appState.tbr.findIndex(l => l.id === id); if(libroIndex === -1) return;
+                appState.libroActual = appState.tbr[libroIndex]; appState.tbr.splice(libroIndex, 1);
+                render();
+                break;
+            case 'terminar':
+                if(!appState.libroActual) return;
+                const libroTerminado = appState.libroActual; appState.historial.unshift(libroTerminado);
+                const sagaPreviaCompleta = libroTerminado.sagaId ? (appState.sagas.find(s => s.id === libroTerminado.sagaId)?.isComplete || false) : false;
+                appState.libroActual = null; actualizarContadoresSagas();
+                let puntosGanados = appState.config.puntosPorLibro + (libroTerminado.paginas * appState.config.puntosPorPagina);
+                let mensajeAlerta = `¡Libro terminado! Has ganado ${puntosGanados} puntos.`;
+                const sagaInfo = libroTerminado.sagaId ? appState.sagas.find(s => s.id === libroTerminado.sagaId) : null;
+                if (sagaInfo && sagaInfo.isComplete && !sagaPreviaCompleta) { puntosGanados += appState.config.puntosPorSaga; mensajeAlerta += `\n¡Y un bono de ${appState.config.puntosPorSaga} por completar la saga "${sagaInfo.name}"!`; }
+                appState.progreso += puntosGanados; alert(mensajeAlerta);
+                render();
+                break;
+            case 'abandonar':
+                if(!appState.libroActual) return;
+                appState.tbr.unshift(appState.libroActual); appState.libroActual = null;
+                render();
+                break;
+        }
+    });
+
+    // --- CARGA INICIAL DE LA APP ---
+    cargarEstado();
+    aplicarTema();
+    render();
+});
+</script>
+</body>
+</html>
