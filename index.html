@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guardián de Compras v5.6 (Escáner ISBN)</title>
+    <title>Guardián de Compras v5.7 (Escáner Mejorado)</title>
     <!-- LIBRERÍA EXTERNA PARA EL ESCÁNER DE CÓDIGOS DE BARRAS -->
     <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
     <style>
@@ -80,12 +80,22 @@
         input:checked + .slider:before { transform: translateX(24px); }
         .slider.round { border-radius: 34px; }
         .slider.round:before { border-radius: 50%; }
-        #scanner-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
-        #scanner-container { background-color: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; position: relative; }
-        #barcode-scanner { width: 100%; height: auto; border: 1px solid #ccc; }
+
+        /* --- ESTILOS MEJORADOS PARA EL ESCÁNER --- */
+        #scanner-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.85); flex-direction: column; align-items: center; justify-content: center; }
+        #scanner-container { background-color: transparent; text-align: center; width: 100%; max-width: 640px; }
+        #barcode-scanner { position: relative; width: 100%; margin: 0 auto; overflow: hidden; border-radius: 8px; }
         #barcode-scanner video { width: 100%; height: auto; }
-        #barcode-scanner canvas.drawingBuffer { position: absolute; top: 0; left: 0; }
-        #scanner-status { text-align: center; margin-top: 10px; color: #333; }
+        #barcode-scanner canvas { position: absolute; top: 0; left: 0; }
+        
+        /* GUÍA VISUAL DE ENFOQUE */
+        #scanner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; }
+        #scanner-overlay::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 30%, transparent 31%, transparent 69%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0.7) 100%); }
+        #scanner-overlay::after { content: ''; position: absolute; top: 50%; left: 5%; right: 5%; height: 2px; background: rgba(255, 0, 0, 0.8); box-shadow: 0 0 5px red; animation: scan-line 2.5s linear infinite; }
+        @keyframes scan-line { 0% { top: 30%; } 50% { top: 70%; } 100% { top: 30%; } }
+        
+        #scanner-status { color: white; font-size: 1.1em; text-shadow: 1px 1px 2px black; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; margin-top: 20px; }
+        .scanner-controls { margin-top: 20px; display: flex; gap: 15px; justify-content: center; }
     </style>
 </head>
 <body>
@@ -151,12 +161,17 @@
         </section>
     </div>
 
+    <!-- MODAL DEL ESCÁNER MEJORADO -->
     <div id="scanner-modal">
         <div id="scanner-container">
-            <h3>Apunte al código de barras del libro</h3>
-            <div id="barcode-scanner"></div>
-            <p id="scanner-status">Iniciando cámara...</p>
-            <button id="cancel-scan-btn" class="btn-peligro" style="width: 100%; margin-top: 15px;">Cancelar</button>
+            <div id="barcode-scanner">
+                <div id="scanner-overlay"></div>
+            </div>
+            <p id="scanner-status">Iniciando...</p>
+            <div class="scanner-controls">
+                <button id="toggle-torch-btn" class="btn-acento" style="display: none;">💡 Activar Flash</button>
+                <button id="cancel-scan-btn" class="btn-peligro">Cancelar</button>
+            </div>
         </div>
     </div>
 
@@ -164,17 +179,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     let appState = {
         config: { puntosPorLibro: 250, puntosPorPagina: 1, puntosPorSaga: 500, objetivo: 1000 },
-        progreso: 0, 
-        compraDesbloqueada: false, 
-        libroActual: null, 
-        tbr: [], 
-        historial: [], 
-        wishlist: [],
-        sagas: [],
-        darkMode: false
+        progreso: 0, compraDesbloqueada: false, libroActual: null, tbr: [], historial: [], wishlist: [], sagas: [], darkMode: false
     };
     
-    // DOM Elements
+    // --- ELEMENTOS DEL DOM ---
     const app = document.getElementById('app');
     const guardarConfigBtn = document.getElementById('guardar-config');
     const estadoCompraDiv = document.getElementById('estado-compra');
@@ -193,67 +201,113 @@ document.addEventListener('DOMContentLoaded', () => {
     const scannerModal = document.getElementById('scanner-modal');
     const cancelScanBtn = document.getElementById('cancel-scan-btn');
     const scannerStatus = document.getElementById('scanner-status');
+    const toggleTorchBtn = document.getElementById('toggle-torch-btn');
 
-    // --- LOGICA DEL ESCÁNER ---
+    let cameraTrack = null; // Para guardar la pista de video y controlar el flash
+
+    // --- LÓGICA MEJORADA DEL ESCÁNER ---
     async function fetchBookData(isbn) {
-        scannerStatus.textContent = `ISBN detectado: ${isbn}. Buscando...`;
+        scannerStatus.textContent = `ISBN ${isbn} detectado. Buscando...`;
         try {
             const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
-            if (!response.ok) {
-                throw new Error('La respuesta de la red no fue correcta.');
-            }
+            if (!response.ok) throw new Error('La respuesta de la red no fue correcta.');
+            
             const data = await response.json();
             if (data.totalItems > 0) {
                 const book = data.items[0].volumeInfo;
                 document.getElementById('tbr-titulo-input').value = book.title || '';
                 document.getElementById('tbr-autor-input').value = book.authors ? book.authors.join(', ') : '';
                 document.getElementById('tbr-paginas-input').value = book.pageCount || '';
-                Quagga.stop();
-                scannerModal.style.display = 'none';
                 alert('¡Libro encontrado y datos rellenados!');
+                stopScanner();
             } else {
-                alert(`No se encontró ningún libro con el ISBN: ${isbn}`);
-                Quagga.stop();
-                scannerModal.style.display = 'none';
+                alert(`No se encontró ningún libro con el ISBN: ${isbn}. Puedes añadirlo manualmente.`);
+                stopScanner();
             }
         } catch (error) {
             console.error('Error al buscar el libro:', error);
             alert('Ocurrió un error al buscar la información del libro.');
-            Quagga.stop();
-            scannerModal.style.display = 'none';
+            stopScanner();
         }
     }
 
+    function stopScanner() {
+        Quagga.stop();
+        if (cameraTrack) {
+            cameraTrack.stop(); // Apaga la cámara y la luz
+        }
+        scannerModal.style.display = 'none';
+        toggleTorchBtn.style.display = 'none'; // Oculta el botón del flash
+    }
+
     function initScanner() {
+        scannerStatus.textContent = 'Solicitando permiso de cámara...';
         scannerModal.style.display = 'flex';
+        
         Quagga.init({
             inputStream: {
                 name: "Live", type: "LiveStream", target: document.querySelector('#barcode-scanner'),
-                constraints: { width: 480, height: 320, facingMode: "environment" }
+                constraints: { 
+                    width: { min: 640 }, height: { min: 480 }, 
+                    facingMode: "environment", // Cámara trasera
+                    // Peticiones para mejorar el enfoque y la luz
+                    advanced: [
+                        { torch: true },
+                        { focusMode: "continuous" }
+                    ]
+                }
             },
-            decoder: { readers: ["ean_reader", "ean_8_reader"] }
+            decoder: { readers: ["ean_reader"] }
         }, function (err) {
-            if (err) { console.error(err); scannerStatus.textContent = 'Error: No se pudo iniciar la cámara. Asegúrate de dar permiso y usar HTTPS.'; return; }
-            scannerStatus.textContent = 'Cámara iniciada. Apunte al código de barras.';
+            if (err) {
+                console.error(err);
+                if (err.name === 'NotAllowedError') {
+                    scannerStatus.textContent = 'Error: Has denegado el permiso para usar la cámara.';
+                } else {
+                    scannerStatus.textContent = 'Error: No se pudo iniciar la cámara.';
+                }
+                return;
+            }
+            scannerStatus.textContent = 'Cámara iniciada. Alinee el código de barras con la línea roja.';
             Quagga.start();
+
+            // Guardar la pista de la cámara para controlar el flash
+            cameraTrack = Quagga.CameraAccess.getActiveTrack();
+            const capabilities = cameraTrack.getCapabilities();
+            if (capabilities.torch) {
+                toggleTorchBtn.style.display = 'block'; // Muestra el botón si hay flash
+            }
         });
+        
         Quagga.onDetected(result => { Quagga.stop(); fetchBookData(result.codeResult.code); });
     }
     
     scanIsbnBtn.addEventListener('click', () => { if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') { initScanner(); } else { alert('Tu navegador no soporta el acceso a la cámara.'); } });
-    cancelScanBtn.addEventListener('click', () => { Quagga.stop(); scannerModal.style.display = 'none'; });
-
-    // --- LOGICA MODO OSCURO ---
-    themeSwitch.addEventListener('change', () => {
-        appState.darkMode = themeSwitch.checked;
-        document.body.classList.toggle('dark-mode', appState.darkMode);
-        guardarEstado();
+    cancelScanBtn.addEventListener('click', stopScanner);
+    
+    toggleTorchBtn.addEventListener('click', () => {
+        if (cameraTrack) {
+            const capabilities = cameraTrack.getCapabilities();
+            if (capabilities.torch) {
+                const isTorchOn = cameraTrack.getSettings().torch;
+                cameraTrack.applyConstraints({
+                    advanced: [{ torch: !isTorchOn }]
+                })
+                .then(() => {
+                    toggleTorchBtn.textContent = !isTorchOn ? '💡 Apagar Flash' : '💡 Activar Flash';
+                })
+                .catch(e => console.error('Error al cambiar el estado del flash:', e));
+            }
+        }
     });
+
+    // --- LÓGICA MODO OSCURO ---
+    themeSwitch.addEventListener('change', () => { appState.darkMode = themeSwitch.checked; document.body.classList.toggle('dark-mode', appState.darkMode); guardarEstado(); });
     function aplicarTema() { document.body.classList.toggle('dark-mode', appState.darkMode); themeSwitch.checked = appState.darkMode; }
 
-    // --- LOGICA PRINCIPAL DE LA APP ---
-    function guardarEstado() { localStorage.setItem('guardianComprasState_v5_6', JSON.stringify(appState)); }
-    function cargarEstado() { const estadoGuardado = localStorage.getItem('guardianComprasState_v5_6'); if (estadoGuardado) Object.assign(appState, JSON.parse(estadoGuardado)); }
+    // --- LÓGICA PRINCIPAL DE LA APP ---
+    function guardarEstado() { localStorage.setItem('guardianComprasState_v5_7', JSON.stringify(appState)); }
+    function cargarEstado() { const estadoGuardado = localStorage.getItem('guardianComprasState_v5_7'); if (estadoGuardado) Object.assign(appState, JSON.parse(estadoGuardado)); }
 
     function render() {
         actualizarContadoresSagas();
@@ -262,9 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('puntos-saga').value = appState.config.puntosPorSaga;
         document.getElementById('puntos-objetivo').value = appState.config.objetivo;
         
-        if (!appState.compraDesbloqueada && appState.progreso >= appState.config.objetivo) {
-            appState.compraDesbloqueada = true;
-        }
+        if (!appState.compraDesbloqueada && appState.progreso >= appState.config.objetivo) appState.compraDesbloqueada = true;
         const progresoPorcentaje = appState.config.objetivo > 0 ? Math.min(100, (appState.progreso / appState.config.objetivo) * 100) : 0;
         progresoTexto.innerText = `Progreso: ${appState.progreso} / ${appState.config.objetivo} Puntos`;
         progresoBarra.style.width = `${progresoPorcentaje}%`;
