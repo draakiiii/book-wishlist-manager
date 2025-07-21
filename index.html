@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guardián de Compras v5.8 (Enfoque Táctil)</title>
-    <!-- LIBRERÍA EXTERNA PARA EL ESCÁNER DE CÓDIGOS DE BARRAS -->
-    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+    <title>Guardián de Compras v5.9 (Escáner ZXing)</title>
+    <!-- NUEVA LIBRERÍA DE ESCANEO (MÁS MODERNA Y FIABLE) -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/zxing.min.js"></script>
     <style>
         :root {
             --color-primario: #1A5276;
@@ -81,24 +81,21 @@
         .slider.round { border-radius: 34px; }
         .slider.round:before { border-radius: 50%; }
 
-        /* --- ESTILOS MEJORADOS PARA EL ESCÁNER --- */
+        /* --- ESTILOS PARA EL ESCÁNER --- */
         #scanner-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.85); flex-direction: column; align-items: center; justify-content: center; }
         #scanner-container { background-color: transparent; text-align: center; width: 100%; max-width: 640px; }
-        #barcode-scanner { position: relative; width: 100%; margin: 0 auto; overflow: hidden; border-radius: 8px; cursor: pointer; /* Cursor para indicar que se puede tocar */ }
-        #barcode-scanner video, #barcode-scanner canvas { width: 100%; height: auto; }
-        #barcode-scanner canvas { position: absolute; top: 0; left: 0; }
-        #scanner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; }
+        #barcode-scanner-container { position: relative; width: 100%; margin: 0 auto; overflow: hidden; border-radius: 8px; }
+        #scanner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
         #scanner-overlay::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 30%, transparent 31%, transparent 69%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0.7) 100%); }
         #scanner-overlay::after { content: ''; position: absolute; top: 50%; left: 5%; right: 5%; height: 2px; background: rgba(255, 0, 0, 0.8); box-shadow: 0 0 5px red; animation: scan-line 2.5s linear infinite; }
         @keyframes scan-line { 0% { top: 30%; } 50% { top: 70%; } 100% { top: 30%; } }
-        
         #scanner-status { color: white; font-size: 1.1em; text-shadow: 1px 1px 2px black; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; margin-top: 20px; }
-        #scanner-help-text { color: #f0f0f0; font-size: 0.9em; margin-top: 10px; text-shadow: 1px 1px 2px black;}
         .scanner-controls { margin-top: 20px; display: flex; gap: 15px; justify-content: center; }
     </style>
 </head>
 <body>
     <div id="app">
+        <!-- El resto del HTML de la app no necesita cambios -->
         <h1>Guardián de Compras 🛡️📚</h1>
         <section id="configuracion" class="seccion">
             <h2><span class="icon">⚙️</span>Configuración</h2>
@@ -160,15 +157,14 @@
         </section>
     </div>
 
-    <!-- MODAL DEL ESCÁNER MEJORADO -->
+    <!-- MODAL DEL ESCÁNER CON LA NUEVA ESTRUCTURA -->
     <div id="scanner-modal">
         <div id="scanner-container">
-            <div id="barcode-scanner">
+            <div id="barcode-scanner-container">
+                <video id="video-stream"></video>
                 <div id="scanner-overlay"></div>
             </div>
             <p id="scanner-status">Iniciando...</p>
-            <!-- NUEVO: Mensaje de ayuda para el enfoque -->
-            <p id="scanner-help-text" style="display:none;">Si el enfoque es lento, toque la pantalla para re-enfocar.</p>
             <div class="scanner-controls">
                 <button id="toggle-torch-btn" class="btn-acento" style="display: none;">💡 Activar Flash</button>
                 <button id="cancel-scan-btn" class="btn-peligro">Cancelar</button>
@@ -184,38 +180,25 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // --- ELEMENTOS DEL DOM ---
+    // (Sin cambios, solo se listan para claridad)
     const app = document.getElementById('app');
     const guardarConfigBtn = document.getElementById('guardar-config');
-    const estadoCompraDiv = document.getElementById('estado-compra');
-    const progresoTexto = document.getElementById('progreso-texto');
-    const progresoBarra = document.getElementById('progreso-barra');
-    const libroActualContainer = document.getElementById('libro-actual-container');
-    const addTbrForm = document.getElementById('add-tbr-form');
-    const tbrList = document.getElementById('tbr-list');
-    const historialList = document.getElementById('historial-list');
-    const sagasDatalist = document.getElementById('sagas-datalist');
-    const wishlistFormContainer = document.getElementById('wishlist-form-container');
-    const addWishlistForm = document.getElementById('add-wishlist-form');
-    const wishlistList = document.getElementById('wishlist-list');
     const themeSwitch = document.getElementById('theme-switch-checkbox');
     const scanIsbnBtn = document.getElementById('scan-isbn-btn');
     const scannerModal = document.getElementById('scanner-modal');
-    const scannerContainer = document.getElementById('scanner-container');
     const cancelScanBtn = document.getElementById('cancel-scan-btn');
     const scannerStatus = document.getElementById('scanner-status');
-    const scannerHelpText = document.getElementById('scanner-help-text');
     const toggleTorchBtn = document.getElementById('toggle-torch-btn');
 
-    let cameraTrack = null; // Para guardar la pista de video y controlar el flash
+    // --- LÓGICA DEL ESCÁNER CON ZXING ---
+    let reader = null;
+    let mediaStreamControls = null;
 
-    // --- LÓGICA MEJORADA DEL ESCÁNER ---
     async function fetchBookData(isbn) {
         scannerStatus.textContent = `ISBN ${isbn} detectado. Buscando...`;
-        scannerHelpText.style.display = 'none'; // Ocultar texto de ayuda durante la búsqueda
         try {
             const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
             if (!response.ok) throw new Error('La respuesta de la red no fue correcta.');
-            
             const data = await response.json();
             if (data.totalItems > 0) {
                 const book = data.items[0].volumeInfo;
@@ -225,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('¡Libro encontrado y datos rellenados!');
                 stopScanner();
             } else {
-                alert(`No se encontró ningún libro con el ISBN: ${isbn}. Puedes añadirlo manually.`);
+                alert(`No se encontró ningún libro con el ISBN: ${isbn}. Puedes añadirlo manualmente.`);
                 stopScanner();
             }
         } catch (error) {
@@ -236,86 +219,87 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function stopScanner() {
-        if (Quagga.CameraAccess.getActiveTrack()) {
-            Quagga.stop();
+        if (reader) {
+            reader.reset(); // Método de ZXing para detener y liberar la cámara
         }
         scannerModal.style.display = 'none';
-        toggleTorchBtn.style.display = 'none'; // Oculta el botón del flash
-        scannerHelpText.style.display = 'none'; // Oculta texto de ayuda
+        toggleTorchBtn.style.display = 'none';
+        mediaStreamControls = null;
     }
 
-    function initScanner() {
+    async function initScanner() {
         scannerStatus.textContent = 'Solicitando permiso de cámara...';
-        scannerHelpText.style.display = 'none';
         scannerModal.style.display = 'flex';
         
-        Quagga.init({
-            inputStream: {
-                name: "Live", type: "LiveStream", target: document.querySelector('#barcode-scanner'),
-                constraints: { 
-                    width: { min: 640 }, height: { min: 480 }, 
-                    facingMode: "environment",
-                    focusMode: "continuous" // Prioridad para el enfoque automático
-                }
-            },
-            locator: { patchSize: "medium", halfSample: true },
-            numOfWorkers: navigator.hardwareConcurrency || 4,
-            decoder: { readers: ["ean_reader"] },
-            locate: true
-        }, function (err) {
-            if (err) {
-                console.error(err);
-                if (err.name === 'NotAllowedError') {
-                    scannerStatus.textContent = 'Error: Has denegado el permiso para usar la cámara.';
-                } else {
-                    scannerStatus.textContent = 'Error: No se pudo iniciar la cámara.';
-                }
-                return;
-            }
-            scannerStatus.textContent = 'Alinee el código de barras con la línea roja.';
-            scannerHelpText.style.display = 'block';
-            Quagga.start();
+        // Usamos la nueva librería
+        reader = new ZXing.BrowserMultiFormatReader();
+        let selectedDeviceId;
 
-            cameraTrack = Quagga.CameraAccess.getActiveTrack();
-            if (cameraTrack && typeof cameraTrack.getCapabilities === 'function') {
-                const capabilities = cameraTrack.getCapabilities();
-                if (capabilities.torch) {
-                    toggleTorchBtn.style.display = 'block';
+        try {
+            const videoInputDevices = await reader.listVideoInputDevices();
+            if (videoInputDevices.length > 0) {
+                // Priorizar cámara trasera
+                const rearCamera = videoInputDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('trasera'));
+                selectedDeviceId = rearCamera ? rearCamera.deviceId : videoInputDevices[0].deviceId;
+                
+                scannerStatus.textContent = 'Iniciando cámara...';
+
+                // Iniciar el escaneo
+                const result = await reader.decodeFromVideoDevice(selectedDeviceId, 'video-stream', (result, err, controls) => {
+                    if (result) {
+                        // DETECTADO!
+                        reader.reset(); // Detener inmediatamente
+                        fetchBookData(result.getText());
+                    }
+                    if (err && !(err instanceof ZXing.NotFoundException)) {
+                        console.error(err);
+                    }
+                    if (controls) {
+                        mediaStreamControls = controls; // Guardar los controles para el flash
+                    }
+                });
+
+                // Comprobar y mostrar el botón del flash si está disponible
+                if (mediaStreamControls && mediaStreamControls.stream) {
+                    const track = mediaStreamControls.stream.getVideoTracks()[0];
+                    const capabilities = track.getCapabilities();
+                    if (capabilities.torch) {
+                        toggleTorchBtn.style.display = 'block';
+                    }
                 }
+
+            } else {
+                scannerStatus.textContent = 'Error: No se encontraron cámaras.';
             }
-        });
-        
-        let detectionTimeout;
-        Quagga.onDetected(result => {
-            // Prevenir detecciones múltiples seguidas
-            clearTimeout(detectionTimeout);
-            Quagga.stop(); // Detener inmediatamente para no seguir procesando
-            detectionTimeout = setTimeout(() => {
-                fetchBookData(result.codeResult.code);
-            }, 100); // Pequeño retardo para asegurar que la detección es estable
-        });
-    }
-    
-    scanIsbnBtn.addEventListener('click', () => { if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') { initScanner(); } else { alert('Tu navegador no soporta el acceso a la cámara.'); } });
-    cancelScanBtn.addEventListener('click', stopScanner);
-    
-    // --- NUEVO: Simulación de Tap-to-Focus ---
-    scannerContainer.addEventListener('click', () => {
-        if (Quagga.CameraAccess.getActiveTrack()) {
-            // Forzar a Quagga a reevaluar la imagen
-            Quagga.start();
+        } catch (err) {
+            console.error(err);
+            if (err.name === 'NotAllowedError') {
+                scannerStatus.textContent = 'Error: Has denegado el permiso para usar la cámara.';
+            } else {
+                scannerStatus.textContent = 'Error: No se pudo iniciar la cámara.';
+            }
         }
+    }
+
+    scanIsbnBtn.addEventListener('click', () => {
+        if (typeof ZXing === 'undefined') {
+            alert('La librería de escaneo no se ha cargado. Revisa tu conexión a internet.');
+            return;
+        }
+        initScanner();
     });
+    
+    cancelScanBtn.addEventListener('click', stopScanner);
 
     toggleTorchBtn.addEventListener('click', () => {
-        if (cameraTrack && typeof cameraTrack.getCapabilities === 'function') {
-            const capabilities = cameraTrack.getCapabilities();
-            if (capabilities.torch) {
-                const isTorchOn = cameraTrack.getSettings().torch;
-                cameraTrack.applyConstraints({ advanced: [{ torch: !isTorchOn }] })
-                .then(() => { toggleTorchBtn.textContent = !isTorchOn ? '💡 Apagar Flash' : '💡 Activar Flash'; })
-                .catch(e => console.error('Error al cambiar el estado del flash:', e));
-            }
+        if (mediaStreamControls) {
+            const track = mediaStreamControls.stream.getVideoTracks()[0];
+            const isTorchOn = track.getSettings().torch || false;
+            track.applyConstraints({ advanced: [{ torch: !isTorchOn }] })
+            .then(() => {
+                toggleTorchBtn.textContent = !isTorchOn ? '💡 Apagar Flash' : '💡 Activar Flash';
+            })
+            .catch(e => console.error('Error al cambiar el estado del flash:', e));
         }
     });
 
@@ -324,8 +308,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function aplicarTema() { document.body.classList.toggle('dark-mode', appState.darkMode); themeSwitch.checked = appState.darkMode; }
 
     // --- LÓGICA PRINCIPAL DE LA APP ---
-    function guardarEstado() { localStorage.setItem('guardianComprasState_v5_8', JSON.stringify(appState)); }
-    function cargarEstado() { const estadoGuardado = localStorage.getItem('guardianComprasState_v5_8'); if (estadoGuardado) Object.assign(appState, JSON.parse(estadoGuardado)); }
+    function guardarEstado() { localStorage.setItem('guardianComprasState_v5_9', JSON.stringify(appState)); }
+    function cargarEstado() { const estadoGuardado = localStorage.getItem('guardianComprasState_v5_9'); if (estadoGuardado) Object.assign(appState, JSON.parse(estadoGuardado)); }
 
     function render() {
         actualizarContadoresSagas();
@@ -336,22 +320,33 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!appState.compraDesbloqueada && appState.progreso >= appState.config.objetivo) appState.compraDesbloqueada = true;
         const progresoPorcentaje = appState.config.objetivo > 0 ? Math.min(100, (appState.progreso / appState.config.objetivo) * 100) : 0;
-        progresoTexto.innerText = `Progreso: ${appState.progreso} / ${appState.config.objetivo} Puntos`;
-        progresoBarra.style.width = `${progresoPorcentaje}%`;
-        progresoBarra.innerText = `${Math.round(progresoPorcentaje)}%`;
-        
-        if (appState.compraDesbloqueada) {
-            estadoCompraDiv.innerHTML = `<p class="empty-message" style="background-color: var(--color-exito); color: white;"><strong>¡COMPRA DESBLOQUEADA!</strong></p>`;
-            wishlistFormContainer.classList.remove('locked');
-        } else {
-            estadoCompraDiv.innerHTML = `<p class="empty-message" style="background-color: rgba(248, 196, 113, 0.2); border-color: var(--color-acento);"><strong>COMPRA BLOQUEADA.</strong></p>`;
-            wishlistFormContainer.classList.add('locked');
+        const progresoTextoEl = document.getElementById('progreso-texto');
+        if(progresoTextoEl) progresoTextoEl.innerText = `Progreso: ${appState.progreso} / ${appState.config.objetivo} Puntos`;
+        const progresoBarraEl = document.getElementById('progreso-barra');
+        if(progresoBarraEl) {
+             progresoBarraEl.style.width = `${progresoPorcentaje}%`;
+             progresoBarraEl.innerText = `${Math.round(progresoPorcentaje)}%`;
         }
-        sagasDatalist.innerHTML = appState.sagas.map(saga => `<option value="${saga.name}">`).join('');
-        wishlistList.innerHTML = appState.wishlist.length ? appState.wishlist.map(libro => crearTarjetaLibro(libro, 'wishlist')).join('') : '<p class="empty-message">Tu lista de deseos está vacía.</p>';
-        libroActualContainer.innerHTML = appState.libroActual ? crearTarjetaLibro(appState.libroActual, 'actual') : '<p class="empty-message">Elige un libro de tu pila para empezar.</p>';
-        tbrList.innerHTML = appState.tbr.length ? appState.tbr.map(libro => crearTarjetaLibro(libro, 'tbr')).join('') : '<p class="empty-message">Tu pila está vacía.</p>';
-        historialList.innerHTML = appState.historial.length ? appState.historial.map(libro => crearTarjetaLibro(libro, 'historial')).join('') : '<p class="empty-message">Aún no has terminado ninguno.</p>';
+        
+        const estadoCompraDiv = document.getElementById('estado-compra');
+        const wishlistFormContainer = document.getElementById('wishlist-form-container');
+        if (appState.compraDesbloqueada) {
+            if(estadoCompraDiv) estadoCompraDiv.innerHTML = `<p class="empty-message" style="background-color: var(--color-exito); color: white;"><strong>¡COMPRA DESBLOQUEADA!</strong></p>`;
+            if(wishlistFormContainer) wishlistFormContainer.classList.remove('locked');
+        } else {
+            if(estadoCompraDiv) estadoCompraDiv.innerHTML = `<p class="empty-message" style="background-color: rgba(248, 196, 113, 0.2); border-color: var(--color-acento);"><strong>COMPRA BLOQUEADA.</strong></p>`;
+            if(wishlistFormContainer) wishlistFormContainer.classList.add('locked');
+        }
+        const sagasDatalist = document.getElementById('sagas-datalist');
+        if(sagasDatalist) sagasDatalist.innerHTML = appState.sagas.map(saga => `<option value="${saga.name}">`).join('');
+        const wishlistList = document.getElementById('wishlist-list');
+        if(wishlistList) wishlistList.innerHTML = appState.wishlist.length ? appState.wishlist.map(libro => crearTarjetaLibro(libro, 'wishlist')).join('') : '<p class="empty-message">Tu lista de deseos está vacía.</p>';
+        const libroActualContainer = document.getElementById('libro-actual-container');
+        if(libroActualContainer) libroActualContainer.innerHTML = appState.libroActual ? crearTarjetaLibro(appState.libroActual, 'actual') : '<p class="empty-message">Elige un libro de tu pila para empezar.</p>';
+        const tbrList = document.getElementById('tbr-list');
+        if(tbrList) tbrList.innerHTML = appState.tbr.length ? appState.tbr.map(libro => crearTarjetaLibro(libro, 'tbr')).join('') : '<p class="empty-message">Tu pila está vacía.</p>';
+        const historialList = document.getElementById('historial-list');
+        if(historialList) historialList.innerHTML = appState.historial.length ? appState.historial.map(libro => crearTarjetaLibro(libro, 'historial')).join('') : '<p class="empty-message">Aún no has terminado ninguno.</p>';
         guardarEstado();
     }
     
@@ -384,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
         appState.sagas = appState.sagas.filter(saga => idsDeSagasEnUso.has(saga.id));
     }
 
-    guardarConfigBtn.addEventListener('click', () => {
+    if(guardarConfigBtn) guardarConfigBtn.addEventListener('click', () => {
         appState.config.puntosPorLibro = parseInt(document.getElementById('puntos-libro').value) || 0;
         appState.config.puntosPorPagina = parseInt(document.getElementById('puntos-pagina').value) || 0;
         appState.config.puntosPorSaga = parseInt(document.getElementById('puntos-saga').value) || 0;
@@ -394,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
         render();
     });
 
-    addTbrForm.addEventListener('submit', e => {
+    if(addTbrForm) addTbrForm.addEventListener('submit', e => {
         e.preventDefault();
         const sagaName = document.getElementById('tbr-saga-input').value.trim();
         let sagaId = null;
@@ -411,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
         render();
     });
     
-    addWishlistForm.addEventListener('submit', e => {
+    if(addWishlistForm) addWishlistForm.addEventListener('submit', e => {
         e.preventDefault();
         if (!appState.compraDesbloqueada) return;
         if(appState.wishlist.length > 0){ alert("Ya tienes un libro en tu wishlist. Cómpralo o elimínalo antes de añadir otro."); return; }
@@ -423,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
         render();
     });
 
-    app.addEventListener('click', (e) => {
+    if(app) app.addEventListener('click', (e) => {
         const target = e.target;
         if (target.closest('.card-controls')) {
             const control = target.closest('.control-btn');
