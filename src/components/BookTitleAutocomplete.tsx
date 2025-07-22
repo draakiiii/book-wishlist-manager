@@ -60,8 +60,8 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
         return;
       }
 
-      // Only search if the user is actively typing and the value has changed
-      if (!isUserTyping || debouncedValue === lastTypedValue) {
+      // Only search if the debounced value has actually changed from the last search
+      if (debouncedValue === lastTypedValue) {
         return;
       }
 
@@ -70,6 +70,8 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
         const results = await searchBooksByTitle(debouncedValue);
         setSuggestions(results);
         setIsOpen(results.length > 0);
+        // Update lastTypedValue to prevent duplicate searches
+        setLastTypedValue(debouncedValue);
       } catch (error) {
         console.error('Error searching books:', error);
         setSuggestions([]);
@@ -80,7 +82,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     };
 
     searchBooks();
-  }, [debouncedValue, disabled, disableAutocomplete, justSelected, isUserTyping, lastTypedValue]);
+  }, [debouncedValue, disabled, disableAutocomplete, justSelected, lastTypedValue]);
 
   // Handle click outside
   useEffect(() => {

@@ -187,11 +187,16 @@
 
   /* Mejoras específicas para móviles en el autocomplete */
   .autocomplete-dropdown {
+    /* Control inteligente del scroll */
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
     /* Prevenir que el scroll se propague al body */
     isolation: isolate;
+    /* Mejorar el rendimiento del scroll */
+    will-change: scroll-position;
+    /* Asegurar que el scroll funcione correctamente */
+    scroll-behavior: smooth;
   }
 
   /* Mejorar la respuesta táctil en los botones del dropdown */
@@ -210,22 +215,8 @@
     }
   }
 
-  /* Mejoras para el scroll del dropdown en móviles */
-  .autocomplete-dropdown {
-    /* Control inteligente del scroll */
-    overscroll-behavior: auto;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
-    /* Prevenir que el scroll se propague al body */
-    isolation: isolate;
-    /* Mejorar el rendimiento del scroll */
-    will-change: scroll-position;
-    /* Asegurar que el scroll funcione correctamente */
-    scroll-behavior: smooth;
-  }
-
-  /* Mejorar la respuesta táctil en móviles */
-  .autocomplete-dropdown * {
+  /* Mejorar la respuesta táctil en elementos no-interactivos del dropdown */
+  .autocomplete-dropdown .suggestion-item {
     touch-action: pan-y;
   }
 }
