@@ -251,7 +251,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
                 ...state.tbr,
                 ...state.historial,
                 ...state.wishlist,
-                ...(state.libroActual ? [state.libroActual] : [])
+                ...state.librosActuales
               ];
               const existingBook = allBooks.find(book => book.isbn === scannedCode);
               

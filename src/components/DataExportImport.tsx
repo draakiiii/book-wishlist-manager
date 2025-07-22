@@ -51,7 +51,7 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
           tbr: state.tbr,
           historial: state.historial,
           wishlist: state.wishlist,
-          actual: state.libroActual
+          actual: state.librosActuales.length === 1 ? state.librosActuales[0] : null
         },
         sagas: state.sagas,
         scanHistory: state.scanHistory,

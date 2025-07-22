@@ -124,7 +124,7 @@ function limpiarSagasHuerfanas(state: AppState): AppState {
   const todosLosLibros = [
     ...state.tbr,
     ...state.historial,
-    ...(state.libroActual ? [state.libroActual] : [])
+    ...state.librosActuales
   ];
   
   const idsDeSagasEnUso = new Set(
@@ -330,13 +330,15 @@ function appReducer(state: AppState, action: Action): AppState {
         }
       }
       
+      let nuevoEstado;
       if (listType === 'actual') {
-        return { ...state, libroActual: null };
+        const nuevaLista = state.librosActuales.filter(l => l.id !== id);
+        nuevoEstado = { ...state, librosActuales: nuevaLista };
+      } else if (listType === 'tbr' || listType === 'historial' || listType === 'wishlist') {
+        const nuevaLista = state[listType].filter(l => l.id !== id);
+        nuevoEstado = { ...state, [listType]: nuevaLista };
       }
-      
-      const nuevaLista = state[listType].filter(l => l.id !== id);
-      const nuevoEstado = { ...state, [listType]: nuevaLista };
-      
+      if (!nuevoEstado) return state;
       return limpiarSagasHuerfanas(nuevoEstado);
     }
 
@@ -539,17 +541,15 @@ function appReducer(state: AppState, action: Action): AppState {
           ...state,
           librosActuales: librosActualesActualizados
         };
+      } else if (listType === 'tbr' || listType === 'historial' || listType === 'wishlist') {
+        const list = state[listType];
+        const updatedList = list.map(book => book.id === id ? { ...book, ...updates } : book);
+        return {
+          ...state,
+          [listType]: updatedList
+        };
       }
-      
-      const list = state[listType as 'tbr' | 'historial' | 'wishlist'];
-      const updatedList = list.map(book => 
-        book.id === id ? { ...book, ...updates } : book
-      );
-      
-      return {
-        ...state,
-        [listType]: updatedList
-      };
+      break;
     }
 
     case 'UPDATE_SAGA': {
@@ -642,6 +642,7 @@ function appReducer(state: AppState, action: Action): AppState {
     default:
       return state;
   }
+  return state;
 }
 
 interface AppStateContextType {
