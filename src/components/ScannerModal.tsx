@@ -213,7 +213,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
         currentStream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [selectedCamera]);
+  }, [selectedCamera, currentStream, addFeedback]);
 
   const checkTorchCapability = async (stream: MediaStream) => {
     try {
