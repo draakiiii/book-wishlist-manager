@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { X, Camera, CameraOff, RotateCcw, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { X, Camera, CameraOff, RotateCcw, AlertCircle, CheckCircle, Loader2, Zap } from 'lucide-react';
 import { BrowserMultiFormatReader, Result } from '@zxing/library';
 import { useAppState } from '../context/AppStateContext';
 
@@ -27,7 +27,6 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
   const [hasShownInitialMessage, setHasShownInitialMessage] = useState(false);
   const [flashlightEnabled, setFlashlightEnabled] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [showZoomControls, setShowZoomControls] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
@@ -411,6 +410,25 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
             muted
           />
           
+          {/* Zoom Controls */}
+          <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-sm rounded-lg p-2">
+            <div className="flex flex-col space-y-2">
+              <button
+                onClick={() => adjustZoom(zoomLevel + 0.5)}
+                className="p-1 rounded bg-white/20 text-white hover:bg-white/30"
+              >
+                +
+              </button>
+              <span className="text-white text-xs text-center">{zoomLevel.toFixed(1)}x</span>
+              <button
+                onClick={() => adjustZoom(zoomLevel - 0.5)}
+                className="p-1 rounded bg-white/20 text-white hover:bg-white/30"
+              >
+                -
+              </button>
+            </div>
+          </div>
+          
           {/* Scanning Overlay */}
           {isScanning && !isProcessing && (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -476,19 +494,8 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
                   : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300'
               }`}
             >
-              <span className="text-lg">💡</span>
+              <Zap className="h-4 w-4" />
               <span className="text-sm">Linterna</span>
-            </motion.button>
-            
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowZoomControls(!showZoomControls)}
-              disabled={isProcessing}
-              className="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
-            >
-              <span className="text-lg">🔍</span>
-              <span className="text-sm">Zoom</span>
             </motion.button>
             
             <motion.button
@@ -518,52 +525,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
             </motion.button>
           </div>
 
-          {/* Zoom Controls */}
-          {showZoomControls && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-4 p-3 bg-slate-100 dark:bg-slate-700 rounded-lg"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Zoom: {zoomLevel.toFixed(1)}x
-                </span>
-                <button
-                  onClick={() => adjustZoom(1)}
-                  className="text-xs text-primary-500 hover:text-primary-600"
-                >
-                  Reset
-                </button>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => adjustZoom(zoomLevel - 0.5)}
-                  disabled={zoomLevel <= 1}
-                  className="px-3 py-1 bg-slate-300 dark:bg-slate-600 text-slate-700 dark:text-slate-300 rounded disabled:opacity-50"
-                >
-                  -
-                </button>
-                <input
-                  type="range"
-                  min="1"
-                  max="5"
-                  step="0.1"
-                  value={zoomLevel}
-                  onChange={(e) => adjustZoom(Number(e.target.value))}
-                  className="flex-1"
-                />
-                <button
-                  onClick={() => adjustZoom(zoomLevel + 0.5)}
-                  disabled={zoomLevel >= 5}
-                  className="px-3 py-1 bg-slate-300 dark:bg-slate-600 text-slate-700 dark:text-slate-300 rounded disabled:opacity-50"
-                >
-                  +
-                </button>
-              </div>
-            </motion.div>
-          )}
+
 
           {/* Feedback Messages */}
           <div className="space-y-2 max-h-32 overflow-y-auto">

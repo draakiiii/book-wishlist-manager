@@ -12,7 +12,8 @@ import {
   Camera,
   CameraOff,
   RotateCcw,
-  List
+  List,
+  Zap
 } from 'lucide-react';
 import { BrowserMultiFormatReader } from '@zxing/library';
 import { useAppState } from '../context/AppStateContext';
@@ -265,6 +266,11 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
       return;
     }
 
+    // Add delay to prevent multiple scans of the same code
+    if (scanningTimeoutRef.current) {
+      clearTimeout(scanningTimeoutRef.current);
+    }
+
     const newBook: ScannedBook = {
       id: Date.now() + Math.random(),
       isbn: scannedCode,
@@ -321,6 +327,11 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
       ));
       addFeedback('error', 'Error al buscar información');
     }
+
+    // Add delay to prevent multiple scans of the same code
+    scanningTimeoutRef.current = setTimeout(() => {
+      // Resume scanning after delay
+    }, 2000); // 2 second delay
   };
 
   const updateBook = (id: number, updates: Partial<ScannedBook>) => {
@@ -443,10 +454,10 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
 
         <div className="flex flex-col h-[calc(90vh-80px)]">
           {/* Scanner Section */}
-          <div className="flex-1 relative bg-black">
+          <div className="relative bg-black">
             <video
               ref={videoRef}
-              className="w-full h-full object-cover"
+              className="w-full h-64 object-cover"
               muted
             />
             
@@ -483,7 +494,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
                     : 'bg-white/20 text-white hover:bg-white/30'
                 }`}
               >
-                <Camera className="h-4 w-4" />
+                <Zap className="h-4 w-4" />
               </button>
               
               {availableCameras.length > 1 && (
