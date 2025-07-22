@@ -26,11 +26,18 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
   const [currentStream, setCurrentStream] = useState<MediaStream | null>(null);
   const [feedbackMessages, setFeedbackMessages] = useState<ScanFeedback[]>([]);
   const [isFocusing, setIsFocusing] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const scannerRef = useRef<BrowserMultiFormatReader | null>(null);
+  const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const addFeedback = useCallback((type: ScanFeedback['type'], message: string) => {
+    // Clear existing timeout
+    if (feedbackTimeoutRef.current) {
+      clearTimeout(feedbackTimeoutRef.current);
+    }
+
     const newFeedback: ScanFeedback = {
       type,
       message,
@@ -38,14 +45,15 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
     };
     
     setFeedbackMessages(prev => {
-      const updated = [newFeedback, ...prev.slice(0, 4)]; // Keep last 5 messages
+      // Only keep the latest 3 messages to prevent stacking
+      const updated = [newFeedback, ...prev.slice(0, 2)];
       return updated;
     });
     
-    // Auto-remove after 3 seconds
-    setTimeout(() => {
+    // Auto-remove after 2 seconds
+    feedbackTimeoutRef.current = setTimeout(() => {
       setFeedbackMessages(prev => prev.filter(f => f.timestamp !== newFeedback.timestamp));
-    }, 3000);
+    }, 2000);
   }, []);
 
   const handleScanResult = useCallback((result: string) => {
@@ -61,14 +69,17 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
     if (currentStream) {
       currentStream.getTracks().forEach(track => track.stop());
     }
+    if (feedbackTimeoutRef.current) {
+      clearTimeout(feedbackTimeoutRef.current);
+    }
     onClose();
   }, [currentStream, onClose]);
 
-  // Get available cameras
+  // Get available cameras - only once
   useEffect(() => {
     const getCameras = async () => {
       try {
-        addFeedback('info', 'Detectando cámaras disponibles...');
+        addFeedback('info', 'Detectando cámaras...');
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');
         setCameraDevices(videoDevices);
@@ -84,9 +95,9 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
         setSelectedCamera(selectedId);
         
         if (backCamera) {
-          addFeedback('info', `Cámara trasera seleccionada: ${backCamera.label}`);
+          addFeedback('info', `Cámara trasera seleccionada`);
         } else {
-          addFeedback('info', `Cámara seleccionada: ${videoDevices[0]?.label || 'Cámara por defecto'}`);
+          addFeedback('info', `Cámara seleccionada`);
         }
       } catch (error) {
         console.error('Error getting cameras:', error);
@@ -95,13 +106,13 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
     };
     
     getCameras();
-  }, [addFeedback]);
+  }, []); // Only run once
 
-  // Initialize camera and scanner
+  // Initialize camera and scanner - only when camera changes
   useEffect(() => {
-    const initCamera = async () => {
-      if (!selectedCamera || !videoRef.current) return;
+    if (!selectedCamera || !videoRef.current || isInitialized) return;
 
+    const initCamera = async () => {
       try {
         addFeedback('info', 'Iniciando cámara...');
         setStatusMessage('Iniciando cámara...');
@@ -126,18 +137,21 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
         });
 
         setCurrentStream(stream);
-        videoRef.current.srcObject = stream;
-        
-        // Wait for video to be ready
-        await new Promise((resolve) => {
-          if (videoRef.current) {
-            videoRef.current.onloadedmetadata = resolve;
-          }
-        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          
+          // Wait for video to be ready
+          await new Promise((resolve) => {
+            if (videoRef.current) {
+              videoRef.current.onloadedmetadata = resolve;
+            }
+          });
+        }
 
-        addFeedback('success', 'Cámara iniciada correctamente');
+        addFeedback('success', 'Cámara iniciada');
         setStatusMessage('Apunta la cámara al código de barras');
         setIsScanning(true);
+        setIsInitialized(true);
         
         // Check for torch capability
         checkTorchCapability(stream);
@@ -157,19 +171,17 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
       }
     };
 
-          if (selectedCamera) {
-        initCamera();
-      }
+    initCamera();
 
-      return () => {
-        if (scannerRef.current) {
-          scannerRef.current.reset();
-        }
-        if (currentStream) {
-          currentStream.getTracks().forEach(track => track.stop());
-        }
-      };
-    }, [selectedCamera, addFeedback, currentStream]);
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.reset();
+      }
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [selectedCamera, addFeedback, currentStream, isInitialized]);
 
   const checkTorchCapability = async (stream: MediaStream) => {
     try {
@@ -189,41 +201,45 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
     if (!videoRef.current) return;
 
     try {
-      addFeedback('info', 'Iniciando detector de códigos...');
+      addFeedback('info', 'Iniciando detector...');
       
       scannerRef.current = new BrowserMultiFormatReader();
       
-      // Set video source
-      videoRef.current.srcObject = stream;
-      
-      // Wait for video to be ready
-      await new Promise((resolve) => {
+              // Set video source
         if (videoRef.current) {
-          videoRef.current.onloadedmetadata = resolve;
+          videoRef.current.srcObject = stream;
+          
+          // Wait for video to be ready
+          await new Promise((resolve) => {
+            if (videoRef.current) {
+              videoRef.current.onloadedmetadata = resolve;
+            }
+          });
         }
-      });
 
-      addFeedback('success', 'Detector iniciado - Escaneando...');
-      
-      // Start decoding
-      scannerRef.current.decodeFromVideoDevice(
-        selectedCamera,
-        videoRef.current,
-        (result: Result | null, error: any) => {
-          if (result) {
-            const scannedText = result.getText();
-            addFeedback('success', `¡Código detectado: ${scannedText}`);
-            setScanAttempts(prev => prev + 1);
-            handleScanResult(scannedText);
-          } else if (error && error.name !== 'NotFoundException') {
-            console.error('Scan error:', error);
-            addFeedback('error', 'Error al escanear');
-          } else {
-            // This is called for every scan attempt
-            setScanAttempts(prev => prev + 1);
-          }
+              addFeedback('success', 'Detector iniciado - Escaneando...');
+        
+                // Start decoding
+        if (videoRef.current) {
+          scannerRef.current.decodeFromVideoDevice(
+            selectedCamera,
+            videoRef.current,
+            (result: Result | null, error: any) => {
+              if (result) {
+                const scannedText = result.getText();
+                addFeedback('success', `¡Código detectado: ${scannedText}`);
+                setScanAttempts(prev => prev + 1);
+                handleScanResult(scannedText);
+              } else if (error && error.name !== 'NotFoundException') {
+                // Only log errors, don't show feedback for every scan attempt
+                console.error('Scan error:', error);
+              } else {
+                // This is called for every scan attempt - just increment counter
+                setScanAttempts(prev => prev + 1);
+              }
+            }
+          );
         }
-      );
 
     } catch (error) {
       console.error('ZXing scanner error:', error);
@@ -258,6 +274,15 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
     
     try {
       addFeedback('info', 'Cambiando cámara...');
+      
+      // Reset initialization state
+      setIsInitialized(false);
+      
+      // Stop current scanner
+      if (scannerRef.current) {
+        scannerRef.current.reset();
+      }
+      
       const currentIndex = cameraDevices.findIndex(device => device.deviceId === selectedCamera);
       const nextIndex = (currentIndex + 1) % cameraDevices.length;
       const nextCamera = cameraDevices[nextIndex];
@@ -387,9 +412,9 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
             </div>
           </div>
 
-          {/* Feedback Messages */}
-          <div className="space-y-2">
-            {feedbackMessages.map((feedback) => (
+          {/* Feedback Messages - Limited to 3 */}
+          <div className="space-y-2 max-h-32 overflow-y-auto">
+            {feedbackMessages.slice(0, 3).map((feedback) => (
               <motion.div
                 key={feedback.timestamp}
                 initial={{ opacity: 0, y: -10 }}
