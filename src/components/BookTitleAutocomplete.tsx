@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { Search, BookOpen, Loader2, Star } from 'lucide-react';
 import { searchBooksByTitle } from '../services/googleBooksAPI';
 import { BookData } from '../types';
@@ -140,71 +140,68 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
         </div>
       </div>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-80 overflow-y-auto"
-          >
-            {suggestions.length > 0 && (
-              <div className="py-1">
-                {suggestions.map((book, index) => (
-                  <motion.button
-                    key={index}
-                    whileHover={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}
-                    onClick={() => handleBookSelect(book)}
-                    className="w-full px-3 py-3 text-left hover:bg-warning-50 dark:hover:bg-warning-900/20 transition-colors duration-150 border-b border-slate-100 dark:border-slate-700 last:border-b-0"
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 p-1.5 bg-warning-100 dark:bg-warning-900/30 rounded-lg">
-                        <BookOpen className="h-4 w-4 text-warning-600 dark:text-warning-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h4 className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                            {book.titulo}
-                          </h4>
-                          {book.calificacion && (
-                            <div className="flex items-center space-x-1">
-                              <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                              <span className="text-xs text-slate-500 dark:text-slate-400">
-                                {book.calificacion.toFixed(1)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
-                          {formatBookInfo(book)}
-                        </p>
-                        {book.editorial && (
-                          <p className="text-xs text-slate-500 dark:text-slate-500">
-                            {book.editorial}
-                          </p>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.15 }}
+          className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-80 overflow-y-auto"
+        >
+          {suggestions.length > 0 && (
+            <div className="py-1">
+              {suggestions.map((book, index) => (
+                <motion.button
+                  key={index}
+                  whileHover={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}
+                  onClick={() => handleBookSelect(book)}
+                  className="w-full px-3 py-3 text-left hover:bg-warning-50 dark:hover:bg-warning-900/20 transition-colors duration-150 border-b border-slate-100 dark:border-slate-700 last:border-b-0"
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 p-1.5 bg-warning-100 dark:bg-warning-900/30 rounded-lg">
+                      <BookOpen className="h-4 w-4 text-warning-600 dark:text-warning-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h4 className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                          {book.titulo}
+                        </h4>
+                        {book.calificacion && (
+                          <div className="flex items-center space-x-1">
+                            <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                              {book.calificacion.toFixed(1)}
+                            </span>
+                          </div>
                         )}
                       </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
+                        {formatBookInfo(book)}
+                      </p>
+                      {book.editorial && (
+                        <p className="text-xs text-slate-500 dark:text-slate-500">
+                          {book.editorial}
+                        </p>
+                      )}
                     </div>
-                  </motion.button>
-                ))}
-              </div>
-            )}
-            
-            {suggestions.length === 0 && !isLoading && debouncedValue.trim().length >= 2 && (
-              <div className="py-4 px-3 text-center">
-                <BookOpen className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  No se encontraron libros con ese título
-                </p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                  Puedes agregarlo manualmente
-                </p>
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          )}
+          
+          {suggestions.length === 0 && !isLoading && debouncedValue.trim().length >= 2 && (
+            <div className="py-4 px-3 text-center">
+              <BookOpen className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                No se encontraron libros con ese título
+              </p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                Puedes agregarlo manualmente
+              </p>
+            </div>
+          )}
+        </motion.div>
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Search, Plus } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ChevronDown, Plus } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 
 interface SagaAutocompleteProps {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Heart, Plus, ShoppingCart, Lock } from 'lucide-react';
+import { Heart, Plus, ShoppingCart } from 'lucide-react';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import { BookData } from '../types';
 
@@ -28,9 +28,6 @@ const WishlistForm: React.FC = () => {
     setTitulo(bookData.titulo);
     setAutor(bookData.autor || '');
   };
-
-  // Permitir añadir libros aunque tengas 0 puntos
-  const canAddToWishlist = true;
 
   return (
     <div className="space-y-3 sm:space-y-4">
