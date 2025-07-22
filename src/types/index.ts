@@ -64,4 +64,12 @@ export interface BookData {
   titulo: string;
   autor?: string;
   paginas?: number;
+  isbn?: string;
+  publicacion?: number;
+  editorial?: string;
+  descripcion?: string;
+  categorias?: string[];
+  idioma?: string;
+  calificacion?: number;
+  numCalificaciones?: number;
 } 

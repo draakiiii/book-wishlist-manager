@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { X, Camera, Zap, ZapOff, RotateCcw, Focus, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, Camera, Zap, ZapOff, RotateCcw, Focus, AlertCircle, CheckCircle, BookOpen } from 'lucide-react';
 import { BrowserMultiFormatReader, Result } from '@zxing/library';
 
 interface ScannerModalProps {
@@ -57,7 +57,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
   }, []);
 
   const handleScanResult = useCallback((result: string) => {
-    addFeedback('success', `¡Código detectado: ${result}`);
+    addFeedback('success', `¡ISBN detectado: ${result}`);
     setLastScanTime(new Date());
     onScan(result);
   }, [onScan, addFeedback]);
@@ -149,7 +149,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
         }
 
         addFeedback('success', 'Cámara iniciada');
-        setStatusMessage('Apunta la cámara al código de barras');
+        setStatusMessage('Apunta la cámara al código ISBN');
         setIsScanning(true);
         setIsInitialized(true);
         
@@ -205,46 +205,82 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
       
       scannerRef.current = new BrowserMultiFormatReader();
       
-              // Set video source
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          
-          // Wait for video to be ready
-          await new Promise((resolve) => {
-            if (videoRef.current) {
-              videoRef.current.onloadedmetadata = resolve;
-            }
-          });
-        }
-
-              addFeedback('success', 'Detector iniciado - Escaneando...');
+      // Set video source
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
         
-                // Start decoding
-        if (videoRef.current) {
-          scannerRef.current.decodeFromVideoDevice(
-            selectedCamera,
-            videoRef.current,
-            (result: Result | null, error: any) => {
-              if (result) {
-                const scannedText = result.getText();
-                addFeedback('success', `¡Código detectado: ${scannedText}`);
+        // Wait for video to be ready
+        await new Promise((resolve) => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = resolve;
+          }
+        });
+      }
+
+      addFeedback('success', 'Detector iniciado - Escaneando...');
+      
+      // Start decoding
+      if (videoRef.current) {
+        scannerRef.current.decodeFromVideoDevice(
+          selectedCamera,
+          videoRef.current,
+          (result: Result | null, error: any) => {
+            if (result) {
+              const scannedText = result.getText();
+              
+              // Validate ISBN format
+              if (isValidISBN(scannedText)) {
+                addFeedback('success', `¡ISBN detectado: ${scannedText}`);
                 setScanAttempts(prev => prev + 1);
                 handleScanResult(scannedText);
-              } else if (error && error.name !== 'NotFoundException') {
-                // Only log errors, don't show feedback for every scan attempt
-                console.error('Scan error:', error);
               } else {
-                // This is called for every scan attempt - just increment counter
+                addFeedback('warning', `Código detectado pero no es ISBN válido: ${scannedText}`);
                 setScanAttempts(prev => prev + 1);
               }
+            } else if (error && error.name !== 'NotFoundException') {
+              // Only log errors, don't show feedback for every scan attempt
+              console.error('Scan error:', error);
+            } else {
+              // This is called for every scan attempt - just increment counter
+              setScanAttempts(prev => prev + 1);
             }
-          );
-        }
+          }
+        );
+      }
 
     } catch (error) {
       console.error('ZXing scanner error:', error);
       addFeedback('error', 'Error al iniciar detector');
     }
+  };
+
+  const isValidISBN = (text: string): boolean => {
+    // Remove any non-numeric characters except 'X' (valid in ISBN-10)
+    const cleanText = text.replace(/[^0-9X]/gi, '');
+    
+    // Check if it's a valid ISBN-10 or ISBN-13
+    if (cleanText.length === 10) {
+      // ISBN-10 validation
+      let sum = 0;
+      for (let i = 0; i < 9; i++) {
+        sum += parseInt(cleanText[i]) * (10 - i);
+      }
+      const lastChar = cleanText[9].toUpperCase();
+      const checkDigit = lastChar === 'X' ? 10 : parseInt(lastChar);
+      sum += checkDigit;
+      return sum % 11 === 0;
+    } else if (cleanText.length === 13) {
+      // ISBN-13 validation
+      let sum = 0;
+      for (let i = 0; i < 12; i++) {
+        sum += parseInt(cleanText[i]) * (i % 2 === 0 ? 1 : 3);
+      }
+      const checkDigit = parseInt(cleanText[12]);
+      const calculatedCheck = (10 - (sum % 10)) % 10;
+      return checkDigit === calculatedCheck;
+    }
+    
+    return false;
   };
 
   const handleToggleTorch = async () => {
@@ -353,9 +389,12 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-            Escanear Código de Barras
-          </h3>
+          <div className="flex items-center space-x-2">
+            <BookOpen className="h-5 w-5 text-primary-500" />
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Escanear ISBN
+            </h3>
+          </div>
           <button
             onClick={handleCloseModal}
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
@@ -488,7 +527,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
           {/* Instructions */}
           <div className="text-center space-y-2">
             <p className="text-xs text-slate-500 dark:text-slate-500">
-              Coloca el código de barras dentro del marco para escanear
+              Coloca el código ISBN dentro del marco para escanear
             </p>
             <p className="text-xs text-slate-400 dark:text-slate-600">
               Toca el botón de enfoque si la imagen está borrosa
