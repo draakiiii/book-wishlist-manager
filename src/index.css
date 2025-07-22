@@ -210,10 +210,15 @@
     }
   }
 
-  /* Prevenir scroll del body cuando el dropdown está abierto */
-  body.dropdown-open {
-    overflow: hidden;
-    position: fixed;
-    width: 100%;
+  /* Mejoras para el scroll del dropdown en móviles */
+  .autocomplete-dropdown {
+    /* Control inteligente del scroll */
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    /* Prevenir que el scroll se propague al body */
+    isolation: isolate;
+    /* Mejorar el rendimiento del scroll */
+    will-change: scroll-position;
   }
 }

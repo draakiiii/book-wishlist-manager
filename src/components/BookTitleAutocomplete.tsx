@@ -100,19 +100,29 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Prevent page scroll when dropdown is open on mobile
+  // Simple scroll handling for mobile dropdown
   useEffect(() => {
-    if (isOpen) {
-      // Add class to prevent body scroll
-      document.body.classList.add('dropdown-open');
-    } else {
-      // Remove class to restore body scroll
-      document.body.classList.remove('dropdown-open');
-    }
+    const scrollContainer = scrollContainerRef.current;
+    
+    if (!scrollContainer || !isOpen) return;
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!scrollContainer) return;
+
+      const scrollTop = scrollContainer.scrollTop;
+      const scrollHeight = scrollContainer.scrollHeight;
+      const height = scrollContainer.clientHeight;
+
+      // Only prevent page scroll if we're not at the boundaries
+      if (scrollTop > 0 && scrollTop + height < scrollHeight) {
+        e.preventDefault();
+      }
+    };
+
+    scrollContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
 
     return () => {
-      // Cleanup: remove class
-      document.body.classList.remove('dropdown-open');
+      scrollContainer.removeEventListener('touchmove', handleTouchMove);
     };
   }, [isOpen]);
 
