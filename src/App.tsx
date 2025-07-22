@@ -133,7 +133,7 @@ const AppContent: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-2">
-              {/* Advanced Features Buttons */}
+              {/* Advanced Features Buttons - Desktop */}
               <div className="hidden md:flex items-center space-x-2">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -176,10 +176,10 @@ const AppContent: React.FC = () => {
                 </motion.button>
               </div>
               
-              {/* Mobile settings button */}
+              {/* Mobile menu button */}
               <button
                 onClick={() => setConfigSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                className="md:hidden p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
               >
                 <Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />
               </button>

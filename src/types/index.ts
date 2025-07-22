@@ -139,7 +139,7 @@ export type Action =
   | { type: 'CLEAR_SEARCH_HISTORY' }
   | { type: 'UPDATE_BOOK'; payload: { id: number; updates: Partial<Libro>; listType: 'tbr' | 'actual' | 'historial' | 'wishlist' } }
   | { type: 'UPDATE_SAGA'; payload: { id: number; updates: Partial<Saga> } }
-  | { type: 'IMPORT_DATA'; payload: { libros: { tbr: Libro[]; historial: Libro[]; wishlist: Libro[]; actual: Libro | null }; sagas: Saga[]; config?: Configuracion } }
+  | { type: 'IMPORT_DATA'; payload: { libros: { tbr: Libro[]; historial: Libro[]; wishlist: Libro[]; actual: Libro | null }; sagas: Saga[]; config?: Configuracion; progreso?: number; compraDesbloqueada?: boolean; scanHistory?: ScanHistory[]; searchHistory?: string[]; lastBackup?: number; performanceMetrics?: { lastRenderTime: number; averageRenderTime: number; memoryUsage?: number } } }
   | { type: 'EXPORT_DATA' }
   | { type: 'SET_PERFORMANCE_METRICS'; payload: { lastRenderTime: number; averageRenderTime: number; memoryUsage?: number } }
   | { type: 'SET_LAST_BACKUP'; payload: number };
@@ -164,6 +164,8 @@ export interface ExportData {
   version: string;
   timestamp: number;
   config: Configuracion;
+  progreso: number;
+  compraDesbloqueada: boolean;
   libros: {
     tbr: Libro[];
     historial: Libro[];
@@ -173,5 +175,11 @@ export interface ExportData {
   sagas: Saga[];
   scanHistory: ScanHistory[];
   searchHistory: string[];
+  lastBackup?: number;
+  performanceMetrics?: {
+    lastRenderTime: number;
+    averageRenderTime: number;
+    memoryUsage?: number;
+  };
   statistics?: Statistics;
 } 

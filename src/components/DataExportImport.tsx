@@ -45,6 +45,8 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
         version: '7.0',
         timestamp: Date.now(),
         config: state.config,
+        progreso: state.progreso,
+        compraDesbloqueada: state.compraDesbloqueada,
         libros: {
           tbr: state.tbr,
           historial: state.historial,
@@ -53,7 +55,9 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
         },
         sagas: state.sagas,
         scanHistory: state.scanHistory,
-        searchHistory: state.searchHistory
+        searchHistory: state.searchHistory,
+        lastBackup: state.lastBackup,
+        performanceMetrics: state.performanceMetrics
       };
 
       const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss', { locale: es });
@@ -256,7 +260,7 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
               <button
                 onClick={() => exportData('json')}
                 disabled={isExporting}
-                className="flex items-center justify-center space-x-2 p-3 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-200 disabled:opacity-50"
+                className="flex items-center justify-center space-x-2 p-3 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-200 disabled:opacity-50 text-slate-900 dark:text-white"
               >
                 <FileText className="h-4 w-4" />
                 <span className="text-sm">JSON</span>
@@ -265,7 +269,7 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
               <button
                 onClick={() => exportData('csv')}
                 disabled={isExporting}
-                className="flex items-center justify-center space-x-2 p-3 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-200 disabled:opacity-50"
+                className="flex items-center justify-center space-x-2 p-3 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-200 disabled:opacity-50 text-slate-900 dark:text-white"
               >
                 <FileText className="h-4 w-4" />
                 <span className="text-sm">CSV</span>
@@ -274,7 +278,7 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
               <button
                 onClick={() => exportData('excel')}
                 disabled={isExporting}
-                className="flex items-center justify-center space-x-2 p-3 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-200 disabled:opacity-50"
+                className="flex items-center justify-center space-x-2 p-3 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-200 disabled:opacity-50 text-slate-900 dark:text-white"
               >
                 <FileText className="h-4 w-4" />
                 <span className="text-sm">Excel</span>

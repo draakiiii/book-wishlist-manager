@@ -551,7 +551,7 @@ function appReducer(state: AppState, action: Action): AppState {
     }
 
     case 'IMPORT_DATA': {
-      const { libros, sagas, config } = action.payload;
+      const { libros, sagas, config, progreso, compraDesbloqueada, scanHistory, searchHistory, lastBackup, performanceMetrics } = action.payload;
       
       let newState = { ...state };
       
@@ -568,6 +568,30 @@ function appReducer(state: AppState, action: Action): AppState {
       
       if (config) {
         newState.config = { ...newState.config, ...config };
+      }
+      
+      if (progreso !== undefined) {
+        newState.progreso = progreso;
+      }
+      
+      if (compraDesbloqueada !== undefined) {
+        newState.compraDesbloqueada = compraDesbloqueada;
+      }
+      
+      if (scanHistory) {
+        newState.scanHistory = scanHistory;
+      }
+      
+      if (searchHistory) {
+        newState.searchHistory = searchHistory;
+      }
+      
+      if (lastBackup) {
+        newState.lastBackup = lastBackup;
+      }
+      
+      if (performanceMetrics) {
+        newState.performanceMetrics = performanceMetrics;
       }
       
       // Update saga counters after import

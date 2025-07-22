@@ -247,12 +247,23 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
               addFeedback('success', `Código detectado: ${scannedCode}`, 2000);
               
               // Add to scan history
+              // Buscar información del libro en las listas existentes
+              const allBooks = [
+                ...state.tbr,
+                ...state.historial,
+                ...state.wishlist,
+                ...(state.libroActual ? [state.libroActual] : [])
+              ];
+              const existingBook = allBooks.find(book => book.isbn === scannedCode);
+              
               if (state.config.scanHistoryEnabled) {
                 dispatch({
                   type: 'ADD_SCAN_HISTORY',
                   payload: {
                     id: Date.now(),
                     isbn: scannedCode,
+                    titulo: existingBook?.titulo,
+                    autor: existingBook?.autor,
                     timestamp: Date.now(),
                     success: validateISBN(scannedCode),
                     errorMessage: validateISBN(scannedCode) ? undefined : 'ISBN inválido'
@@ -442,16 +453,16 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
         {/* Controls */}
         <div className="p-4 space-y-4">
           {/* Camera Controls */}
-          <div className="flex justify-center space-x-3 flex-wrap">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={switchCamera}
               disabled={availableCameras.length <= 1 || isProcessing}
-              className="px-4 py-2 bg-slate-500 hover:bg-slate-600 disabled:bg-slate-400 text-white rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+              className="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:bg-slate-50 dark:disabled:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
             >
               <RotateCcw className="h-4 w-4" />
-              <span>Cambiar Cámara</span>
+              <span className="text-sm">Cámara</span>
             </motion.button>
             
             <motion.button
@@ -459,14 +470,14 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
               whileTap={{ scale: 0.95 }}
               onClick={toggleFlashlight}
               disabled={isProcessing}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 ${
+              className={`px-3 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 ${
                 flashlightEnabled 
-                  ? 'bg-yellow-500 hover:bg-yellow-600 text-white' 
-                  : 'bg-slate-500 hover:bg-slate-600 text-white'
+                  ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-700' 
+                  : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300'
               }`}
             >
               <span className="text-lg">💡</span>
-              <span>Linterna</span>
+              <span className="text-sm">Linterna</span>
             </motion.button>
             
             <motion.button
@@ -474,10 +485,10 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowZoomControls(!showZoomControls)}
               disabled={isProcessing}
-              className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+              className="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
             >
               <span className="text-lg">🔍</span>
-              <span>Zoom</span>
+              <span className="text-sm">Zoom</span>
             </motion.button>
             
             <motion.button
@@ -491,12 +502,12 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
                 }
               }}
               disabled={isProcessing}
-              className="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-400 text-white rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+              className="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
             >
               {isScanning ? (
                 <>
                   <CameraOff className="h-4 w-4" />
-                  <span>Detener</span>
+                  <span className="text-sm">Detener</span>
                 </>
               ) : (
                 <>

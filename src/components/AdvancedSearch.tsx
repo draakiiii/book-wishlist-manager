@@ -540,6 +540,86 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onClose, isOp
               </div>
             </div>
           </div>
+
+          {/* Search Results */}
+          <div className="flex-1 overflow-y-auto">
+            {searchResults.length === 0 ? (
+              <div className="p-8 text-center">
+                <Search className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                <p className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  No se encontraron resultados
+                </p>
+                <p className="text-sm text-slate-500 dark:text-slate-500">
+                  Intenta ajustar los filtros de búsqueda o usar términos diferentes
+                </p>
+              </div>
+            ) : (
+              <div className="p-4 space-y-3">
+                {searchResults.slice(0, 20).map((book) => (
+                  <div
+                    key={`${book.listType}-${book.id}`}
+                    className="p-3 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors duration-200"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="font-medium text-slate-900 dark:text-white">
+                            {book.titulo}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            book.listType === 'tbr' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                            book.listType === 'historial' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                            book.listType === 'wishlist' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                            'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                          }`}>
+                            {book.listType === 'tbr' ? 'TBR' :
+                             book.listType === 'historial' ? 'Historial' :
+                             book.listType === 'wishlist' ? 'Wishlist' : 'Actual'}
+                          </span>
+                        </div>
+                        {book.autor && (
+                          <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
+                            {book.autor}
+                          </p>
+                        )}
+                        <div className="flex items-center space-x-4 text-xs text-slate-500 dark:text-slate-500">
+                          {book.paginas && (
+                            <span>{book.paginas} páginas</span>
+                          )}
+                          {book.genero && (
+                            <span>{book.genero}</span>
+                          )}
+                          {book.editorial && (
+                            <span>{book.editorial}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {searchResults.length > 20 && (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-slate-500 dark:text-slate-500">
+                      Mostrando los primeros 20 resultados de {searchResults.length}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Help Section */}
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-t border-blue-200 dark:border-blue-800">
+            <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">
+              ¿Cómo funciona la búsqueda avanzada?
+            </h4>
+            <div className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
+              <p>• <strong>Búsqueda de texto:</strong> Busca en título, autor, ISBN y editorial</p>
+              <p>• <strong>Filtros:</strong> Refina por estado, autor, saga, género, idioma, editorial, calificación, páginas, precio y estado de lectura</p>
+              <p>• <strong>Historial:</strong> Guarda tus últimas búsquedas para acceso rápido</p>
+              <p>• <strong>Resultados:</strong> Muestra libros de todas tus listas (TBR, Historial, Wishlist, Actual)</p>
+            </div>
+          </div>
         </div>
       </motion.div>
     </motion.div>
