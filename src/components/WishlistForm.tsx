@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Heart, Plus, ShoppingCart, Search, Loader2, CheckCircle, AlertCircle, Camera, Hash } from 'lucide-react';
+import { Heart, Plus, ShoppingCart, Search, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import { BookData } from '../types';
 import { fetchBookData, validateISBN } from '../services/googleBooksAPI';
-import BarcodeScannerModal from './BarcodeScannerModal';
-import ISBNInputModal from './ISBNInputModal';
 
 const WishlistForm: React.FC = () => {
   const { state, dispatch } = useAppState();
@@ -254,7 +252,8 @@ const WishlistForm: React.FC = () => {
               </div>
             </motion.button>
 
-            {/* Scan Options */}
+            {/* Scan Options - Temporarily Disabled */}
+            {/* 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -288,6 +287,7 @@ const WishlistForm: React.FC = () => {
                 </div>
               </motion.button>
             </div>
+            */}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-3 sm:p-4 space-y-3 sm:space-y-4">
@@ -393,7 +393,8 @@ const WishlistForm: React.FC = () => {
         </motion.div>
       )}
 
-      {/* ISBN Input Modal */}
+      {/* ISBN Input Modal - Temporarily Disabled */}
+      {/*
       {showISBNInput && (
         <ISBNInputModal
           onClose={() => setShowISBNInput(false)}
@@ -401,13 +402,13 @@ const WishlistForm: React.FC = () => {
         />
       )}
 
-      {/* Barcode Scanner Modal */}
       {showBarcodeScanner && (
         <BarcodeScannerModal
           onClose={() => setShowBarcodeScanner(false)}
           onScanSuccess={handleSearchResult}
         />
       )}
+      */}
     </div>
   );
 };

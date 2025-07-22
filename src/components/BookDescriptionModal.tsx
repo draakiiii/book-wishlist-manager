@@ -1,6 +1,6 @@
 import React from 'react';
 import { Libro } from '../types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { X, BookOpen, User, FileText, Star, Calendar, Building, Globe, Tag } from 'lucide-react';
 
 interface BookDescriptionModalProps {
@@ -13,7 +13,7 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ isOpen, onC
   if (!book) return null;
 
   return (
-    <AnimatePresence>
+    <>
       {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -183,7 +183,7 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ isOpen, onC
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </>
   );
 };
 

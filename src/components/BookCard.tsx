@@ -13,8 +13,7 @@ import {
   User,
   FileText,
   Star,
-  Edit3,
-  Eye
+  Edit3
 } from 'lucide-react';
 import BookDescriptionModal from './BookDescriptionModal';
 
