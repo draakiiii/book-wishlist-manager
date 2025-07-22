@@ -74,24 +74,60 @@ const TBRForm: React.FC = () => {
       
       if (bookData) {
         console.log('Book data received:', bookData);
-        console.log('Setting title to:', bookData.titulo);
-        console.log('Setting author to:', bookData.autor);
-        console.log('Setting pages to:', bookData.paginas);
         
-        setTitulo(bookData.titulo);
-        setAutor(bookData.autor || '');
-        setPaginas(bookData.paginas?.toString() || '');
-        setIsExpanded(true); // Expand the form to show the populated data
-        setScanStatus('found');
-        setScanMessage(`¡Libro encontrado: ${bookData.titulo}`);
-        
-        // Show additional book info if available
-        if (bookData.editorial || bookData.publicacion) {
-          const additionalInfo: string[] = [];
-          if (bookData.editorial) additionalInfo.push(bookData.editorial);
-          if (bookData.publicacion) additionalInfo.push(bookData.publicacion.toString());
-          if (additionalInfo.length > 0) {
-            setScanMessage(prev => `${prev} (${additionalInfo.join(', ')})`);
+        // Si el libro tiene información completa, añadirlo directamente al TBR
+        if (bookData.isbn || bookData.descripcion || bookData.editorial) {
+          const nuevoLibro = {
+            id: Date.now(),
+            titulo: bookData.titulo,
+            autor: bookData.autor,
+            paginas: bookData.paginas,
+            isbn: bookData.isbn,
+            publicacion: bookData.publicacion,
+            editorial: bookData.editorial,
+            descripcion: bookData.descripcion,
+            categorias: bookData.categorias,
+            idioma: bookData.idioma,
+            calificacion: bookData.calificacion,
+            numCalificaciones: bookData.numCalificaciones
+          };
+          
+          dispatch({ type: 'ADD_TO_TBR', payload: nuevoLibro });
+          
+          setScanStatus('found');
+          setScanMessage(`¡Libro añadido al TBR: ${bookData.titulo}`);
+          
+          if (bookData.editorial || bookData.publicacion) {
+            const additionalInfo: string[] = [];
+            if (bookData.editorial) additionalInfo.push(bookData.editorial);
+            if (bookData.publicacion) additionalInfo.push(bookData.publicacion.toString());
+            if (additionalInfo.length > 0) {
+              setScanMessage(prev => `${prev} (${additionalInfo.join(', ')})`);
+            }
+          }
+          
+          // Reset form after a delay
+          setTimeout(() => {
+            setScanStatus('idle');
+            setScanMessage('');
+            setIsBookFromScan(false);
+          }, 3000);
+        } else {
+          // Si no tiene información completa, mostrar en el formulario
+          setTitulo(bookData.titulo);
+          setAutor(bookData.autor || '');
+          setPaginas(bookData.paginas?.toString() || '');
+          setIsExpanded(true);
+          setScanStatus('found');
+          setScanMessage(`¡Libro encontrado: ${bookData.titulo}`);
+          
+          if (bookData.editorial || bookData.publicacion) {
+            const additionalInfo: string[] = [];
+            if (bookData.editorial) additionalInfo.push(bookData.editorial);
+            if (bookData.publicacion) additionalInfo.push(bookData.publicacion.toString());
+            if (additionalInfo.length > 0) {
+              setScanMessage(prev => `${prev} (${additionalInfo.join(', ')})`);
+            }
           }
         }
       } else {
@@ -112,21 +148,60 @@ const TBRForm: React.FC = () => {
   };
 
   const handleBookSelect = (bookData: BookData) => {
-    setTitulo(bookData.titulo);
-    setAutor(bookData.autor || '');
-    setPaginas(bookData.paginas?.toString() || '');
-    setIsExpanded(true);
-    setIsBookFromScan(false); // Book came from autocomplete, not scanning
-    setScanStatus('found');
-    setScanMessage(`¡Libro seleccionado: ${bookData.titulo}`);
-    
-    // Show additional book info if available
-    if (bookData.editorial || bookData.publicacion) {
-      const additionalInfo: string[] = [];
-      if (bookData.editorial) additionalInfo.push(bookData.editorial);
-      if (bookData.publicacion) additionalInfo.push(bookData.publicacion.toString());
-      if (additionalInfo.length > 0) {
-        setScanMessage(prev => `${prev} (${additionalInfo.join(', ')})`);
+    // Si el libro tiene información completa, añadirlo directamente al TBR
+    if (bookData.isbn || bookData.descripcion || bookData.editorial) {
+      const nuevoLibro = {
+        id: Date.now(),
+        titulo: bookData.titulo,
+        autor: bookData.autor,
+        paginas: bookData.paginas,
+        isbn: bookData.isbn,
+        publicacion: bookData.publicacion,
+        editorial: bookData.editorial,
+        descripcion: bookData.descripcion,
+        categorias: bookData.categorias,
+        idioma: bookData.idioma,
+        calificacion: bookData.calificacion,
+        numCalificaciones: bookData.numCalificaciones
+      };
+      
+      dispatch({ type: 'ADD_TO_TBR', payload: nuevoLibro });
+      
+      setScanStatus('found');
+      setScanMessage(`¡Libro añadido al TBR: ${bookData.titulo}`);
+      
+      if (bookData.editorial || bookData.publicacion) {
+        const additionalInfo: string[] = [];
+        if (bookData.editorial) additionalInfo.push(bookData.editorial);
+        if (bookData.publicacion) additionalInfo.push(bookData.publicacion.toString());
+        if (additionalInfo.length > 0) {
+          setScanMessage(prev => `${prev} (${additionalInfo.join(', ')})`);
+        }
+      }
+      
+      // Reset form after a delay
+      setTimeout(() => {
+        setScanStatus('idle');
+        setScanMessage('');
+        setIsBookFromScan(false);
+      }, 3000);
+    } else {
+      // Si no tiene información completa, mostrar en el formulario
+      setTitulo(bookData.titulo);
+      setAutor(bookData.autor || '');
+      setPaginas(bookData.paginas?.toString() || '');
+      setIsExpanded(true);
+      setIsBookFromScan(false);
+      setScanStatus('found');
+      setScanMessage(`¡Libro seleccionado: ${bookData.titulo}`);
+      
+      if (bookData.editorial || bookData.publicacion) {
+        const additionalInfo: string[] = [];
+        if (bookData.editorial) additionalInfo.push(bookData.editorial);
+        if (bookData.publicacion) additionalInfo.push(bookData.publicacion.toString());
+        if (additionalInfo.length > 0) {
+          setScanMessage(prev => `${prev} (${additionalInfo.join(', ')})`);
+        }
       }
     }
   };

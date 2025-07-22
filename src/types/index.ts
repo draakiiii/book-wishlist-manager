@@ -146,7 +146,8 @@ export type Action =
   | { type: 'IMPORT_DATA'; payload: { libros: { tbr: Libro[]; historial: Libro[]; wishlist: Libro[]; actual: Libro | null }; sagas: Saga[]; config?: Configuracion; progreso?: number; compraDesbloqueada?: boolean; scanHistory?: ScanHistory[]; searchHistory?: string[]; lastBackup?: number; performanceMetrics?: { lastRenderTime: number; averageRenderTime: number; memoryUsage?: number } } }
   | { type: 'EXPORT_DATA' }
   | { type: 'SET_PERFORMANCE_METRICS'; payload: { lastRenderTime: number; averageRenderTime: number; memoryUsage?: number } }
-  | { type: 'SET_LAST_BACKUP'; payload: number };
+  | { type: 'SET_LAST_BACKUP'; payload: number }
+  | { type: 'CLEAN_DUPLICATE_SAGAS' };
 
 export type BookListType = 'tbr' | 'actual' | 'historial' | 'wishlist';
 

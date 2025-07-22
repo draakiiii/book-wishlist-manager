@@ -21,6 +21,13 @@ const ConfigForm: React.FC = () => {
     }
   };
 
+  const handleCleanDuplicateSagas = () => {
+    if (window.confirm('¿Estás seguro de que quieres limpiar las sagas duplicadas? Esto eliminará las sagas vacías y duplicadas.')) {
+      dispatch({ type: 'CLEAN_DUPLICATE_SAGAS' });
+      alert('Sagas duplicadas limpiadas correctamente.');
+    }
+  };
+
   const handleInputChange = (field: keyof typeof config, value: number) => {
     setConfig(prev => ({ ...prev, [field]: Math.max(0, value) }));
   };
@@ -74,6 +81,16 @@ const ConfigForm: React.FC = () => {
           >
             <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4" />
             <span>Resetear Progreso</span>
+          </motion.button>
+          
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleCleanDuplicateSagas}
+            className="w-full sm:w-auto px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
+          >
+            <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span>Limpiar Sagas</span>
           </motion.button>
         </div>
       </div>
