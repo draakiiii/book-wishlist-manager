@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { AppStateProvider, useAppState } from './context/AppStateContext';
 import { motion } from 'framer-motion';
 import { 
@@ -8,7 +8,12 @@ import {
   Clock, 
   Trophy, 
   Settings,
-  Wallet
+  Wallet,
+  Search,
+  BarChart3,
+  Database,
+  History,
+  Zap
 } from 'lucide-react';
 import CollapsibleConfig from './components/CollapsibleConfig';
 import Sidebar from './components/Sidebar';
@@ -18,12 +23,21 @@ import TBRForm from './components/TBRForm';
 import BookList from './components/BookList';
 import SagaList from './components/SagaList';
 import SagaCompletionNotification from './components/SagaCompletionNotification';
+import AdvancedSearch from './components/AdvancedSearch';
+import AdvancedStatistics from './components/AdvancedStatistics';
+import DataExportImport from './components/DataExportImport';
+import ScanHistory from './components/ScanHistory';
 
 import './App.css';
 
 const AppContent: React.FC = () => {
   const { state, dispatch } = useAppState();
   const [configSidebarOpen, setConfigSidebarOpen] = React.useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [statisticsModalOpen, setStatisticsModalOpen] = useState(false);
+  const [exportImportModalOpen, setExportImportModalOpen] = useState(false);
+  const [scanHistoryModalOpen, setScanHistoryModalOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
 
   useEffect(() => {
     // Aplicar el modo oscuro al body
@@ -62,6 +76,34 @@ const AppContent: React.FC = () => {
     dispatch({ type: 'REMOVE_SAGA_NOTIFICATION', payload: { id } });
   };
 
+  // Performance monitoring
+  const measurePerformance = useCallback(() => {
+    const startTime = performance.now();
+    
+    return () => {
+      const endTime = performance.now();
+      const renderTime = endTime - startTime;
+      
+      // Get memory usage if available
+      const memoryUsage = (performance as any).memory?.usedJSHeapSize;
+      
+      dispatch({
+        type: 'SET_PERFORMANCE_METRICS',
+        payload: {
+          lastRenderTime: renderTime,
+          averageRenderTime: 0, // Will be calculated in reducer
+          memoryUsage
+        }
+      });
+    };
+  }, [dispatch]);
+
+  // Measure performance on each render
+  useEffect(() => {
+    const cleanup = measurePerformance();
+    return cleanup;
+  });
+
   return (
     <div className="theme-transition min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
       {/* Notificaciones de saga completada */}
@@ -91,12 +133,55 @@ const AppContent: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-2">
-              {/* Mobile settings button */}
+              {/* Advanced Features Buttons */}
+              <div className="flex items-center space-x-1 md:space-x-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setSearchModalOpen(true)}
+                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  title="Búsqueda Avanzada"
+                >
+                  <Search className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setStatisticsModalOpen(true)}
+                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  title="Estadísticas Avanzadas"
+                >
+                  <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setExportImportModalOpen(true)}
+                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  title="Exportar/Importar Datos"
+                >
+                  <Database className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setScanHistoryModalOpen(true)}
+                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  title="Historial de Escaneos"
+                >
+                  <History className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                </motion.button>
+              </div>
+              
+              {/* Settings button */}
               <button
                 onClick={() => setConfigSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
               >
-                <Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
               </button>
             </div>
           </div>
@@ -265,9 +350,9 @@ const AppContent: React.FC = () => {
                 </div>
               </div>
               <div className="p-4 sm:p-6">
-                {state.libroActual ? (
-                  <BookList 
-                    books={[state.libroActual]}
+                        {state.librosActuales.length > 0 ? (
+          <BookList
+            books={state.librosActuales}
                     type="actual"
                     emptyMessage=""
                   />
@@ -289,6 +374,31 @@ const AppContent: React.FC = () => {
       <Sidebar 
         isOpen={configSidebarOpen} 
         onClose={() => setConfigSidebarOpen(false)} 
+      />
+
+      {/* Advanced Search Modal */}
+      <AdvancedSearch
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        onSearch={setSearchResults}
+      />
+
+      {/* Advanced Statistics Modal */}
+      <AdvancedStatistics
+        isOpen={statisticsModalOpen}
+        onClose={() => setStatisticsModalOpen(false)}
+      />
+
+      {/* Data Export/Import Modal */}
+      <DataExportImport
+        isOpen={exportImportModalOpen}
+        onClose={() => setExportImportModalOpen(false)}
+      />
+
+      {/* Scan History Modal */}
+      <ScanHistory
+        isOpen={scanHistoryModalOpen}
+        onClose={() => setScanHistoryModalOpen(false)}
       />
     </div>
   );

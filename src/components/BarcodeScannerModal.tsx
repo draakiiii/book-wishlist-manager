@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { X, Camera, CameraOff, RotateCcw, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { X, Camera, CameraOff, RotateCcw, AlertCircle, CheckCircle, Loader2, Zap } from 'lucide-react';
 import { BrowserMultiFormatReader, Result } from '@zxing/library';
 import { useAppState } from '../context/AppStateContext';
 
@@ -24,7 +24,9 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
   const [lastScannedCode, setLastScannedCode] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [hasShownInitialMessage, setHasShownInitialMessage] = useState(false);
+
+  const [flashlightEnabled, setFlashlightEnabled] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
@@ -45,6 +47,66 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     setTimeout(() => {
       setFeedbackMessages(prev => prev.filter(f => f.timestamp !== newFeedback.timestamp));
     }, duration);
+  };
+
+  const toggleFlashlight = async () => {
+    if (!videoRef.current) return;
+    
+    try {
+      const stream = videoRef.current.srcObject as MediaStream;
+      if (!stream) return;
+      
+      const track = stream.getVideoTracks()[0];
+      if (!track) return;
+      
+      const capabilities = track.getCapabilities();
+      if (!capabilities || !('torch' in capabilities)) {
+        addFeedback('warning', 'Esta cámara no soporta linterna');
+        return;
+      }
+      
+      const newFlashlightState = !flashlightEnabled;
+      await track.applyConstraints({
+        advanced: [{ torch: newFlashlightState } as any]
+      });
+      
+      setFlashlightEnabled(newFlashlightState);
+      addFeedback('info', newFlashlightState ? 'Linterna activada' : 'Linterna desactivada', 1500);
+    } catch (error) {
+      console.error('Error toggling flashlight:', error);
+      addFeedback('error', 'Error al controlar la linterna');
+    }
+  };
+
+  const adjustZoom = async (newZoom: number) => {
+    if (!videoRef.current) return;
+    
+    try {
+      const stream = videoRef.current.srcObject as MediaStream;
+      if (!stream) return;
+      
+      const track = stream.getVideoTracks()[0];
+      if (!track) return;
+      
+      const capabilities = track.getCapabilities();
+      if (!capabilities || !('zoom' in capabilities)) {
+        addFeedback('warning', 'Esta cámara no soporta zoom digital');
+        return;
+      }
+      
+      const zoomRange = capabilities.zoom as { min: number; max: number };
+      const clampedZoom = Math.max(zoomRange.min, Math.min(zoomRange.max, newZoom));
+      
+      await track.applyConstraints({
+        advanced: [{ zoom: clampedZoom } as any]
+      });
+      
+      setZoomLevel(clampedZoom);
+      addFeedback('info', `Zoom ajustado a ${clampedZoom.toFixed(1)}x`, 1500);
+    } catch (error) {
+      console.error('Error adjusting zoom:', error);
+      addFeedback('error', 'Error al ajustar el zoom');
+    }
   };
 
   const validateISBN = (text: string): boolean => {
@@ -80,47 +142,30 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
         codeReaderRef.current = new BrowserMultiFormatReader();
       }
 
-      // Request camera permissions first
-      try {
-        await navigator.mediaDevices.getUserMedia({ video: true });
-      } catch (permissionError) {
-        addFeedback('error', 'Permiso de cámara denegado. Por favor, permite el acceso a la cámara.');
-        return;
-      }
-
       // Get available cameras
       const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === 'videoinput');
-      setAvailableCameras(videoDevices);
+      const cameras = devices.filter(device => device.kind === 'videoinput');
+      setAvailableCameras(cameras);
 
-      if (videoDevices.length === 0) {
+      if (cameras.length === 0) {
         addFeedback('error', 'No se encontraron cámaras disponibles');
         return;
       }
 
-      // Find the best camera (prefer saved preference, then back camera, then any camera)
-      const savedPreference = state.config.cameraPreference;
-      let bestCameraIndex = 0;
-      
-      if (savedPreference !== undefined && savedPreference < videoDevices.length) {
-        // Use saved preference if it's valid
-        bestCameraIndex = savedPreference;
-        console.log(`Usando cámara guardada: ${savedPreference}`);
-      } else {
-        // Find the best camera using the algorithm
-        bestCameraIndex = findBestCamera(videoDevices);
-        console.log(`Usando algoritmo de selección: ${bestCameraIndex}`);
-      }
-      
+      const bestCameraIndex = findBestCamera(cameras);
       setCurrentCamera(bestCameraIndex);
-      setIsInitialized(true);
-      
-      // Show camera info without feedback message
-      const cameraName = videoDevices[bestCameraIndex]?.label || 'Cámara sin nombre';
-      console.log(`Cámara seleccionada: ${cameraName}`);
 
-      // Start scanning with best camera
-      await startScanning();
+      // Request camera permissions with specific device
+      await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          deviceId: cameras[bestCameraIndex].deviceId,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      });
+
+      setIsInitialized(true);
+      addFeedback('success', 'Escáner inicializado correctamente', 2000);
     } catch (error) {
       console.error('Error initializing scanner:', error);
       addFeedback('error', 'Error al inicializar el escáner');
@@ -128,50 +173,33 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
   };
 
   const findBestCamera = (cameras: MediaDeviceInfo[]): number => {
-    // Priority order: back camera > front camera > any camera
-    const backCameras = cameras.filter(camera => 
+    // Use configured camera preference if available
+    if (state.config.cameraPreference !== undefined && state.config.cameraPreference < cameras.length) {
+      return state.config.cameraPreference;
+    }
+    
+    // Prefer back camera
+    const backCamera = cameras.findIndex(camera => 
       camera.label.toLowerCase().includes('back') || 
-      camera.label.toLowerCase().includes('trasera') ||
-      camera.label.toLowerCase().includes('posterior')
+      camera.label.toLowerCase().includes('posterior') ||
+      camera.label.toLowerCase().includes('trasera')
     );
     
-    const frontCameras = cameras.filter(camera => 
-      camera.label.toLowerCase().includes('front') || 
-      camera.label.toLowerCase().includes('frontal') ||
-      camera.label.toLowerCase().includes('selfie')
-    );
-
-    // Return back camera if available
-    if (backCameras.length > 0) {
-      const backCameraIndex = cameras.findIndex(camera => camera.deviceId === backCameras[0].deviceId);
-      return backCameraIndex;
-    }
-
-    // Return front camera if available
-    if (frontCameras.length > 0) {
-      const frontCameraIndex = cameras.findIndex(camera => camera.deviceId === frontCameras[0].deviceId);
-      return frontCameraIndex;
-    }
-
-    // Return first camera as fallback
+    if (backCamera !== -1) return backCamera;
+    
+    // Fallback to first camera
     return 0;
   };
 
-    const startScanning = async () => {
-    if (!codeReaderRef.current || !videoRef.current || isScanning) return;
+  const startScanning = async () => {
+    if (!codeReaderRef.current || !videoRef.current || !isInitialized) return;
 
     try {
       setIsScanning(true);
-
-      const selectedDevice = availableCameras[currentCamera];
-      if (!selectedDevice) {
-        addFeedback('error', 'Cámara no disponible');
-        setIsScanning(false);
-        return;
-      }
-
+      addFeedback('info', 'Iniciando escaneo...', 1500);
+      
       await codeReaderRef.current.decodeFromVideoDevice(
-        selectedDevice.deviceId,
+        availableCameras[currentCamera]?.deviceId || null,
         videoRef.current,
         (result: Result | null, error: any) => {
           if (result) {
@@ -182,6 +210,30 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
             
             setLastScannedCode(scannedCode);
             addFeedback('success', `Código detectado: ${scannedCode}`, 2000);
+            
+            // Add to scan history
+            const allBooks = [
+              ...state.tbr,
+              ...state.historial,
+              ...state.wishlist,
+              ...state.librosActuales
+            ];
+            const existingBook = allBooks.find(book => book.isbn === scannedCode);
+            
+            if (state.config.scanHistoryEnabled) {
+              dispatch({
+                type: 'ADD_SCAN_HISTORY',
+                payload: {
+                  id: Date.now(),
+                  isbn: scannedCode,
+                  titulo: existingBook?.titulo,
+                  autor: existingBook?.autor,
+                  timestamp: Date.now(),
+                  success: validateISBN(scannedCode),
+                  errorMessage: validateISBN(scannedCode) ? undefined : 'ISBN inválido'
+                }
+              });
+            }
             
             // Validate ISBN
             if (validateISBN(scannedCode)) {
@@ -194,7 +246,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
               // Process the ISBN and close modal
               setTimeout(() => {
                 onScanSuccess(scannedCode);
-                onClose(); // Close the scanner modal
+                onClose();
               }, 1500);
             } else {
               addFeedback('warning', 'Código detectado pero no es un ISBN válido', 2000);
@@ -211,16 +263,10 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
           }
         }
       );
-
-      // Only show initial success message once
-      if (isScanning && !hasShownInitialMessage) {
-        addFeedback('success', 'Escáner listo. Apunta al código de barras del libro', 4000);
-        setHasShownInitialMessage(true);
-      }
     } catch (error) {
       console.error('Error starting scanner:', error);
-      addFeedback('error', 'Error al iniciar el escáner');
       setIsScanning(false);
+      addFeedback('error', 'Error al iniciar el escáner');
     }
   };
 
@@ -229,8 +275,8 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       codeReaderRef.current.reset();
     }
     setIsScanning(false);
+    addFeedback('info', 'Escaneo detenido', 1500);
     
-    // Clear any pending timeout
     if (scanningTimeoutRef.current) {
       clearTimeout(scanningTimeoutRef.current);
       scanningTimeoutRef.current = null;
@@ -243,27 +289,43 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       return;
     }
 
-    const wasScanning = isScanning;
-    stopScanning();
     const nextCamera = (currentCamera + 1) % availableCameras.length;
     setCurrentCamera(nextCamera);
     
-    // Save camera preference
+    // Update camera preference in config
     dispatch({ type: 'SET_CAMERA_PREFERENCE', payload: nextCamera });
     
-    const cameraName = availableCameras[nextCamera]?.label || 'Cámara sin nombre';
-    addFeedback('info', `Cambiando a: ${cameraName}`, 1500);
+    addFeedback('info', `Cambiando a cámara ${nextCamera + 1}`, 1500);
     
-    // Restart scanning with new camera after a delay if it was scanning before
-    if (wasScanning) {
-      scanningTimeoutRef.current = setTimeout(() => {
+    // Restart scanning with new camera
+    if (isScanning) {
+      stopScanning();
+      setTimeout(() => {
         startScanning();
-      }, 300);
+      }, 500);
     }
   };
 
-  const handleCloseModal = () => {
+  const handleCloseModal = async () => {
+    // Turn off flashlight before closing
+    if (flashlightEnabled && videoRef.current) {
+      try {
+        const stream = videoRef.current.srcObject as MediaStream;
+        if (stream) {
+          const track = stream.getVideoTracks()[0];
+          if (track) {
+            await track.applyConstraints({
+              advanced: [{ torch: false } as any]
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error turning off flashlight:', error);
+      }
+    }
+
     stopScanning();
+    setFlashlightEnabled(false);
     onClose();
   };
 
@@ -323,6 +385,40 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
             muted
           />
           
+          {/* Camera Controls */}
+          <div className="absolute top-4 right-4 flex flex-col space-y-2">
+            {/* Flashlight Button */}
+            <button
+              onClick={toggleFlashlight}
+              className={`p-2 rounded-lg transition-colors duration-200 ${
+                flashlightEnabled 
+                  ? 'bg-yellow-500 text-white' 
+                  : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
+            >
+              <Zap className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Zoom Controls */}
+          <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-sm rounded-lg p-2">
+            <div className="flex flex-col space-y-2">
+              <button
+                onClick={() => adjustZoom(zoomLevel + 0.5)}
+                className="p-1 rounded bg-white/20 text-white hover:bg-white/30"
+              >
+                +
+              </button>
+              <span className="text-white text-xs text-center">{zoomLevel.toFixed(1)}x</span>
+              <button
+                onClick={() => adjustZoom(zoomLevel - 0.5)}
+                className="p-1 rounded bg-white/20 text-white hover:bg-white/30"
+              >
+                -
+              </button>
+            </div>
+          </div>
+          
           {/* Scanning Overlay */}
           {isScanning && !isProcessing && (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -365,16 +461,31 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
         {/* Controls */}
         <div className="p-4 space-y-4">
           {/* Camera Controls */}
-          <div className="flex justify-center space-x-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={switchCamera}
               disabled={availableCameras.length <= 1 || isProcessing}
-              className="px-4 py-2 bg-slate-500 hover:bg-slate-600 disabled:bg-slate-400 text-white rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+              className="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:bg-slate-50 dark:disabled:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
             >
               <RotateCcw className="h-4 w-4" />
-              <span>Cambiar Cámara</span>
+              <span className="text-sm">Cámara</span>
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleFlashlight}
+              disabled={isProcessing}
+              className={`px-3 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 ${
+                flashlightEnabled 
+                  ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-700' 
+                  : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              <Zap className="h-4 w-4" />
+              <span className="text-sm">Linterna</span>
             </motion.button>
             
             <motion.button
@@ -388,12 +499,12 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
                 }
               }}
               disabled={isProcessing}
-              className="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-400 text-white rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+              className="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
             >
               {isScanning ? (
                 <>
                   <CameraOff className="h-4 w-4" />
-                  <span>Detener</span>
+                  <span className="text-sm">Detener</span>
                 </>
               ) : (
                 <>
@@ -403,6 +514,8 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
               )}
             </motion.button>
           </div>
+
+
 
           {/* Feedback Messages */}
           <div className="space-y-2 max-h-32 overflow-y-auto">

@@ -10,7 +10,7 @@ const SagaList: React.FC = () => {
     const todosLosLibros = [
       ...state.tbr,
       ...state.historial,
-      ...(state.libroActual ? [state.libroActual] : [])
+      ...state.librosActuales
     ];
     
     const librosDeLaSaga = todosLosLibros.filter(libro => libro.sagaId === sagaId);
@@ -27,7 +27,7 @@ const SagaList: React.FC = () => {
     const todosLosLibros = [
       ...state.tbr,
       ...state.historial,
-      ...(state.libroActual ? [state.libroActual] : [])
+      ...state.librosActuales
     ];
     
     return todosLosLibros.filter(libro => libro.sagaId === sagaId);
@@ -127,7 +127,7 @@ const SagaList: React.FC = () => {
                 <div className="grid grid-cols-1 gap-2">
                   {books.map((book) => {
                     const isRead = state.historial.some(l => l.id === book.id);
-                    const isCurrent = state.libroActual?.id === book.id;
+                    const isCurrent = state.librosActuales.some(l => l.id === book.id);
                     
                     return (
                       <div

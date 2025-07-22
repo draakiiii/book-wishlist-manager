@@ -1,25 +1,39 @@
 import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
-import { AppState, Action, Libro } from '../types';
+import { AppState, Action, Libro, ScanHistory, Statistics } from '../types';
 import { getInitialTheme, persistThemePreference } from '../utils/themeConfig';
 
-const STORAGE_KEY = 'guardianComprasState_v6_0';
+const STORAGE_KEY = 'guardianComprasState_v7_0';
 
 const initialState: AppState = {
   config: {
     puntosPorLibro: 250,
     puntosPorPagina: 1,
     puntosPorSaga: 500,
-    objetivo: 1000
+    objetivo: 1000,
+    flashlightEnabled: false,
+    zoomLevel: 1,
+    autoSaveEnabled: true,
+    autoSaveInterval: 30000,
+    searchHistoryEnabled: true,
+    scanHistoryEnabled: true,
+    statisticsEnabled: true,
+    exportFormat: 'json'
   },
   progreso: 0,
   compraDesbloqueada: false,
-  libroActual: null,
+  librosActuales: [],
   tbr: [],
   historial: [],
   wishlist: [],
   sagas: [],
   sagaNotifications: [],
-  darkMode: getInitialTheme()
+  darkMode: getInitialTheme(),
+  scanHistory: [],
+  searchHistory: [],
+  performanceMetrics: {
+    lastRenderTime: 0,
+    averageRenderTime: 0
+  }
 };
 
 function loadStateFromStorage(): AppState | null {
@@ -34,7 +48,10 @@ function loadStateFromStorage(): AppState | null {
         // Asegurar que las propiedades que podrían no existir en versiones anteriores estén presentes
         sagaNotifications: parsedState.sagaNotifications || [],
         darkMode: parsedState.darkMode || false,
-        sagas: parsedState.sagas || []
+        sagas: parsedState.sagas || [],
+        scanHistory: parsedState.scanHistory || [],
+        searchHistory: parsedState.searchHistory || [],
+        performanceMetrics: parsedState.performanceMetrics || { lastRenderTime: 0, averageRenderTime: 0 }
       };
       // Verificar y corregir el estado de compraDesbloqueada
       if (completeState.progreso >= completeState.config.objetivo) {
@@ -53,7 +70,7 @@ function actualizarContadoresSagas(state: AppState): AppState {
   const todosLosLibros = [
     ...state.tbr,
     ...state.historial,
-    ...(state.libroActual ? [state.libroActual] : [])
+    ...state.librosActuales
   ];
 
   const sagasActualizadas = state.sagas.map(saga => {
@@ -66,7 +83,7 @@ function actualizarContadoresSagas(state: AppState): AppState {
     // 3. No hay libros de la saga en TBR o actual
     const librosEnTbrOActual = [
       ...state.tbr,
-      ...(state.libroActual ? [state.libroActual] : [])
+      ...state.librosActuales
     ].filter(libro => libro.sagaId === saga.id);
     
     const isComplete = librosDeLaSaga.length > 0 && 
@@ -88,14 +105,14 @@ function verificarSagaCompleta(sagaId: number, state: AppState): boolean {
   const todosLosLibros = [
     ...state.tbr,
     ...state.historial,
-    ...(state.libroActual ? [state.libroActual] : [])
+    ...state.librosActuales
   ];
   
   const librosDeLaSaga = todosLosLibros.filter(libro => libro.sagaId === sagaId);
   const librosLeidosDeLaSaga = state.historial.filter(libro => libro.sagaId === sagaId);
   const librosEnTbrOActual = [
     ...state.tbr,
-    ...(state.libroActual ? [state.libroActual] : [])
+    ...state.librosActuales
   ].filter(libro => libro.sagaId === sagaId);
   
   return librosDeLaSaga.length > 0 && 
@@ -107,7 +124,7 @@ function limpiarSagasHuerfanas(state: AppState): AppState {
   const todosLosLibros = [
     ...state.tbr,
     ...state.historial,
-    ...(state.libroActual ? [state.libroActual] : [])
+    ...state.librosActuales
   ];
   
   const idsDeSagasEnUso = new Set(
@@ -198,13 +215,14 @@ function appReducer(state: AppState, action: Action): AppState {
       const libro = state.tbr[libroIndex];
       const nuevaTbr = state.tbr.filter((_, index) => index !== libroIndex);
       
-      return { ...state, libroActual: libro, tbr: nuevaTbr };
+      return { ...state, librosActuales: [...state.librosActuales, libro], tbr: nuevaTbr };
     }
 
     case 'FINISH_BOOK': {
-      if (!state.libroActual || state.libroActual.id !== action.payload) return state;
+      const libroIndex = state.librosActuales.findIndex(l => l.id === action.payload);
+      if (libroIndex === -1) return state;
       
-      const libroTerminado = state.libroActual;
+      const libroTerminado = state.librosActuales[libroIndex];
       const sagaPreviaCompleta = libroTerminado.sagaId 
         ? verificarSagaCompleta(libroTerminado.sagaId, state)
         : false;
@@ -214,7 +232,7 @@ function appReducer(state: AppState, action: Action): AppState {
       
       const nuevoEstado = {
         ...state,
-        libroActual: null,
+        librosActuales: state.librosActuales.filter((_, index) => index !== libroIndex),
         historial: [libroTerminado, ...state.historial],
         progreso: state.progreso + puntosGanados
       };
@@ -249,12 +267,15 @@ function appReducer(state: AppState, action: Action): AppState {
     }
 
     case 'ABANDON_BOOK': {
-      if (!state.libroActual || state.libroActual.id !== action.payload) return state;
+      const libroIndex = state.librosActuales.findIndex(l => l.id === action.payload);
+      if (libroIndex === -1) return state;
+      
+      const libroAbandonado = state.librosActuales[libroIndex];
       
       return {
         ...state,
-        libroActual: null,
-        tbr: [state.libroActual, ...state.tbr]
+        librosActuales: state.librosActuales.filter((_, index) => index !== libroIndex),
+        tbr: [libroAbandonado, ...state.tbr]
       };
     }
 
@@ -309,13 +330,15 @@ function appReducer(state: AppState, action: Action): AppState {
         }
       }
       
+      let nuevoEstado;
       if (listType === 'actual') {
-        return { ...state, libroActual: null };
+        const nuevaLista = state.librosActuales.filter(l => l.id !== id);
+        nuevoEstado = { ...state, librosActuales: nuevaLista };
+      } else if (listType === 'tbr' || listType === 'historial' || listType === 'wishlist') {
+        const nuevaLista = state[listType].filter(l => l.id !== id);
+        nuevoEstado = { ...state, [listType]: nuevaLista };
       }
-      
-      const nuevaLista = state[listType].filter(l => l.id !== id);
-      const nuevoEstado = { ...state, [listType]: nuevaLista };
-      
+      if (!nuevoEstado) return state;
       return limpiarSagasHuerfanas(nuevoEstado);
     }
 
@@ -373,7 +396,7 @@ function appReducer(state: AppState, action: Action): AppState {
       const todosLosLibros = [
         ...state.tbr,
         ...state.historial,
-        ...(state.libroActual ? [state.libroActual] : [])
+        ...state.librosActuales
       ];
 
       // Crear un mapa de nombres de saga a IDs
@@ -422,17 +445,20 @@ function appReducer(state: AppState, action: Action): AppState {
         return libro;
       });
 
-      const libroActualActualizado = state.libroActual && state.libroActual.sagaName && sagaNameToId.has(state.libroActual.sagaName)
-        ? { ...state.libroActual, sagaId: sagaNameToId.get(state.libroActual.sagaName) }
-        : state.libroActual;
+      const librosActualesActualizados = state.librosActuales.map(libro => {
+        if (libro.sagaName && sagaNameToId.has(libro.sagaName)) {
+          return { ...libro, sagaId: sagaNameToId.get(libro.sagaName) };
+        }
+        return libro;
+      });
 
-      const nuevoEstado = {
-        ...state,
-        tbr: tbrActualizada,
-        historial: historialActualizado,
-        libroActual: libroActualActualizado,
-        sagas: [...state.sagas, ...nuevasSagas]
-      };
+              const nuevoEstado = {
+          ...state,
+          tbr: tbrActualizada,
+          historial: historialActualizado,
+          librosActuales: librosActualesActualizados,
+          sagas: [...state.sagas, ...nuevasSagas]
+        };
 
       return actualizarContadoresSagas(nuevoEstado);
     }
@@ -457,9 +483,166 @@ function appReducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case 'ADD_SCAN_HISTORY': {
+      if (!state.config.scanHistoryEnabled) return state;
+      
+      const newScanHistory: ScanHistory = {
+        ...action.payload,
+        id: Date.now(),
+        timestamp: Date.now()
+      };
+      
+      return {
+        ...state,
+        scanHistory: [newScanHistory, ...state.scanHistory.slice(0, 99)] // Keep last 100 scans
+      };
+    }
+
+    case 'CLEAR_SCAN_HISTORY': {
+      return {
+        ...state,
+        scanHistory: []
+      };
+    }
+
+    case 'ADD_SEARCH_HISTORY': {
+      if (!state.config.searchHistoryEnabled) return state;
+      
+      const searchTerm = action.payload.trim();
+      if (!searchTerm) return state;
+      
+      const filteredHistory = state.searchHistory.filter(term => term !== searchTerm);
+      return {
+        ...state,
+        searchHistory: [searchTerm, ...filteredHistory.slice(0, 19)] // Keep last 20 searches
+      };
+    }
+
+    case 'CLEAR_SEARCH_HISTORY': {
+      return {
+        ...state,
+        searchHistory: []
+      };
+    }
+
+    case 'UPDATE_BOOK': {
+      const { id, updates, listType } = action.payload;
+      
+      if (listType === 'actual') {
+        const libroIndex = state.librosActuales.findIndex(l => l.id === id);
+        if (libroIndex === -1) return state;
+        
+        const libroActualizado = { ...state.librosActuales[libroIndex], ...updates };
+        const librosActualesActualizados = state.librosActuales.map((libro, index) => 
+          index === libroIndex ? libroActualizado : libro
+        );
+        
+        return {
+          ...state,
+          librosActuales: librosActualesActualizados
+        };
+      } else if (listType === 'tbr' || listType === 'historial' || listType === 'wishlist') {
+        const list = state[listType];
+        const updatedList = list.map(book => book.id === id ? { ...book, ...updates } : book);
+        return {
+          ...state,
+          [listType]: updatedList
+        };
+      }
+      break;
+    }
+
+    case 'UPDATE_SAGA': {
+      const { id, updates } = action.payload;
+      const updatedSagas = state.sagas.map(saga => 
+        saga.id === id ? { ...saga, ...updates } : saga
+      );
+      
+      return {
+        ...state,
+        sagas: updatedSagas
+      };
+    }
+
+    case 'IMPORT_DATA': {
+      const { libros, sagas, config, progreso, compraDesbloqueada, scanHistory, searchHistory, lastBackup, performanceMetrics } = action.payload;
+      
+      let newState = { ...state };
+      
+      if (libros) {
+        if (libros.tbr) newState.tbr = libros.tbr;
+        if (libros.historial) newState.historial = libros.historial;
+        if (libros.wishlist) newState.wishlist = libros.wishlist;
+        if (libros.actual) newState.librosActuales = Array.isArray(libros.actual) ? libros.actual : [libros.actual];
+      }
+      
+      if (sagas) {
+        newState.sagas = sagas;
+      }
+      
+      if (config) {
+        newState.config = { ...newState.config, ...config };
+      }
+      
+      if (progreso !== undefined) {
+        newState.progreso = progreso;
+      }
+      
+      if (compraDesbloqueada !== undefined) {
+        newState.compraDesbloqueada = compraDesbloqueada;
+      }
+      
+      if (scanHistory) {
+        newState.scanHistory = scanHistory;
+      }
+      
+      if (searchHistory) {
+        newState.searchHistory = searchHistory;
+      }
+      
+      if (lastBackup) {
+        newState.lastBackup = lastBackup;
+      }
+      
+      if (performanceMetrics) {
+        newState.performanceMetrics = performanceMetrics;
+      }
+      
+      // Update saga counters after import
+      return actualizarContadoresSagas(newState);
+    }
+
+    case 'EXPORT_DATA': {
+      // This action doesn't modify state, it's handled by the component
+      return state;
+    }
+
+    case 'SET_PERFORMANCE_METRICS': {
+      const { lastRenderTime, averageRenderTime, memoryUsage } = action.payload;
+      const currentAvg = state.performanceMetrics?.averageRenderTime || 0;
+      const newAvg = currentAvg === 0 ? lastRenderTime : (currentAvg + lastRenderTime) / 2;
+      
+      return {
+        ...state,
+        performanceMetrics: {
+          lastRenderTime,
+          averageRenderTime: newAvg,
+          memoryUsage
+        }
+      };
+    }
+
+    case 'SET_LAST_BACKUP': {
+      return {
+        ...state,
+        lastBackup: action.payload
+      };
+    }
+
     default:
       return state;
   }
+  return state;
 }
 
 interface AppStateContextType {

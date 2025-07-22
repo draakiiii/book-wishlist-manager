@@ -119,16 +119,17 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
       onBookSelect(book);
     }
     
-    // Reset the justSelected flag after a short delay
+    // Reset the justSelected flag after a longer delay to prevent immediate re-opening
     setTimeout(() => {
       setJustSelected(false);
-    }, 1000);
+    }, 2000);
   };
 
   const handleInputFocus = () => {
     if (disabled || disableAutocomplete || justSelected) return;
     
-    if (suggestions.length > 0) {
+    // Only show suggestions if user is actively typing and there are suggestions
+    if (inputValue.trim().length >= 2 && suggestions.length > 0) {
       setIsOpen(true);
     }
   };

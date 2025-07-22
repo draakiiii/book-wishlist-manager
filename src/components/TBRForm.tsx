@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Clock, Plus, Search, BookOpen, Loader2, CheckCircle, AlertCircle, Camera } from 'lucide-react';
+import { Clock, Plus, Search, BookOpen, Loader2, CheckCircle, AlertCircle, Camera, Barcode } from 'lucide-react';
 import ISBNInputModal from './ISBNInputModal';
 import BarcodeScannerModal from './BarcodeScannerModal';
+import BulkScanModal from './BulkScanModal';
 import SagaAutocomplete from './SagaAutocomplete';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import { fetchBookData, validateISBN } from '../services/googleBooksAPI';
@@ -18,6 +19,7 @@ const TBRForm: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showISBNInput, setShowISBNInput] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [showBulkScan, setShowBulkScan] = useState(false);
   const [isLoadingBook, setIsLoadingBook] = useState(false);
   const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'found' | 'error'>('idle');
   const [scanMessage, setScanMessage] = useState('');
@@ -227,6 +229,18 @@ const TBRForm: React.FC = () => {
                 <Camera className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span>Escanear Código</span>
               </motion.button>
+              
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowBulkScan(true)}
+                disabled={isLoadingBook}
+                className="w-full sm:w-auto px-4 py-2 bg-warning-500 hover:bg-warning-600 disabled:bg-warning-400 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
+              >
+                <Barcode className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>Escaneo Múltiple</span>
+              </motion.button>
             </div>
 
             {/* Scan Status */}
@@ -251,13 +265,21 @@ const TBRForm: React.FC = () => {
                 <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
                   Título del Libro *
                 </label>
-                <BookTitleAutocomplete
-                  value={titulo}
-                  onChange={setTitulo}
-                  onBookSelect={handleBookSelect}
-                  placeholder="Ej: El Hobbit"
-                  disableAutocomplete={isBookFromScan}
-                />
+                              <BookTitleAutocomplete
+                value={titulo}
+                onChange={(value) => {
+                  setTitulo(value);
+                  // Reset scan state when user starts typing manually
+                  if (isBookFromScan && value !== titulo) {
+                    setIsBookFromScan(false);
+                    setScanStatus('idle');
+                    setScanMessage('');
+                  }
+                }}
+                onBookSelect={handleBookSelect}
+                placeholder="Ej: El Hobbit"
+                disableAutocomplete={isBookFromScan}
+              />
               </div>
               
               {/* Autor */}
@@ -349,6 +371,17 @@ const TBRForm: React.FC = () => {
         <BarcodeScannerModal
           onClose={() => setShowBarcodeScanner(false)}
           onScanSuccess={handleSearchResult}
+        />
+      )}
+
+      {/* Bulk Scan Modal */}
+      {showBulkScan && (
+        <BulkScanModal
+          isOpen={showBulkScan}
+          onClose={() => setShowBulkScan(false)}
+          onBooksAdded={(books) => {
+            console.log(`${books.length} libros agregados`);
+          }}
         />
       )}
     </div>
