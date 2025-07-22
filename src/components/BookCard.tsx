@@ -65,13 +65,22 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   };
 
   const handlePurchaseWishlistBook = () => {
-    const pages = prompt('¿Cuántas páginas tiene el libro?');
-    if (pages && !isNaN(parseInt(pages))) {
-      dispatch({ 
-        type: 'PURCHASE_WISHLIST_BOOK', 
-        payload: { id: book.id, pages: parseInt(pages) } 
-      });
+    let pages = book.paginas; // Usar las páginas que ya tiene el libro
+    
+    // Solo preguntar si el libro no tiene páginas
+    if (!pages) {
+      const pagesInput = prompt('¿Cuántas páginas tiene el libro?');
+      if (pagesInput && !isNaN(parseInt(pagesInput))) {
+        pages = parseInt(pagesInput);
+      } else {
+        return; // Si no se proporciona un número válido, cancelar la compra
+      }
     }
+    
+    dispatch({ 
+      type: 'PURCHASE_WISHLIST_BOOK', 
+      payload: { id: book.id, pages: pages! } 
+    });
   };
 
   const handleDelete = () => {
