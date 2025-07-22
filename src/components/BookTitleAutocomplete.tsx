@@ -10,6 +10,8 @@ interface BookTitleAutocompleteProps {
   onBookSelect?: (bookData: BookData) => void;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
+  disableAutocomplete?: boolean;
 }
 
 const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
@@ -17,15 +19,24 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   onChange,
   onBookSelect,
   placeholder = "Ej: El Hobbit",
-  className = ""
+  className = "",
+  disabled = false,
+  disableAutocomplete = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
   const [suggestions, setSuggestions] = useState<BookData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [debouncedValue, setDebouncedValue] = useState(value);
+  const [justSelected, setJustSelected] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Sync internal state with prop value
+  useEffect(() => {
+    setInputValue(value);
+    setDebouncedValue(value);
+  }, [value]);
 
   // Debounce the search to avoid too many API calls
   useEffect(() => {
@@ -39,7 +50,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   // Search for books when debounced value changes
   useEffect(() => {
     const searchBooks = async () => {
-      if (debouncedValue.trim().length < 2) {
+      if (disabled || disableAutocomplete || debouncedValue.trim().length < 2 || justSelected) {
         setSuggestions([]);
         setIsOpen(false);
         return;
@@ -60,7 +71,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     };
 
     searchBooks();
-  }, [debouncedValue]);
+  }, [debouncedValue, disabled, disableAutocomplete, justSelected]);
 
   // Handle click outside
   useEffect(() => {
@@ -80,22 +91,43 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
+    
     const newValue = e.target.value;
     setInputValue(newValue);
     onChange(newValue);
+    
+    // Reset justSelected flag when user starts typing manually
+    if (justSelected) {
+      setJustSelected(false);
+    }
+    
+    // Close autocomplete if disabled
+    if (disableAutocomplete) {
+      setIsOpen(false);
+    }
   };
 
   const handleBookSelect = (book: BookData) => {
     setInputValue(book.titulo);
+    setDebouncedValue(book.titulo); // Set debounced value to prevent re-search
+    setJustSelected(true); // Mark that we just selected a book
     onChange(book.titulo);
     setIsOpen(false);
     
     if (onBookSelect) {
       onBookSelect(book);
     }
+    
+    // Reset the justSelected flag after a short delay
+    setTimeout(() => {
+      setJustSelected(false);
+    }, 1000);
   };
 
   const handleInputFocus = () => {
+    if (disabled || disableAutocomplete || justSelected) return;
+    
     if (suggestions.length > 0) {
       setIsOpen(true);
     }
@@ -128,8 +160,11 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onKeyDown={handleInputKeyDown}
-          className="w-full px-3 py-2 pr-10 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-warning-500 focus:border-transparent transition-colors duration-200 text-sm"
-          placeholder={placeholder}
+          disabled={disabled}
+          className={`w-full px-3 py-2 pr-10 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-warning-500 focus:border-transparent transition-colors duration-200 text-sm ${
+            disabled ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          placeholder={disabled ? 'Libro detectado por escáner' : placeholder}
         />
         <div className="absolute inset-y-0 right-0 flex items-center pr-3">
           {isLoading ? (

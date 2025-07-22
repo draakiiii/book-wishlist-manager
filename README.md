@@ -28,7 +28,9 @@ Una aplicación moderna y elegante para gestionar tu lista de deseos de libros c
 - **Control de Gastos**: Evita compras impulsivas
 
 ### 📱 **Funcionalidades Avanzadas**
-- **Escáner de Códigos de Barras**: Escanea ISBN para agregar libros rápidamente
+- **Escáner de Códigos de Barras**: Escanea ISBN con la cámara para agregar libros rápidamente
+- **Entrada Manual de ISBN**: Ingresa códigos ISBN manualmente con validación automática
+- **Autocompletado de Títulos**: Búsqueda inteligente de libros por título
 - **Persistencia de Datos**: Tus datos se guardan automáticamente
 - **Configuración Flexible**: Personaliza el sistema de puntos
 

@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Settings, Save, RotateCcw } from 'lucide-react';
+import { Settings, Save, RotateCcw, Camera } from 'lucide-react';
 
 const ConfigForm: React.FC = () => {
   const { state, dispatch } = useAppState();
   const [config, setConfig] = useState(state.config);
   const [isEditing, setIsEditing] = useState(false);
+  const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +24,21 @@ const ConfigForm: React.FC = () => {
   const handleInputChange = (field: keyof typeof config, value: number) => {
     setConfig(prev => ({ ...prev, [field]: Math.max(0, value) }));
   };
+
+  // Get available cameras
+  useEffect(() => {
+    const getCameras = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        setAvailableCameras(videoDevices);
+      } catch (error) {
+        console.error('Error getting cameras:', error);
+      }
+    };
+
+    getCameras();
+  }, []);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -178,6 +194,40 @@ const ConfigForm: React.FC = () => {
           </motion.div>
         </div>
 
+        {/* Camera Configuration */}
+        {availableCameras.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="space-y-1.5 sm:space-y-2"
+          >
+            <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+              Cámara Preferida para Escáner
+            </label>
+            <div className="relative">
+              <select
+                value={config.cameraPreference || 0}
+                onChange={(e) => setConfig(prev => ({ ...prev, cameraPreference: parseInt(e.target.value) }))}
+                disabled={!isEditing}
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
+              >
+                {availableCameras.map((camera, index) => (
+                  <option key={camera.deviceId} value={index}>
+                    Cámara {index + 1}: {camera.label || 'Cámara sin nombre'}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <Camera className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Cámara que se usará por defecto al escanear códigos de barras
+            </p>
+          </motion.div>
+        )}
+
         {/* Action Buttons */}
         {isEditing && (
           <motion.div
@@ -248,6 +298,24 @@ const ConfigForm: React.FC = () => {
               </span>
             </div>
           </div>
+          
+          {/* Camera Configuration Display */}
+          {availableCameras.length > 0 && (
+            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-200 dark:border-slate-700">
+              <div className="flex items-center space-x-2 mb-2">
+                <Camera className="h-3 w-3 text-slate-500 dark:text-slate-400" />
+                <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Cámara Preferida
+                </span>
+              </div>
+              <span className="text-xs sm:text-sm text-slate-900 dark:text-slate-100">
+                {config.cameraPreference !== undefined && config.cameraPreference < availableCameras.length
+                  ? `Cámara ${config.cameraPreference + 1}: ${availableCameras[config.cameraPreference]?.label || 'Cámara sin nombre'}`
+                  : 'Automática (mejor cámara disponible)'
+                }
+              </span>
+            </div>
+          )}
         </motion.div>
       )}
     </div>

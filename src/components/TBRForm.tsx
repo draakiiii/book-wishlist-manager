@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Clock, Plus, Search, BookOpen, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Clock, Plus, Search, BookOpen, Loader2, CheckCircle, AlertCircle, Camera } from 'lucide-react';
 import ISBNInputModal from './ISBNInputModal';
+import BarcodeScannerModal from './BarcodeScannerModal';
 import SagaAutocomplete from './SagaAutocomplete';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import { fetchBookData, validateISBN } from '../services/googleBooksAPI';
@@ -16,9 +17,11 @@ const TBRForm: React.FC = () => {
   const [sagaName, setSagaName] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [showISBNInput, setShowISBNInput] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [isLoadingBook, setIsLoadingBook] = useState(false);
   const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'found' | 'error'>('idle');
   const [scanMessage, setScanMessage] = useState('');
+  const [isBookFromScan, setIsBookFromScan] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,9 +49,11 @@ const TBRForm: React.FC = () => {
 
   const handleSearchResult = async (result: string) => {
     setShowISBNInput(false);
+    setShowBarcodeScanner(false); // Close barcode scanner modal
     setIsLoadingBook(true);
     setScanStatus('scanning');
     setScanMessage('Validando ISBN...');
+    setIsBookFromScan(true); // Mark that this book came from scanning
     
     try {
       // Validate ISBN format
@@ -56,6 +61,7 @@ const TBRForm: React.FC = () => {
         setScanStatus('error');
         setScanMessage('Código de barras no válido. Debe ser un ISBN de 10 o 13 dígitos.');
         setIsLoadingBook(false);
+        setIsBookFromScan(false);
         return;
       }
       
@@ -65,6 +71,11 @@ const TBRForm: React.FC = () => {
       const bookData = await fetchBookData(result);
       
       if (bookData) {
+        console.log('Book data received:', bookData);
+        console.log('Setting title to:', bookData.titulo);
+        console.log('Setting author to:', bookData.autor);
+        console.log('Setting pages to:', bookData.paginas);
+        
         setTitulo(bookData.titulo);
         setAutor(bookData.autor || '');
         setPaginas(bookData.paginas?.toString() || '');
@@ -85,12 +96,14 @@ const TBRForm: React.FC = () => {
         setScanStatus('error');
         setScanMessage('No se encontró información del libro. Puedes agregarlo manualmente.');
         setIsExpanded(true);
+        setIsBookFromScan(false);
       }
     } catch (error) {
       console.error('Error fetching book data:', error);
       setScanStatus('error');
       setScanMessage('Error al buscar información del libro. Puedes agregarlo manualmente.');
       setIsExpanded(true);
+      setIsBookFromScan(false);
     } finally {
       setIsLoadingBook(false);
     }
@@ -101,6 +114,7 @@ const TBRForm: React.FC = () => {
     setAutor(bookData.autor || '');
     setPaginas(bookData.paginas?.toString() || '');
     setIsExpanded(true);
+    setIsBookFromScan(false); // Book came from autocomplete, not scanning
     setScanStatus('found');
     setScanMessage(`¡Libro seleccionado: ${bookData.titulo}`);
     
@@ -179,8 +193,8 @@ const TBRForm: React.FC = () => {
           </motion.button>
         ) : (
           <form onSubmit={handleSubmit} className="p-3 sm:p-4 space-y-3 sm:space-y-4">
-            {/* ISBN Search Button */}
-            <div className="flex justify-center">
+            {/* ISBN Search Buttons */}
+            <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-3">
               <motion.button
                 type="button"
                 whileHover={{ scale: 1.05 }}
@@ -200,6 +214,18 @@ const TBRForm: React.FC = () => {
                     <span>Buscar por ISBN</span>
                   </>
                 )}
+              </motion.button>
+              
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowBarcodeScanner(true)}
+                disabled={isLoadingBook}
+                className="w-full sm:w-auto px-4 py-2 bg-success-500 hover:bg-success-600 disabled:bg-success-400 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
+              >
+                <Camera className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>Escanear Código</span>
               </motion.button>
             </div>
 
@@ -230,6 +256,7 @@ const TBRForm: React.FC = () => {
                   onChange={setTitulo}
                   onBookSelect={handleBookSelect}
                   placeholder="Ej: El Hobbit"
+                  disableAutocomplete={isBookFromScan}
                 />
               </div>
               
@@ -298,6 +325,7 @@ const TBRForm: React.FC = () => {
                   setSagaName('');
                   setScanStatus('idle');
                   setScanMessage('');
+                  setIsBookFromScan(false);
                 }}
                 className="w-full sm:w-auto px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors duration-200 text-sm"
               >
@@ -313,6 +341,14 @@ const TBRForm: React.FC = () => {
         <ISBNInputModal
           onClose={() => setShowISBNInput(false)}
           onSearch={handleSearchResult}
+        />
+      )}
+
+      {/* Barcode Scanner Modal */}
+      {showBarcodeScanner && (
+        <BarcodeScannerModal
+          onClose={() => setShowBarcodeScanner(false)}
+          onScanSuccess={handleSearchResult}
         />
       )}
     </div>

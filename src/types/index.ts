@@ -25,6 +25,7 @@ export interface Configuracion {
   puntosPorPagina: number;
   puntosPorSaga: number;
   objetivo: number;
+  cameraPreference?: number; // Índice de la cámara preferida
 }
 
 export interface AppState {
@@ -42,6 +43,7 @@ export interface AppState {
 
 export type Action =
   | { type: 'SET_CONFIG'; payload: Configuracion }
+  | { type: 'SET_CAMERA_PREFERENCE'; payload: number }
   | { type: 'RESET_PROGRESS' }
   | { type: 'TOGGLE_DARK_MODE' }
   | { type: 'SET_DARK_MODE'; payload: boolean }
