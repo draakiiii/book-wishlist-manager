@@ -133,55 +133,55 @@ const AppContent: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-2">
-              {/* Advanced Features Buttons - Desktop */}
-              <div className="hidden md:flex items-center space-x-2">
+              {/* Advanced Features Buttons */}
+              <div className="flex items-center space-x-1 md:space-x-2">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setSearchModalOpen(true)}
-                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
                   title="Búsqueda Avanzada"
                 >
-                  <Search className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                  <Search className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
                 </motion.button>
                 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setStatisticsModalOpen(true)}
-                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
                   title="Estadísticas Avanzadas"
                 >
-                  <BarChart3 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                  <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
                 </motion.button>
                 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setExportImportModalOpen(true)}
-                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
                   title="Exportar/Importar Datos"
                 >
-                  <Database className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                  <Database className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
                 </motion.button>
                 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setScanHistoryModalOpen(true)}
-                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
                   title="Historial de Escaneos"
                 >
-                  <History className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                  <History className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
                 </motion.button>
               </div>
               
-              {/* Mobile menu button */}
+              {/* Settings button */}
               <button
                 onClick={() => setConfigSidebarOpen(true)}
-                className="md:hidden p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
               >
-                <Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
               </button>
             </div>
           </div>
