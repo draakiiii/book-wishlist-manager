@@ -100,29 +100,31 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Simple scroll handling for mobile dropdown
+  // Handle mobile scroll behavior
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     
     if (!scrollContainer || !isOpen) return;
 
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!scrollContainer) return;
-
+    const handleWheel = (e: WheelEvent) => {
       const scrollTop = scrollContainer.scrollTop;
       const scrollHeight = scrollContainer.scrollHeight;
       const height = scrollContainer.clientHeight;
-
-      // Only prevent page scroll if we're not at the boundaries
-      if (scrollTop > 0 && scrollTop + height < scrollHeight) {
-        e.preventDefault();
+      
+      // If we're at the boundaries, let the page scroll
+      if ((scrollTop <= 0 && e.deltaY < 0) || 
+          (scrollTop + height >= scrollHeight && e.deltaY > 0)) {
+        return;
       }
+      
+      // Otherwise, prevent page scroll
+      e.preventDefault();
     };
 
-    scrollContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+    scrollContainer.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
-      scrollContainer.removeEventListener('touchmove', handleTouchMove);
+      scrollContainer.removeEventListener('wheel', handleWheel);
     };
   }, [isOpen]);
 
