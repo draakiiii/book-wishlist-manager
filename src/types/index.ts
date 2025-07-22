@@ -44,6 +44,7 @@ export type Action =
   | { type: 'SET_CONFIG'; payload: Configuracion }
   | { type: 'RESET_PROGRESS' }
   | { type: 'TOGGLE_DARK_MODE' }
+  | { type: 'SET_DARK_MODE'; payload: boolean }
   | { type: 'ADD_TO_TBR'; payload: Libro }
   | { type: 'START_BOOK'; payload: number }
   | { type: 'FINISH_BOOK'; payload: number }

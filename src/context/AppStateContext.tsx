@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
 import { AppState, Action, Libro } from '../types';
+import { getInitialTheme, persistThemePreference } from '../utils/themeConfig';
 
 const STORAGE_KEY = 'guardianComprasState_v6_0';
 
@@ -18,7 +19,7 @@ const initialState: AppState = {
   wishlist: [],
   sagas: [],
   sagaNotifications: [],
-  darkMode: false
+  darkMode: getInitialTheme()
 };
 
 function loadStateFromStorage(): AppState | null {
@@ -135,8 +136,19 @@ function appReducer(state: AppState, action: Action): AppState {
     case 'RESET_PROGRESS':
       return { ...state, progreso: 0, compraDesbloqueada: false };
 
-    case 'TOGGLE_DARK_MODE':
-      return { ...state, darkMode: !state.darkMode };
+    case 'TOGGLE_DARK_MODE': {
+      const newDarkMode = !state.darkMode;
+      // Persistir la preferencia del usuario
+      persistThemePreference(newDarkMode);
+      return { ...state, darkMode: newDarkMode };
+    }
+
+    case 'SET_DARK_MODE': {
+      const newDarkMode = action.payload;
+      // Persistir la preferencia del usuario
+      persistThemePreference(newDarkMode);
+      return { ...state, darkMode: newDarkMode };
+    }
 
     case 'ADD_TO_TBR': {
       const nuevoLibro = action.payload;
@@ -450,10 +462,11 @@ function appReducer(state: AppState, action: Action): AppState {
 interface AppStateContextType {
   state: AppState;
   dispatch: React.Dispatch<Action>;
-  toggleDarkMode: () => void;
 }
 
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);
+
+export { AppStateContext };
 
 export const useAppState = () => {
   const context = useContext(AppStateContext);
@@ -478,17 +491,13 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
   
   const [state, dispatch] = useReducer(appReducer, initialAppState);
 
-  const toggleDarkMode = () => {
-    dispatch({ type: 'TOGGLE_DARK_MODE' });
-  };
-
   // Sincronizar con localStorage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
   return (
-    <AppStateContext.Provider value={{ state, dispatch, toggleDarkMode }}>
+    <AppStateContext.Provider value={{ state, dispatch }}>
       {children}
     </AppStateContext.Provider>
   );

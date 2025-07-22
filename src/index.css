@@ -53,6 +53,11 @@
     @apply border-border;
   }
   
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -60,6 +65,8 @@
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+    /* Transiciones suaves para el modo oscuro */
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   /* Mejoras para inputs en móviles */
@@ -73,17 +80,27 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Mejoras para scroll en móviles */
-  html {
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-  }
-
   /* Mejoras para el viewport móvil */
   @media (max-width: 640px) {
     body {
       font-size: 14px;
     }
+  }
+
+  /* Mejoras específicas para el modo oscuro */
+  .dark body {
+    color-scheme: dark;
+  }
+
+  .dark * {
+    border-color: hsl(var(--border));
+  }
+
+  /* Asegurar que las transiciones funcionen en todos los elementos */
+  *, *::before, *::after {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
   }
 }
 

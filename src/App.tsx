@@ -8,8 +8,6 @@ import {
   Clock, 
   Trophy, 
   Settings,
-  Sun,
-  Moon,
   Wallet,
   Menu,
   X
@@ -21,15 +19,45 @@ import TBRForm from './components/TBRForm';
 import BookList from './components/BookList';
 import SagaList from './components/SagaList';
 import SagaCompletionNotification from './components/SagaCompletionNotification';
+import ThemeToggle from './components/ThemeToggle';
 import './App.css';
 
 const AppContent: React.FC = () => {
-  const { state, toggleDarkMode, dispatch } = useAppState();
+  const { state, dispatch } = useAppState();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   useEffect(() => {
+    // Aplicar el modo oscuro al body
     document.body.classList.toggle('dark', state.darkMode);
+    
+    // Aplicar el modo oscuro al html también para mejor compatibilidad
+    document.documentElement.classList.toggle('dark', state.darkMode);
+    
+    // Actualizar el meta theme-color para móviles
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', state.darkMode ? '#1e293b' : '#ffffff');
+    }
   }, [state.darkMode]);
+
+  // Escuchar cambios en la preferencia del sistema
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+      // Solo cambiar si el usuario no ha establecido una preferencia manual
+      const savedPreference = localStorage.getItem('guardianComprasDarkMode');
+      if (savedPreference === null) {
+        dispatch({ type: 'SET_DARK_MODE', payload: e.matches });
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    
+    return () => {
+      mediaQuery.removeEventListener('change', handleSystemThemeChange);
+    };
+  }, [dispatch]);
 
   const handleFixSagaData = () => {
     dispatch({ type: 'FIX_SAGA_DATA' });
@@ -40,7 +68,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
+    <div className="theme-transition min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
       {/* Notificaciones de saga completada */}
       {state.sagaNotifications && state.sagaNotifications.map((notification) => (
         <SagaCompletionNotification
@@ -68,16 +96,7 @@ const AppContent: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-2">
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
-              >
-                {state.darkMode ? (
-                  <Sun className="h-5 w-5 text-yellow-400" />
-                ) : (
-                  <Moon className="h-5 w-5 text-slate-600" />
-                )}
-              </button>
+              <ThemeToggle />
               
               {/* Mobile menu button */}
               <button
