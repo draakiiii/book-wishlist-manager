@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Clock, Plus, Camera, BookOpen, Loader2 } from 'lucide-react';
+import { Clock, Plus, Camera, BookOpen, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import ScannerModal from './ScannerModal';
 import SagaAutocomplete from './SagaAutocomplete';
-import { fetchBookData } from '../services/googleBooksAPI';
+import { fetchBookData, validateISBN } from '../services/googleBooksAPI';
 
 const TBRForm: React.FC = () => {
   const { dispatch } = useAppState();
@@ -15,6 +15,8 @@ const TBRForm: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [isLoadingBook, setIsLoadingBook] = useState(false);
+  const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'found' | 'error'>('idle');
+  const [scanMessage, setScanMessage] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,41 +37,86 @@ const TBRForm: React.FC = () => {
       setPaginas('');
       setSagaName('');
       setIsExpanded(false);
+      setScanStatus('idle');
+      setScanMessage('');
     }
   };
 
   const handleScanResult = async (result: string) => {
     setShowScanner(false);
     setIsLoadingBook(true);
+    setScanStatus('scanning');
+    setScanMessage('Validando ISBN...');
     
     try {
-      // Clean the scanned result (remove any non-numeric characters except for 'X' which is valid in ISBN)
-      const cleanIsbn = result.replace(/[^0-9X]/gi, '');
-      
-      if (cleanIsbn.length < 10 || cleanIsbn.length > 13) {
-        alert('Código de barras no válido. Debe ser un ISBN de 10 o 13 dígitos.');
+      // Validate ISBN format
+      if (!validateISBN(result)) {
+        setScanStatus('error');
+        setScanMessage('Código de barras no válido. Debe ser un ISBN de 10 o 13 dígitos.');
         setIsLoadingBook(false);
         return;
       }
       
+      setScanMessage('Buscando información del libro...');
+      
       // Fetch book data from Google Books API
-      const bookData = await fetchBookData(cleanIsbn);
+      const bookData = await fetchBookData(result);
       
       if (bookData) {
         setTitulo(bookData.titulo);
         setAutor(bookData.autor || '');
         setPaginas(bookData.paginas?.toString() || '');
         setIsExpanded(true); // Expand the form to show the populated data
+        setScanStatus('found');
+        setScanMessage(`¡Libro encontrado: ${bookData.titulo}`);
+        
+        // Show additional book info if available
+        if (bookData.editorial || bookData.publicacion) {
+          const additionalInfo: string[] = [];
+          if (bookData.editorial) additionalInfo.push(bookData.editorial);
+          if (bookData.publicacion) additionalInfo.push(bookData.publicacion.toString());
+          if (additionalInfo.length > 0) {
+            setScanMessage(prev => `${prev} (${additionalInfo.join(', ')})`);
+          }
+        }
       } else {
-        alert('No se encontró información del libro. Puedes agregarlo manualmente.');
+        setScanStatus('error');
+        setScanMessage('No se encontró información del libro. Puedes agregarlo manualmente.');
         setIsExpanded(true);
       }
     } catch (error) {
       console.error('Error fetching book data:', error);
-      alert('Error al buscar información del libro. Puedes agregarlo manualmente.');
+      setScanStatus('error');
+      setScanMessage('Error al buscar información del libro. Puedes agregarlo manualmente.');
       setIsExpanded(true);
     } finally {
       setIsLoadingBook(false);
+    }
+  };
+
+  const getStatusIcon = () => {
+    switch (scanStatus) {
+      case 'scanning':
+        return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
+      case 'found':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'error':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return <Camera className="h-4 w-4 text-slate-500" />;
+    }
+  };
+
+  const getStatusColor = () => {
+    switch (scanStatus) {
+      case 'scanning':
+        return 'text-blue-600 dark:text-blue-400';
+      case 'found':
+        return 'text-green-600 dark:text-green-400';
+      case 'error':
+        return 'text-red-600 dark:text-red-400';
+      default:
+        return 'text-slate-600 dark:text-slate-400';
     }
   };
 
@@ -129,11 +176,27 @@ const TBRForm: React.FC = () => {
                 ) : (
                   <>
                     <Camera className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span>Escanear Código de Barras</span>
+                    <span>Escanear ISBN</span>
                   </>
                 )}
               </motion.button>
             </div>
+
+            {/* Scan Status */}
+            {scanStatus !== 'idle' && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`flex items-center space-x-2 p-2 rounded-lg text-sm ${
+                  scanStatus === 'found' ? 'bg-green-100 dark:bg-green-900/30' :
+                  scanStatus === 'error' ? 'bg-red-100 dark:bg-red-900/30' :
+                  'bg-blue-100 dark:bg-blue-900/30'
+                }`}
+              >
+                {getStatusIcon()}
+                <span className={getStatusColor()}>{scanMessage}</span>
+              </motion.div>
+            )}
 
             <div className="grid grid-cols-1 gap-3 sm:gap-4">
               {/* Título */}
@@ -214,6 +277,8 @@ const TBRForm: React.FC = () => {
                   setAutor('');
                   setPaginas('');
                   setSagaName('');
+                  setScanStatus('idle');
+                  setScanMessage('');
                 }}
                 className="w-full sm:w-auto px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors duration-200 text-sm"
               >
