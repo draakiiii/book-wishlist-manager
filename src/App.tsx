@@ -8,23 +8,22 @@ import {
   Clock, 
   Trophy, 
   Settings,
-  Wallet,
-  Menu,
-  X
+  Wallet
 } from 'lucide-react';
-import ConfigForm from './components/ConfigForm';
+import CollapsibleConfig from './components/CollapsibleConfig';
+import Sidebar from './components/Sidebar';
 import ProgressBar from './components/ProgressBar';
 import WishlistForm from './components/WishlistForm';
 import TBRForm from './components/TBRForm';
 import BookList from './components/BookList';
 import SagaList from './components/SagaList';
 import SagaCompletionNotification from './components/SagaCompletionNotification';
-import ThemeToggle from './components/ThemeToggle';
+
 import './App.css';
 
 const AppContent: React.FC = () => {
   const { state, dispatch } = useAppState();
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [configSidebarOpen, setConfigSidebarOpen] = React.useState(false);
 
   useEffect(() => {
     // Aplicar el modo oscuro al body
@@ -59,10 +58,6 @@ const AppContent: React.FC = () => {
     };
   }, [dispatch]);
 
-  const handleFixSagaData = () => {
-    dispatch({ type: 'FIX_SAGA_DATA' });
-  };
-
   const handleRemoveNotification = (id: number) => {
     dispatch({ type: 'REMOVE_SAGA_NOTIFICATION', payload: { id } });
   };
@@ -96,18 +91,12 @@ const AppContent: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-2">
-              <ThemeToggle />
-              
-              {/* Mobile menu button */}
+              {/* Mobile settings button */}
               <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                onClick={() => setConfigSidebarOpen(true)}
                 className="lg:hidden p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
               >
-                {mobileMenuOpen ? (
-                  <X className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                ) : (
-                  <Menu className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                )}
+                <Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />
               </button>
             </div>
           </div>
@@ -121,38 +110,12 @@ const AppContent: React.FC = () => {
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6 lg:space-y-8">
             
-            {/* Configuration Section */}
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
-            >
-              <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-                    <Settings className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-                  </div>
-                  <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
-                    Configuración
-                  </h2>
-                </div>
-              </div>
-              <div className="p-4 sm:p-6">
-                <ConfigForm />
-                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                  <button
-                    onClick={handleFixSagaData}
-                    className="w-full sm:w-auto px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors duration-200 text-sm"
-                  >
-                    🔧 Corregir Datos de Sagas
-                  </button>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                    Corrige los IDs de saga y contadores (temporal)
-                  </p>
-                </div>
-              </div>
-            </motion.section>
+            {/* Configuration Section - Desktop Collapsible */}
+            <div className="hidden lg:block">
+              <CollapsibleConfig />
+            </div>
+            
+
 
             {/* Progress Section */}
             <motion.section
@@ -321,6 +284,12 @@ const AppContent: React.FC = () => {
           </div>
         </div>
       </main>
+      
+      {/* Mobile Configuration Sidebar */}
+      <Sidebar 
+        isOpen={configSidebarOpen} 
+        onClose={() => setConfigSidebarOpen(false)} 
+      />
     </div>
   );
 };

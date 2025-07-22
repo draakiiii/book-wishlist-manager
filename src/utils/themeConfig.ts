@@ -25,13 +25,7 @@ export const getSystemTheme = (): boolean => {
 
 // Función para obtener el tema inicial
 export const getInitialTheme = (): boolean => {
-  if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem(THEME_CONFIG.STORAGE_KEY);
-    if (saved !== null) {
-      return JSON.parse(saved);
-    }
-    return getSystemTheme();
-  }
+  // Always return light mode
   return false;
 };
 

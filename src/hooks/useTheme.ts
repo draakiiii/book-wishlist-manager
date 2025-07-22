@@ -8,49 +8,31 @@ import {
 } from '../utils/themeConfig';
 
 export const useTheme = () => {
-  const [isDark, setIsDark] = useState(getInitialTheme);
+  // Force light mode only
+  const isDark = false;
 
   // Intentar obtener el contexto AppState si está disponible
   const appStateContext = useContext(AppStateContext);
 
   useEffect(() => {
-    // Aplicar el tema al DOM
-    applyThemeToDOM(isDark);
+    // Aplicar el tema al DOM - always light mode
+    applyThemeToDOM(false);
     
-    // Persistir la preferencia
-    persistThemePreference(isDark);
+    // Persistir la preferencia - always light mode
+    persistThemePreference(false);
 
     // Sincronizar con AppState si está disponible
-    if (appStateContext && appStateContext.state && appStateContext.state.darkMode !== isDark) {
-      appStateContext.dispatch({ type: 'SET_DARK_MODE', payload: isDark });
+    if (appStateContext && appStateContext.state && appStateContext.state.darkMode !== false) {
+      appStateContext.dispatch({ type: 'SET_DARK_MODE', payload: false });
     }
-  }, [isDark, appStateContext]);
-
-  useEffect(() => {
-    // Escuchar cambios en la preferencia del sistema
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
-      // Solo cambiar si el usuario no ha establecido una preferencia manual
-      const savedPreference = localStorage.getItem(THEME_CONFIG.STORAGE_KEY);
-      if (savedPreference === null) {
-        setIsDark(e.matches);
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-    
-    return () => {
-      mediaQuery.removeEventListener('change', handleSystemThemeChange);
-    };
-  }, []);
+  }, [appStateContext]);
 
   const toggleTheme = () => {
-    setIsDark(!isDark);
+    // No-op function - theme cannot be toggled
   };
 
   const setTheme = (dark: boolean) => {
-    setIsDark(dark);
+    // No-op function - theme cannot be changed
   };
 
   return {

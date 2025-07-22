@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Clock, Plus, Camera, BookOpen } from 'lucide-react';
+import { Clock, Plus, Camera, BookOpen, Loader2 } from 'lucide-react';
 import ScannerModal from './ScannerModal';
 import SagaAutocomplete from './SagaAutocomplete';
+import { fetchBookData } from '../services/googleBooksAPI';
 
 const TBRForm: React.FC = () => {
   const { dispatch } = useAppState();
@@ -13,6 +14,7 @@ const TBRForm: React.FC = () => {
   const [sagaName, setSagaName] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [isLoadingBook, setIsLoadingBook] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,15 +38,39 @@ const TBRForm: React.FC = () => {
     }
   };
 
-  const handleScanResult = (result: string) => {
-    // Parse the scanned result and populate the form
-    // This is a simple implementation - you might want to enhance it
-    const lines = result.split('\n');
-    if (lines.length >= 2) {
-      setTitulo(lines[0] || '');
-      setAutor(lines[1] || '');
-    }
+  const handleScanResult = async (result: string) => {
     setShowScanner(false);
+    setIsLoadingBook(true);
+    
+    try {
+      // Clean the scanned result (remove any non-numeric characters except for 'X' which is valid in ISBN)
+      const cleanIsbn = result.replace(/[^0-9X]/gi, '');
+      
+      if (cleanIsbn.length < 10 || cleanIsbn.length > 13) {
+        alert('Código de barras no válido. Debe ser un ISBN de 10 o 13 dígitos.');
+        setIsLoadingBook(false);
+        return;
+      }
+      
+      // Fetch book data from Google Books API
+      const bookData = await fetchBookData(cleanIsbn);
+      
+      if (bookData) {
+        setTitulo(bookData.titulo);
+        setAutor(bookData.autor || '');
+        setPaginas(bookData.paginas?.toString() || '');
+        setIsExpanded(true); // Expand the form to show the populated data
+      } else {
+        alert('No se encontró información del libro. Puedes agregarlo manualmente.');
+        setIsExpanded(true);
+      }
+    } catch (error) {
+      console.error('Error fetching book data:', error);
+      alert('Error al buscar información del libro. Puedes agregarlo manualmente.');
+      setIsExpanded(true);
+    } finally {
+      setIsLoadingBook(false);
+    }
   };
 
   return (
@@ -92,10 +118,20 @@ const TBRForm: React.FC = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowScanner(true)}
-                className="w-full sm:w-auto px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
+                disabled={isLoadingBook}
+                className="w-full sm:w-auto px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-400 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
               >
-                <Camera className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span>Escanear Código de Barras</span>
+                {isLoadingBook ? (
+                  <>
+                    <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                    <span>Buscando libro...</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span>Escanear Código de Barras</span>
+                  </>
+                )}
               </motion.button>
             </div>
 
