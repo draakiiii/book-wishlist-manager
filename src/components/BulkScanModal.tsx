@@ -497,25 +497,23 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
             </div>
 
             {/* Zoom Controls */}
-            {showZoomControls && (
-              <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-sm rounded-lg p-2">
-                <div className="flex flex-col space-y-2">
-                  <button
-                    onClick={() => adjustZoom(zoomLevel + 0.5)}
-                    className="p-1 rounded bg-white/20 text-white hover:bg-white/30"
-                  >
-                    +
-                  </button>
-                  <span className="text-white text-xs text-center">{zoomLevel.toFixed(1)}x</span>
-                  <button
-                    onClick={() => adjustZoom(zoomLevel - 0.5)}
-                    className="p-1 rounded bg-white/20 text-white hover:bg-white/30"
-                  >
-                    -
-                  </button>
-                </div>
+            <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-sm rounded-lg p-2">
+              <div className="flex flex-col space-y-2">
+                <button
+                  onClick={() => adjustZoom(zoomLevel + 0.5)}
+                  className="p-1 rounded bg-white/20 text-white hover:bg-white/30"
+                >
+                  +
+                </button>
+                <span className="text-white text-xs text-center">{zoomLevel.toFixed(1)}x</span>
+                <button
+                  onClick={() => adjustZoom(zoomLevel - 0.5)}
+                  className="p-1 rounded bg-white/20 text-white hover:bg-white/30"
+                >
+                  -
+                </button>
               </div>
-            )}
+            </div>
 
             {/* Feedback Messages */}
             <div className="absolute top-4 left-4 space-y-2">
