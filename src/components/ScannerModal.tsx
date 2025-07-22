@@ -63,15 +63,32 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
   }, [onScan, addFeedback]);
 
   const handleCloseModal = useCallback(() => {
+    // Stop scanner
     if (scannerRef.current) {
       scannerRef.current.reset();
+      scannerRef.current = null;
     }
+    
+    // Stop stream
     if (currentStream) {
       currentStream.getTracks().forEach(track => track.stop());
+      setCurrentStream(null);
     }
+    
+    // Clear video
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    
+    // Clear feedback timeout
     if (feedbackTimeoutRef.current) {
       clearTimeout(feedbackTimeoutRef.current);
     }
+    
+    // Reset states
+    setIsInitialized(false);
+    setIsScanning(false);
+    
     onClose();
   }, [currentStream, onClose]);
 
@@ -106,11 +123,22 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
     };
     
     getCameras();
+    
+    // Cleanup function
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.reset();
+        scannerRef.current = null;
+      }
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+    };
   }, []); // Only run once
 
   // Initialize camera and scanner - only when camera changes
   useEffect(() => {
-    if (!selectedCamera || !videoRef.current || isInitialized) return;
+    if (!selectedCamera || !videoRef.current) return;
 
     const initCamera = async () => {
       try {
@@ -118,9 +146,13 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
         setStatusMessage('Iniciando cámara...');
         setIsScanning(false);
         
-        // Stop previous stream
+        // Stop previous stream and scanner
         if (currentStream) {
           currentStream.getTracks().forEach(track => track.stop());
+        }
+        if (scannerRef.current) {
+          scannerRef.current.reset();
+          scannerRef.current = null;
         }
 
         // Get camera stream with better constraints for mobile
@@ -181,7 +213,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
         currentStream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [selectedCamera, addFeedback, currentStream, isInitialized]);
+  }, [selectedCamera, addFeedback, currentStream]);
 
   const checkTorchCapability = async (stream: MediaStream) => {
     try {
@@ -203,19 +235,11 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
     try {
       addFeedback('info', 'Iniciando detector...');
       
+      // Create new scanner instance
       scannerRef.current = new BrowserMultiFormatReader();
       
-      // Set video source
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        
-        // Wait for video to be ready
-        await new Promise((resolve) => {
-          if (videoRef.current) {
-            videoRef.current.onloadedmetadata = resolve;
-          }
-        });
-      }
+      // Wait a bit for video to be fully ready
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       addFeedback('success', 'Detector iniciado - Escaneando...');
       
@@ -314,17 +338,30 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
       // Reset initialization state
       setIsInitialized(false);
       
-      // Stop current scanner
+      // Stop current stream and scanner
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        setCurrentStream(null);
+      }
       if (scannerRef.current) {
         scannerRef.current.reset();
+        scannerRef.current = null;
+      }
+      
+      // Clear video element
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
       }
       
       const currentIndex = cameraDevices.findIndex(device => device.deviceId === selectedCamera);
       const nextIndex = (currentIndex + 1) % cameraDevices.length;
       const nextCamera = cameraDevices[nextIndex];
       
-      setSelectedCamera(nextCamera.deviceId);
-      addFeedback('info', `Cambiado a: ${nextCamera.label}`);
+      // Add a small delay to ensure cleanup is complete
+      setTimeout(() => {
+        setSelectedCamera(nextCamera.deviceId);
+        addFeedback('info', `Cambiado a: ${nextCamera.label}`);
+      }, 100);
     } catch (error) {
       console.error('Error switching camera:', error);
       addFeedback('error', 'Error al cambiar cámara');
