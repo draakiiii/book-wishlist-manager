@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Search, 
   Filter, 
@@ -299,15 +299,13 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onClose, isOp
             </div>
           </div>
 
-          {/* Filters Panel */}
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="border-b border-slate-200 dark:border-slate-700 overflow-hidden"
-              >
+                           {/* Filters Panel */}
+                 {showFilters && (
+                   <motion.div
+                     initial={{ height: 0, opacity: 0 }}
+                     animate={{ height: 'auto', opacity: 1 }}
+                     className="border-b border-slate-200 dark:border-slate-700 overflow-hidden"
+                   >
                 <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {/* Estado */}
                   <div>
@@ -516,10 +514,9 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onClose, isOp
                       <option value="pendiente">Pendientes</option>
                     </select>
                   </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                                       </div>
+                     </motion.div>
+                   )}
 
           {/* Results Summary */}
           <div className="p-4 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">

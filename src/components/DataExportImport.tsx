@@ -35,7 +35,7 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const [selectedFormat, setSelectedFormat] = useState<'json' | 'csv' | 'excel'>('json');
 
-  const exportData = useCallback(async (format: 'json' | 'csv' | 'excel') => {
+  const exportData = useCallback(async (exportFormat: 'json' | 'csv' | 'excel') => {
     setIsExporting(true);
     setImportError(null);
     setImportSuccess(null);
@@ -60,7 +60,7 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
       let fileName: string;
       let content: string | Blob;
 
-      switch (format) {
+      switch (exportFormat) {
         case 'json':
           fileName = `guardian-compras_backup_${timestamp}.json`;
           content = JSON.stringify(exportData, null, 2);
@@ -68,16 +68,12 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
 
         case 'csv':
           fileName = `guardian-compras_backup_${timestamp}.csv`;
-          const csvData = {
-            libros: [
-              ...exportData.libros.tbr.map(book => ({ ...book, tipo: 'TBR' })),
-              ...exportData.libros.historial.map(book => ({ ...book, tipo: 'Historial' })),
-              ...exportData.libros.wishlist.map(book => ({ ...book, tipo: 'Wishlist' })),
-              ...(exportData.libros.actual ? [{ ...exportData.libros.actual, tipo: 'Actual' }] : [])
-            ],
-            sagas: exportData.sagas,
-            configuracion: [exportData.config]
-          };
+          const csvData = [
+            ...exportData.libros.tbr.map(book => ({ ...book, tipo: 'TBR' })),
+            ...exportData.libros.historial.map(book => ({ ...book, tipo: 'Historial' })),
+            ...exportData.libros.wishlist.map(book => ({ ...book, tipo: 'Wishlist' })),
+            ...(exportData.libros.actual ? [{ ...exportData.libros.actual, tipo: 'Actual' }] : [])
+          ];
           content = Papa.unparse(csvData);
           break;
 
@@ -92,8 +88,8 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
       }
 
       const blob = new Blob([content], { 
-        type: format === 'json' ? 'application/json' : 
-              format === 'csv' ? 'text/csv' : 
+        type: exportFormat === 'json' ? 'application/json' : 
+              exportFormat === 'csv' ? 'text/csv' : 
               'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       });
 

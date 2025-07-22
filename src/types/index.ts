@@ -139,7 +139,7 @@ export type Action =
   | { type: 'CLEAR_SEARCH_HISTORY' }
   | { type: 'UPDATE_BOOK'; payload: { id: number; updates: Partial<Libro>; listType: 'tbr' | 'actual' | 'historial' | 'wishlist' } }
   | { type: 'UPDATE_SAGA'; payload: { id: number; updates: Partial<Saga> } }
-  | { type: 'IMPORT_DATA'; payload: { libros: Libro[]; sagas: Saga[]; config?: Configuracion } }
+  | { type: 'IMPORT_DATA'; payload: { libros: { tbr: Libro[]; historial: Libro[]; wishlist: Libro[]; actual: Libro | null }; sagas: Saga[]; config?: Configuracion } }
   | { type: 'EXPORT_DATA' }
   | { type: 'SET_PERFORMANCE_METRICS'; payload: { lastRenderTime: number; averageRenderTime: number; memoryUsage?: number } }
   | { type: 'SET_LAST_BACKUP'; payload: number };

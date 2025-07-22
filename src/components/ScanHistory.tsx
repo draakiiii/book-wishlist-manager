@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   History, 
   Search, 
@@ -240,15 +240,13 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({ isOpen, onClose }) => {
               </div>
             ) : (
               <div className="divide-y divide-slate-200 dark:divide-slate-700">
-                <AnimatePresence>
-                  {filteredAndSortedHistory.map((scan) => (
-                    <motion.div
-                      key={scan.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors duration-200"
-                    >
+                {filteredAndSortedHistory.map((scan) => (
+                  <motion.div
+                    key={scan.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors duration-200"
+                  >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
@@ -303,7 +301,6 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({ isOpen, onClose }) => {
                       </div>
                     </motion.div>
                   ))}
-                </AnimatePresence>
               </div>
             )}
           </div>

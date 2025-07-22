@@ -61,14 +61,14 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       if (!track) return;
       
       const capabilities = track.getCapabilities();
-      if (!capabilities.torch) {
+      if (!capabilities || !('torch' in capabilities)) {
         addFeedback('warning', 'Esta cámara no soporta linterna');
         return;
       }
       
       const newFlashlightState = !flashlightEnabled;
       await track.applyConstraints({
-        advanced: [{ torch: newFlashlightState }]
+        advanced: [{ torch: newFlashlightState } as any]
       });
       
       setFlashlightEnabled(newFlashlightState);
@@ -90,16 +90,16 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       if (!track) return;
       
       const capabilities = track.getCapabilities();
-      if (!capabilities.zoom) {
+      if (!capabilities || !('zoom' in capabilities)) {
         addFeedback('warning', 'Esta cámara no soporta zoom digital');
         return;
       }
       
-      const zoomRange = capabilities.zoom;
+      const zoomRange = capabilities.zoom as { min: number; max: number };
       const clampedZoom = Math.max(zoomRange.min, Math.min(zoomRange.max, newZoom));
       
       await track.applyConstraints({
-        advanced: [{ zoom: clampedZoom }]
+        advanced: [{ zoom: clampedZoom } as any]
       });
       
       setZoomLevel(clampedZoom);
@@ -251,6 +251,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
                 dispatch({
                   type: 'ADD_SCAN_HISTORY',
                   payload: {
+                    id: Date.now(),
                     isbn: scannedCode,
                     timestamp: Date.now(),
                     success: validateISBN(scannedCode),

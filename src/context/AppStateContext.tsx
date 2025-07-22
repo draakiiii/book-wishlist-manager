@@ -518,7 +518,16 @@ function appReducer(state: AppState, action: Action): AppState {
 
     case 'UPDATE_BOOK': {
       const { id, updates, listType } = action.payload;
-      const list = state[listType];
+      
+      if (listType === 'actual') {
+        if (!state.libroActual || state.libroActual.id !== id) return state;
+        return {
+          ...state,
+          libroActual: { ...state.libroActual, ...updates }
+        };
+      }
+      
+      const list = state[listType as 'tbr' | 'historial' | 'wishlist'];
       const updatedList = list.map(book => 
         book.id === id ? { ...book, ...updates } : book
       );
