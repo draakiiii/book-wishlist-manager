@@ -240,20 +240,6 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
             </motion.button>
           )}
 
-          {/* View button for all books */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleShowDescription();
-            }}
-            className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
-          >
-            <Eye className="h-3 w-3" />
-            <span>Visualizar</span>
-          </motion.button>
-
           {/* Edit button for TBR and Wishlist */}
           {(type === 'tbr' || type === 'wishlist') && onEdit && (
             <motion.button
@@ -281,6 +267,20 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
           >
             <Trash2 className="h-3 w-3" />
             <span>Eliminar</span>
+          </motion.button>
+
+          {/* View button for all books - placed last to be the largest */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleShowDescription();
+            }}
+            className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
+          >
+            <Eye className="h-3 w-3" />
+            <span>Visualizar</span>
           </motion.button>
         </motion.div>
       </div>

@@ -24,17 +24,40 @@ const TBRForm: React.FC = () => {
   const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'found' | 'error'>('idle');
   const [scanMessage, setScanMessage] = useState('');
   const [isBookFromScan, setIsBookFromScan] = useState(false);
+  const [selectedBookData, setSelectedBookData] = useState<BookData | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (titulo.trim()) {
-      const nuevoLibro = {
-        id: Date.now(),
-        titulo: titulo.trim(),
-        autor: autor.trim() || undefined,
-        paginas: paginas ? parseInt(paginas) : undefined,
-        sagaName: sagaName || undefined
-      };
+      let nuevoLibro;
+      
+      // Si tenemos datos completos del libro seleccionado, usarlos
+      if (selectedBookData) {
+        nuevoLibro = {
+          id: Date.now(),
+          titulo: selectedBookData.titulo,
+          autor: selectedBookData.autor,
+          paginas: selectedBookData.paginas,
+          isbn: selectedBookData.isbn,
+          publicacion: selectedBookData.publicacion,
+          editorial: selectedBookData.editorial,
+          descripcion: selectedBookData.descripcion,
+          categorias: selectedBookData.categorias,
+          idioma: selectedBookData.idioma,
+          calificacion: selectedBookData.calificacion,
+          numCalificaciones: selectedBookData.numCalificaciones,
+          sagaName: sagaName || undefined
+        };
+      } else {
+        // Si no hay datos completos, usar los campos del formulario
+        nuevoLibro = {
+          id: Date.now(),
+          titulo: titulo.trim(),
+          autor: autor.trim() || undefined,
+          paginas: paginas ? parseInt(paginas) : undefined,
+          sagaName: sagaName || undefined
+        };
+      }
 
       dispatch({ type: 'ADD_TO_TBR', payload: nuevoLibro });
       
@@ -46,6 +69,7 @@ const TBRForm: React.FC = () => {
       setIsExpanded(false);
       setScanStatus('idle');
       setScanMessage('');
+      setSelectedBookData(null);
     }
   };
 
@@ -92,37 +116,8 @@ const TBRForm: React.FC = () => {
           }
         }
         
-        // Si el libro tiene información completa, añadirlo directamente al TBR después de un delay
-        if (bookData.isbn || bookData.descripcion || bookData.editorial) {
-          setTimeout(() => {
-            const nuevoLibro = {
-              id: Date.now(),
-              titulo: bookData.titulo,
-              autor: bookData.autor,
-              paginas: bookData.paginas,
-              isbn: bookData.isbn,
-              publicacion: bookData.publicacion,
-              editorial: bookData.editorial,
-              descripcion: bookData.descripcion,
-              categorias: bookData.categorias,
-              idioma: bookData.idioma,
-              calificacion: bookData.calificacion,
-              numCalificaciones: bookData.numCalificaciones
-            };
-            
-            dispatch({ type: 'ADD_TO_TBR', payload: nuevoLibro });
-            
-            setScanStatus('found');
-            setScanMessage(`¡Libro añadido al TBR: ${bookData.titulo}`);
-            
-            // Reset form after a delay
-            setTimeout(() => {
-              setScanStatus('idle');
-              setScanMessage('');
-              setIsBookFromScan(false);
-            }, 3000);
-          }, 1000); // Delay de 1 segundo para que el usuario vea los campos actualizados
-        }
+        // Guardar los datos completos del libro para usarlos en el submit
+        setSelectedBookData(bookData);
       } else {
         setScanStatus('error');
         setScanMessage('No se encontró información del libro. Puedes agregarlo manualmente.');
@@ -159,37 +154,8 @@ const TBRForm: React.FC = () => {
       }
     }
     
-    // Si el libro tiene información completa, añadirlo directamente al TBR después de un delay
-    if (bookData.isbn || bookData.descripcion || bookData.editorial) {
-      setTimeout(() => {
-        const nuevoLibro = {
-          id: Date.now(),
-          titulo: bookData.titulo,
-          autor: bookData.autor,
-          paginas: bookData.paginas,
-          isbn: bookData.isbn,
-          publicacion: bookData.publicacion,
-          editorial: bookData.editorial,
-          descripcion: bookData.descripcion,
-          categorias: bookData.categorias,
-          idioma: bookData.idioma,
-          calificacion: bookData.calificacion,
-          numCalificaciones: bookData.numCalificaciones
-        };
-        
-        dispatch({ type: 'ADD_TO_TBR', payload: nuevoLibro });
-        
-        setScanStatus('found');
-        setScanMessage(`¡Libro añadido al TBR: ${bookData.titulo}`);
-        
-        // Reset form after a delay
-        setTimeout(() => {
-          setScanStatus('idle');
-          setScanMessage('');
-          setIsBookFromScan(false);
-        }, 3000);
-      }, 1000); // Delay de 1 segundo para que el usuario vea los campos actualizados
-    }
+    // Guardar los datos completos del libro para usarlos en el submit
+    setSelectedBookData(bookData);
   };
 
   const getStatusIcon = () => {
