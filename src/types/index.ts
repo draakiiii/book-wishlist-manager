@@ -98,7 +98,7 @@ export interface AppState {
   config: Configuracion;
   progreso: number;
   compraDesbloqueada: boolean;
-  libroActual: Libro | null;
+  librosActuales: Libro[];
   tbr: Libro[];
   historial: Libro[];
   wishlist: Libro[];
