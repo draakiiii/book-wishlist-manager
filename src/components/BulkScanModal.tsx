@@ -788,11 +788,12 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
                                 placeholder="Autor"
                               />
                               <input
-                                type="text"
+                                type="number"
                                 value={book.paginas}
                                 onChange={(e) => updateBook(book.id, { paginas: e.target.value })}
                                 className="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                                 placeholder="Páginas"
+                                min="1"
                               />
                               <input
                                 type="text"
