@@ -13,7 +13,8 @@ import {
   User,
   FileText,
   Star,
-  Edit3
+  Edit3,
+  Eye
 } from 'lucide-react';
 import BookDescriptionModal from './BookDescriptionModal';
 
@@ -121,10 +122,9 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         whileHover={{ y: -2 }}
-        className={`relative rounded-xl border-2 p-3 sm:p-4 transition-all duration-300 hover:shadow-lg cursor-pointer ${getTypeColor()}`}
+        className={`relative rounded-xl border-2 p-3 sm:p-4 transition-all duration-300 hover:shadow-lg ${getTypeColor()}`}
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
-        onClick={handleShowDescription}
       >
       {/* Type Badge */}
       <div className="absolute top-2 right-2 flex items-center space-x-1 px-2 py-1 bg-white/80 dark:bg-slate-800/80 rounded-full text-xs font-medium">
@@ -239,6 +239,20 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
               <span>Comprar</span>
             </motion.button>
           )}
+
+          {/* View button for all books */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleShowDescription();
+            }}
+            className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
+          >
+            <Eye className="h-3 w-3" />
+            <span>Visualizar</span>
+          </motion.button>
 
           {/* Edit button for TBR and Wishlist */}
           {(type === 'tbr' || type === 'wishlist') && onEdit && (
