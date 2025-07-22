@@ -27,6 +27,12 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Sync internal state with prop value
+  useEffect(() => {
+    setInputValue(value);
+    setDebouncedValue(value);
+  }, [value]);
+
   // Debounce the search to avoid too many API calls
   useEffect(() => {
     const timer = setTimeout(() => {

@@ -184,8 +184,13 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
             }
           }
           
-          if (error && error.name !== 'NotFoundException') {
-            console.error('Scanning error:', error);
+          if (error) {
+            // Only log errors that are not "no code found" errors
+            if (error.name !== 'NotFoundException' && 
+                error.name !== 'NoMultiFormatReaderWasFoundException' &&
+                !error.message?.includes('No MultiFormat Readers were able to detect')) {
+              console.error('Scanning error:', error);
+            }
           }
         }
       );
