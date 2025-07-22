@@ -22,12 +22,13 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
   const [lastScannedCode, setLastScannedCode] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [hasShownInitialMessage, setHasShownInitialMessage] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
   const scanningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const addFeedback = (type: ScanFeedback['type'], message: string) => {
+  const addFeedback = (type: ScanFeedback['type'], message: string, duration: number = 3000) => {
     const newFeedback: ScanFeedback = {
       type,
       message,
@@ -41,7 +42,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     
     setTimeout(() => {
       setFeedbackMessages(prev => prev.filter(f => f.timestamp !== newFeedback.timestamp));
-    }, 3000);
+    }, duration);
   };
 
   const validateISBN = (text: string): boolean => {
@@ -99,7 +100,10 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       const bestCameraIndex = findBestCamera(videoDevices);
       setCurrentCamera(bestCameraIndex);
       setIsInitialized(true);
-      addFeedback('info', `Cámara seleccionada: ${videoDevices[bestCameraIndex]?.label || 'Cámara sin nombre'}`);
+      
+      // Show camera info without feedback message
+      const cameraName = videoDevices[bestCameraIndex]?.label || 'Cámara sin nombre';
+      console.log(`Cámara seleccionada: ${cameraName}`);
 
       // Start scanning with best camera
       await startScanning();
@@ -144,7 +148,6 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
 
     try {
       setIsScanning(true);
-      addFeedback('info', 'Iniciando escáner...');
 
       const selectedDevice = availableCameras[currentCamera];
       if (!selectedDevice) {
@@ -164,12 +167,12 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
             if (scannedCode === lastScannedCode) return;
             
             setLastScannedCode(scannedCode);
-            addFeedback('success', `Código detectado: ${scannedCode}`);
+            addFeedback('success', `Código detectado: ${scannedCode}`, 2000);
             
             // Validate ISBN
             if (validateISBN(scannedCode)) {
               setIsProcessing(true);
-              addFeedback('success', 'ISBN válido detectado. Procesando...');
+              addFeedback('success', 'ISBN válido detectado. Procesando...', 1500);
               
               // Stop scanning
               stopScanning();
@@ -180,7 +183,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
                 onClose(); // Close the scanner modal
               }, 1500);
             } else {
-              addFeedback('warning', 'Código detectado pero no es un ISBN válido');
+              addFeedback('warning', 'Código detectado pero no es un ISBN válido', 2000);
             }
           }
           
@@ -195,7 +198,11 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
         }
       );
 
-      addFeedback('success', 'Escáner iniciado. Apunta al código de barras');
+      // Only show initial success message once
+      if (isScanning && !hasShownInitialMessage) {
+        addFeedback('success', 'Escáner listo. Apunta al código de barras del libro', 4000);
+        setHasShownInitialMessage(true);
+      }
     } catch (error) {
       console.error('Error starting scanner:', error);
       addFeedback('error', 'Error al iniciar el escáner');
@@ -228,13 +235,13 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     setCurrentCamera(nextCamera);
     
     const cameraName = availableCameras[nextCamera]?.label || 'Cámara sin nombre';
-    addFeedback('info', `Cambiando a: ${cameraName}`);
+    addFeedback('info', `Cambiando a: ${cameraName}`, 1500);
     
     // Restart scanning with new camera after a delay if it was scanning before
     if (wasScanning) {
       scanningTimeoutRef.current = setTimeout(() => {
         startScanning();
-      }, 500);
+      }, 300);
     }
   };
 
