@@ -4,7 +4,9 @@ import { motion } from 'framer-motion';
 import { Clock, Plus, Search, BookOpen, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import ISBNInputModal from './ISBNInputModal';
 import SagaAutocomplete from './SagaAutocomplete';
+import BookTitleAutocomplete from './BookTitleAutocomplete';
 import { fetchBookData, validateISBN } from '../services/googleBooksAPI';
+import { BookData } from '../types';
 
 const TBRForm: React.FC = () => {
   const { dispatch } = useAppState();
@@ -91,6 +93,25 @@ const TBRForm: React.FC = () => {
       setIsExpanded(true);
     } finally {
       setIsLoadingBook(false);
+    }
+  };
+
+  const handleBookSelect = (bookData: BookData) => {
+    setTitulo(bookData.titulo);
+    setAutor(bookData.autor || '');
+    setPaginas(bookData.paginas?.toString() || '');
+    setIsExpanded(true);
+    setScanStatus('found');
+    setScanMessage(`¡Libro seleccionado: ${bookData.titulo}`);
+    
+    // Show additional book info if available
+    if (bookData.editorial || bookData.publicacion) {
+      const additionalInfo: string[] = [];
+      if (bookData.editorial) additionalInfo.push(bookData.editorial);
+      if (bookData.publicacion) additionalInfo.push(bookData.publicacion.toString());
+      if (additionalInfo.length > 0) {
+        setScanMessage(prev => `${prev} (${additionalInfo.join(', ')})`);
+      }
     }
   };
 
@@ -199,18 +220,16 @@ const TBRForm: React.FC = () => {
             )}
 
             <div className="grid grid-cols-1 gap-3 sm:gap-4">
-              {/* Título */}
+              {/* Título con Autocompletado */}
               <div className="space-y-1.5 sm:space-y-2">
                 <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
                   Título del Libro *
                 </label>
-                <input
-                  type="text"
+                <BookTitleAutocomplete
                   value={titulo}
-                  onChange={(e) => setTitulo(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-warning-500 focus:border-transparent transition-colors duration-200 text-sm"
+                  onChange={setTitulo}
+                  onBookSelect={handleBookSelect}
                   placeholder="Ej: El Hobbit"
-                  required
                 />
               </div>
               
