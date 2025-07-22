@@ -9,6 +9,7 @@ const WishlistForm: React.FC = () => {
   const { state, dispatch } = useAppState();
   const [titulo, setTitulo] = useState('');
   const [autor, setAutor] = useState('');
+  const [paginas, setPaginas] = useState<number | undefined>(undefined);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -16,10 +17,15 @@ const WishlistForm: React.FC = () => {
     if (titulo.trim()) {
       dispatch({ 
         type: 'ADD_TO_WISHLIST', 
-        payload: { titulo: titulo.trim(), autor: autor.trim() || undefined } 
+        payload: { 
+          titulo: titulo.trim(), 
+          autor: autor.trim() || undefined,
+          paginas: paginas
+        } 
       });
       setTitulo('');
       setAutor('');
+      setPaginas(undefined);
       setIsExpanded(false);
     }
   };
@@ -27,6 +33,7 @@ const WishlistForm: React.FC = () => {
   const handleBookSelect = (bookData: BookData) => {
     setTitulo(bookData.titulo);
     setAutor(bookData.autor || '');
+    setPaginas(bookData.paginas);
   };
 
   return (
@@ -114,6 +121,27 @@ const WishlistForm: React.FC = () => {
                   placeholder="Ej: J.R.R. Tolkien"
                 />
               </div>
+              
+              {paginas && (
+                <div className="space-y-1.5 sm:space-y-2">
+                  <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Páginas (detectado automáticamente)
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="number"
+                      value={paginas}
+                      onChange={(e) => setPaginas(e.target.value ? parseInt(e.target.value) : undefined)}
+                      className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-secondary-500 focus:border-transparent transition-colors duration-200 text-sm"
+                      placeholder="Número de páginas"
+                      min="1"
+                    />
+                    <div className="px-3 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-xs font-medium">
+                      ✓ Auto
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">

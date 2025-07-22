@@ -284,7 +284,8 @@ function appReducer(state: AppState, action: Action): AppState {
       const nuevoLibro: Libro = {
         id: Date.now(),
         titulo: action.payload.titulo,
-        autor: action.payload.autor
+        autor: action.payload.autor,
+        paginas: action.payload.paginas
       };
       
       return {
