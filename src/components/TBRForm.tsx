@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Clock, Plus, Camera, BookOpen, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-import ScannerModal from './ScannerModal';
+import { Clock, Plus, Search, BookOpen, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import ISBNInputModal from './ISBNInputModal';
 import SagaAutocomplete from './SagaAutocomplete';
 import { fetchBookData, validateISBN } from '../services/googleBooksAPI';
 
@@ -13,7 +13,7 @@ const TBRForm: React.FC = () => {
   const [paginas, setPaginas] = useState('');
   const [sagaName, setSagaName] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
-  const [showScanner, setShowScanner] = useState(false);
+  const [showISBNInput, setShowISBNInput] = useState(false);
   const [isLoadingBook, setIsLoadingBook] = useState(false);
   const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'found' | 'error'>('idle');
   const [scanMessage, setScanMessage] = useState('');
@@ -42,8 +42,8 @@ const TBRForm: React.FC = () => {
     }
   };
 
-  const handleScanResult = async (result: string) => {
-    setShowScanner(false);
+  const handleSearchResult = async (result: string) => {
+    setShowISBNInput(false);
     setIsLoadingBook(true);
     setScanStatus('scanning');
     setScanMessage('Validando ISBN...');
@@ -103,7 +103,7 @@ const TBRForm: React.FC = () => {
       case 'error':
         return <AlertCircle className="h-4 w-4 text-red-500" />;
       default:
-        return <Camera className="h-4 w-4 text-slate-500" />;
+        return <Search className="h-4 w-4 text-slate-500" />;
     }
   };
 
@@ -158,13 +158,13 @@ const TBRForm: React.FC = () => {
           </motion.button>
         ) : (
           <form onSubmit={handleSubmit} className="p-3 sm:p-4 space-y-3 sm:space-y-4">
-            {/* Scanner Button */}
+            {/* ISBN Search Button */}
             <div className="flex justify-center">
               <motion.button
                 type="button"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setShowScanner(true)}
+                onClick={() => setShowISBNInput(true)}
                 disabled={isLoadingBook}
                 className="w-full sm:w-auto px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-400 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
               >
@@ -175,8 +175,8 @@ const TBRForm: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <Camera className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span>Escanear ISBN</span>
+                    <Search className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span>Buscar por ISBN</span>
                   </>
                 )}
               </motion.button>
@@ -289,11 +289,11 @@ const TBRForm: React.FC = () => {
         )}
       </motion.div>
 
-      {/* Scanner Modal */}
-      {showScanner && (
-        <ScannerModal
-          onClose={() => setShowScanner(false)}
-          onScan={handleScanResult}
+      {/* ISBN Input Modal */}
+      {showISBNInput && (
+        <ISBNInputModal
+          onClose={() => setShowISBNInput(false)}
+          onSearch={handleSearchResult}
         />
       )}
     </div>
