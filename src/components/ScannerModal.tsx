@@ -54,13 +54,13 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
     feedbackTimeoutRef.current = setTimeout(() => {
       setFeedbackMessages(prev => prev.filter(f => f.timestamp !== newFeedback.timestamp));
     }, 2000);
-  }, []);
+  }, [feedbackTimeoutRef]);
 
   const handleScanResult = useCallback((result: string) => {
     addFeedback('success', `¡ISBN detectado: ${result}`);
     setLastScanTime(new Date());
     onScan(result);
-  }, [onScan, addFeedback]);
+  }, [onScan]);
 
   const handleCloseModal = useCallback(() => {
     // Stop scanner
@@ -138,7 +138,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
 
   // Initialize camera and scanner - only when camera changes
   useEffect(() => {
-    if (!selectedCamera || !videoRef.current) return;
+    if (!selectedCamera || !videoRef.current || isInitialized) return;
 
     const initCamera = async () => {
       try {
@@ -213,7 +213,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
         currentStream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [selectedCamera, addFeedback, currentStream]);
+  }, [selectedCamera, currentStream, addFeedback]);
 
   const checkTorchCapability = async (stream: MediaStream) => {
     try {
