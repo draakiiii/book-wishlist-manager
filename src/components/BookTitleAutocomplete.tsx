@@ -28,6 +28,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   const [suggestions, setSuggestions] = useState<BookData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [debouncedValue, setDebouncedValue] = useState(value);
+  const [justSelected, setJustSelected] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -49,7 +50,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   // Search for books when debounced value changes
   useEffect(() => {
     const searchBooks = async () => {
-      if (disabled || disableAutocomplete || debouncedValue.trim().length < 2) {
+      if (disabled || disableAutocomplete || debouncedValue.trim().length < 2 || justSelected) {
         setSuggestions([]);
         setIsOpen(false);
         return;
@@ -70,7 +71,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     };
 
     searchBooks();
-  }, [debouncedValue, disabled, disableAutocomplete]);
+  }, [debouncedValue, disabled, disableAutocomplete, justSelected]);
 
   // Handle click outside
   useEffect(() => {
@@ -96,6 +97,11 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     setInputValue(newValue);
     onChange(newValue);
     
+    // Reset justSelected flag when user starts typing manually
+    if (justSelected) {
+      setJustSelected(false);
+    }
+    
     // Close autocomplete if disabled
     if (disableAutocomplete) {
       setIsOpen(false);
@@ -104,16 +110,23 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
 
   const handleBookSelect = (book: BookData) => {
     setInputValue(book.titulo);
+    setDebouncedValue(book.titulo); // Set debounced value to prevent re-search
+    setJustSelected(true); // Mark that we just selected a book
     onChange(book.titulo);
     setIsOpen(false);
     
     if (onBookSelect) {
       onBookSelect(book);
     }
+    
+    // Reset the justSelected flag after a short delay
+    setTimeout(() => {
+      setJustSelected(false);
+    }, 1000);
   };
 
   const handleInputFocus = () => {
-    if (disabled || disableAutocomplete) return;
+    if (disabled || disableAutocomplete || justSelected) return;
     
     if (suggestions.length > 0) {
       setIsOpen(true);
