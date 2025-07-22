@@ -1,15 +1,23 @@
 import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
-import { AppState, Action, Libro } from '../types';
+import { AppState, Action, Libro, ScanHistory, Statistics } from '../types';
 import { getInitialTheme, persistThemePreference } from '../utils/themeConfig';
 
-const STORAGE_KEY = 'guardianComprasState_v6_0';
+const STORAGE_KEY = 'guardianComprasState_v7_0';
 
 const initialState: AppState = {
   config: {
     puntosPorLibro: 250,
     puntosPorPagina: 1,
     puntosPorSaga: 500,
-    objetivo: 1000
+    objetivo: 1000,
+    flashlightEnabled: false,
+    zoomLevel: 1,
+    autoSaveEnabled: true,
+    autoSaveInterval: 30000,
+    searchHistoryEnabled: true,
+    scanHistoryEnabled: true,
+    statisticsEnabled: true,
+    exportFormat: 'json'
   },
   progreso: 0,
   compraDesbloqueada: false,
@@ -19,7 +27,13 @@ const initialState: AppState = {
   wishlist: [],
   sagas: [],
   sagaNotifications: [],
-  darkMode: getInitialTheme()
+  darkMode: getInitialTheme(),
+  scanHistory: [],
+  searchHistory: [],
+  performanceMetrics: {
+    lastRenderTime: 0,
+    averageRenderTime: 0
+  }
 };
 
 function loadStateFromStorage(): AppState | null {
@@ -34,7 +48,10 @@ function loadStateFromStorage(): AppState | null {
         // Asegurar que las propiedades que podrían no existir en versiones anteriores estén presentes
         sagaNotifications: parsedState.sagaNotifications || [],
         darkMode: parsedState.darkMode || false,
-        sagas: parsedState.sagas || []
+        sagas: parsedState.sagas || [],
+        scanHistory: parsedState.scanHistory || [],
+        searchHistory: parsedState.searchHistory || [],
+        performanceMetrics: parsedState.performanceMetrics || { lastRenderTime: 0, averageRenderTime: 0 }
       };
       // Verificar y corregir el estado de compraDesbloqueada
       if (completeState.progreso >= completeState.config.objetivo) {
@@ -454,6 +471,124 @@ function appReducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         sagaNotifications: state.sagaNotifications.filter(n => n.id !== action.payload.id)
+      };
+    }
+
+    case 'ADD_SCAN_HISTORY': {
+      if (!state.config.scanHistoryEnabled) return state;
+      
+      const newScanHistory: ScanHistory = {
+        ...action.payload,
+        id: Date.now(),
+        timestamp: Date.now()
+      };
+      
+      return {
+        ...state,
+        scanHistory: [newScanHistory, ...state.scanHistory.slice(0, 99)] // Keep last 100 scans
+      };
+    }
+
+    case 'CLEAR_SCAN_HISTORY': {
+      return {
+        ...state,
+        scanHistory: []
+      };
+    }
+
+    case 'ADD_SEARCH_HISTORY': {
+      if (!state.config.searchHistoryEnabled) return state;
+      
+      const searchTerm = action.payload.trim();
+      if (!searchTerm) return state;
+      
+      const filteredHistory = state.searchHistory.filter(term => term !== searchTerm);
+      return {
+        ...state,
+        searchHistory: [searchTerm, ...filteredHistory.slice(0, 19)] // Keep last 20 searches
+      };
+    }
+
+    case 'CLEAR_SEARCH_HISTORY': {
+      return {
+        ...state,
+        searchHistory: []
+      };
+    }
+
+    case 'UPDATE_BOOK': {
+      const { id, updates, listType } = action.payload;
+      const list = state[listType];
+      const updatedList = list.map(book => 
+        book.id === id ? { ...book, ...updates } : book
+      );
+      
+      return {
+        ...state,
+        [listType]: updatedList
+      };
+    }
+
+    case 'UPDATE_SAGA': {
+      const { id, updates } = action.payload;
+      const updatedSagas = state.sagas.map(saga => 
+        saga.id === id ? { ...saga, ...updates } : saga
+      );
+      
+      return {
+        ...state,
+        sagas: updatedSagas
+      };
+    }
+
+    case 'IMPORT_DATA': {
+      const { libros, sagas, config } = action.payload;
+      
+      let newState = { ...state };
+      
+      if (libros) {
+        if (libros.tbr) newState.tbr = libros.tbr;
+        if (libros.historial) newState.historial = libros.historial;
+        if (libros.wishlist) newState.wishlist = libros.wishlist;
+        if (libros.actual) newState.libroActual = libros.actual;
+      }
+      
+      if (sagas) {
+        newState.sagas = sagas;
+      }
+      
+      if (config) {
+        newState.config = { ...newState.config, ...config };
+      }
+      
+      // Update saga counters after import
+      return actualizarContadoresSagas(newState);
+    }
+
+    case 'EXPORT_DATA': {
+      // This action doesn't modify state, it's handled by the component
+      return state;
+    }
+
+    case 'SET_PERFORMANCE_METRICS': {
+      const { lastRenderTime, averageRenderTime, memoryUsage } = action.payload;
+      const currentAvg = state.performanceMetrics?.averageRenderTime || 0;
+      const newAvg = currentAvg === 0 ? lastRenderTime : (currentAvg + lastRenderTime) / 2;
+      
+      return {
+        ...state,
+        performanceMetrics: {
+          lastRenderTime,
+          averageRenderTime: newAvg,
+          memoryUsage
+        }
+      };
+    }
+
+    case 'SET_LAST_BACKUP': {
+      return {
+        ...state,
+        lastBackup: action.payload
       };
     }
 

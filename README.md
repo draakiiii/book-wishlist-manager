@@ -1,86 +1,104 @@
-# 🛡️ Guardián de Compras - Gestor de Lista de Deseos de Libros
+# Guardián de Compras - Versión 7.0
 
-Una aplicación moderna y elegante para gestionar tu lista de deseos de libros con un sistema de recompensas basado en puntos.
+Una aplicación avanzada para gestionar tu biblioteca personal, con sistema de recompensas, seguimiento de lectura y herramientas avanzadas de gestión.
 
-## ✨ Características
+## 🚀 Nuevas Características - Versión 7.0
 
-### 🎨 **Interfaz Moderna**
-- **Diseño Responsivo**: Se adapta perfectamente a cualquier dispositivo
-- **Modo Oscuro/Claro**: Cambia entre temas con un solo clic
-- **Animaciones Suaves**: Transiciones fluidas con Framer Motion
-- **Iconografía Moderna**: Iconos de Lucide React para una experiencia visual superior
+### 🔍 Búsqueda y Filtros Avanzados
+- **Búsqueda en tiempo real** con debounce para mejor rendimiento
+- **Filtros múltiples**: por autor, saga, género, idioma, editorial, calificación, páginas, precio
+- **Filtros por estado**: TBR, Historial, Wishlist, Actual
+- **Historial de búsquedas** con las últimas 20 consultas
+- **Búsqueda por ISBN, título, autor, editorial**
+- **Resultados en tiempo real** con contadores por categoría
 
-### 📚 **Gestión de Libros**
-- **Pila de Lectura (TBR)**: Agrega libros que ya posees
-- **Libro Actual**: Gestiona el libro que estás leyendo actualmente
-- **Historial de Lectura**: Registra todos los libros completados
-- **Lista de Deseos**: Guarda libros que quieres comprar
+### 📊 Estadísticas Avanzadas
+- **Dashboard completo** con métricas detalladas
+- **Gráficos interactivos**: líneas, barras, áreas, circulares
+- **Progreso mensual y anual** con visualizaciones
+- **Análisis de géneros y autores** más leídos
+- **Métricas de rendimiento** en tiempo real
+- **Tiempo promedio de lectura** calculado automáticamente
+- **Tasa de éxito de escaneos** y estadísticas de uso
 
-### 🎯 **Sistema de Puntos**
-- **Puntos por Libro**: Gana puntos al terminar un libro
-- **Puntos por Página**: Bonus adicional por cada página leída
-- **Bonus por Saga**: Recompensa extra por completar sagas
-- **Objetivos Personalizables**: Configura tus propios objetivos
+### 💾 Exportación e Importación de Datos
+- **Múltiples formatos**: JSON, CSV, Excel
+- **Respaldo automático** con timestamps
+- **Importación inteligente** que detecta formatos automáticamente
+- **Migración de versiones** anteriores
+- **Resumen de datos** antes de importar
+- **Zona de peligro** para eliminación completa
+- **Historial de respaldos** con fechas
 
-### 🛒 **Sistema de Compras**
-- **Compra Desbloqueada**: Alcanza tu objetivo para desbloquear una compra
-- **Gestión de Wishlist**: Agrega libros a tu lista de deseos
-- **Control de Gastos**: Evita compras impulsivas
+### 📱 Escáner de Códigos de Barras Mejorado
+- **Linterna integrada** para escaneo en condiciones de poca luz
+- **Zoom digital** con controles precisos (1x - 5x)
+- **Historial de escaneos** con estadísticas detalladas
+- **Filtros por éxito/error** y búsqueda en historial
+- **Tasa de éxito** y métricas de rendimiento
+- **Interfaz mejorada** con controles táctiles
+- **Detección automática** de capacidades de cámara
 
-### 📱 **Funcionalidades Avanzadas**
-- **Escáner de Códigos de Barras**: Escanea ISBN con la cámara para agregar libros rápidamente
-- **Entrada Manual de ISBN**: Ingresa códigos ISBN manualmente con validación automática
-- **Autocompletado de Títulos**: Búsqueda inteligente de libros por título
-- **Persistencia de Datos**: Tus datos se guardan automáticamente
-- **Configuración Flexible**: Personaliza el sistema de puntos
+### ⚡ Mejoras en Performance
+- **Virtualización de listas** para mejor rendimiento
+- **Memoización inteligente** de componentes
+- **Debounce en búsquedas** para reducir carga
+- **Lazy loading** de componentes pesados
+- **Métricas de rendimiento** en tiempo real
+- **Optimización de re-renders** con React.memo
+- **Gestión eficiente de memoria**
 
-## 🚀 Tecnologías Utilizadas
+### 🎯 Gestión de Sagas Mejorada
+- **Detección automática** de sagas por nombre
+- **Contadores dinámicos** de libros por saga
+- **Notificaciones inteligentes** de completado
+- **Gestión de sagas huérfanas** automática
+- **Estadísticas detalladas** por saga
+- **Filtros por estado** de completado
+- **Importación/exportación** de datos de sagas
 
-- **React 19**: Framework de interfaz de usuario
-- **TypeScript**: Tipado estático para mayor seguridad
-- **Tailwind CSS**: Framework de CSS utility-first
-- **Framer Motion**: Animaciones y transiciones
-- **Lucide React**: Iconografía moderna
-- **ZXing Library**: Escaneo de códigos de barras
+### 📈 Historial de Escaneos
+- **Registro completo** de todos los escaneos
+- **Filtros avanzados** por éxito, fecha, ISBN
+- **Búsqueda en historial** con resultados en tiempo real
+- **Estadísticas detalladas** de uso
+- **Exportación** del historial completo
+- **Limpieza selectiva** de registros
+- **Métricas de rendimiento** del escáner
 
-## 🎨 Diseño y UX
+## 🛠️ Tecnologías Utilizadas
 
-### **Paleta de Colores**
-- **Primario**: Azul (#0ea5e9) - Para acciones principales
-- **Secundario**: Púrpura (#d946ef) - Para lista de deseos
-- **Éxito**: Verde (#22c55e) - Para acciones positivas
-- **Advertencia**: Amarillo (#f59e0b) - Para pila de lectura
-- **Peligro**: Rojo (#ef4444) - Para acciones destructivas
+### Frontend
+- **React 19** con TypeScript
+- **Framer Motion** para animaciones
+- **Tailwind CSS** para estilos
+- **Lucide React** para iconos
+- **Recharts** para gráficos
+- **React Window** para virtualización
 
-### **Componentes Modernos**
-- **Cards con Efectos**: Hover effects y sombras dinámicas
-- **Botones Animados**: Micro-interacciones para mejor feedback
-- **Formularios Intuitivos**: Validación visual y estados claros
-- **Modales Elegantes**: Overlays con backdrop blur
+### Escáner de Códigos
+- **@zxing/library** para decodificación
+- **MediaDevices API** para acceso a cámara
+- **Torch API** para control de linterna
+- **Zoom API** para zoom digital
 
-## 📱 Responsive Design
+### Gestión de Datos
+- **File-Saver** para descarga de archivos
+- **PapaParse** para parsing CSV
+- **Date-fns** para manejo de fechas
+- **LocalStorage** para persistencia
 
-La aplicación está optimizada para:
-- **Móviles**: Layout de una columna con navegación táctil
-- **Tablets**: Layout de dos columnas para mejor aprovechamiento del espacio
-- **Desktop**: Layout de tres columnas con sidebar para libro actual
+### Performance
+- **React.memo** para optimización
+- **useDebounce** para búsquedas
+- **React Intersection Observer** para lazy loading
+- **Performance API** para métricas
 
-## 🎯 Flujo de Usuario
-
-1. **Configuración**: Establece tus objetivos y sistema de puntos
-2. **Agregar Libros**: Usa el formulario o escáner para agregar libros a tu pila
-3. **Leer**: Marca un libro como "actual" y comienza a leer
-4. **Completar**: Termina libros para ganar puntos
-5. **Desbloquear**: Alcanza tu objetivo para desbloquear una compra
-6. **Comprar**: Agrega libros a tu lista de deseos y cómpralos
-
-## 🔧 Instalación y Uso
+## 📦 Instalación
 
 ```bash
 # Clonar el repositorio
-git clone [url-del-repositorio]
-
-# Entrar al directorio
+git clone <repository-url>
 cd guardian-compras
 
 # Instalar dependencias
@@ -88,43 +106,84 @@ npm install
 
 # Iniciar en modo desarrollo
 npm start
+
+# Construir para producción
+npm run build
 ```
 
-## 🎨 Personalización
+## 🎮 Uso
 
-### **Temas de Colores**
-La aplicación incluye un sistema de temas completo con:
-- Colores primarios y secundarios personalizables
-- Modo oscuro/claro automático
-- Transiciones suaves entre temas
+### Funciones Básicas
+1. **Agregar libros** a tu TBR (To Be Read)
+2. **Iniciar lectura** de un libro
+3. **Marcar como completado** para ganar puntos
+4. **Gestionar wishlist** para compras futuras
+5. **Seguir sagas** automáticamente
 
-### **Configuración de Puntos**
-Personaliza completamente tu sistema de recompensas:
-- Puntos por libro terminado
-- Puntos por página leída
-- Bonus por saga completada
-- Objetivo personalizable
+### Funciones Avanzadas
+1. **Búsqueda avanzada** con múltiples filtros
+2. **Estadísticas detalladas** de tu lectura
+3. **Exportar/importar** todos tus datos
+4. **Escáner mejorado** con linterna y zoom
+5. **Historial completo** de escaneos
 
-## 📊 Estadísticas
+## 🔧 Configuración
 
-La aplicación te permite:
-- Ver tu progreso actual hacia el objetivo
-- Rastrear libros leídos y por leer
-- Monitorear el estado de tus sagas
-- Gestionar tu lista de deseos
+### Configuración del Escáner
+- **Preferencia de cámara**: Selecciona cámara frontal/trasera
+- **Linterna**: Activa/desactiva según necesidad
+- **Zoom**: Ajusta de 1x a 5x para mejor enfoque
+- **Historial**: Guarda todos los escaneos automáticamente
 
-## 🔮 Futuras Mejoras
+### Configuración de Búsqueda
+- **Debounce**: 300ms para búsquedas en tiempo real
+- **Historial**: Últimas 20 búsquedas guardadas
+- **Filtros**: Configurables por tipo de dato
+- **Resultados**: Ordenables por múltiples criterios
 
-- [ ] Integración con APIs de librerías online
-- [ ] Estadísticas avanzadas y gráficos
-- [ ] Exportación de datos
-- [ ] Sincronización en la nube
-- [ ] Notificaciones push
-- [ ] Modo offline
+### Configuración de Exportación
+- **Formato por defecto**: JSON
+- **Respaldo automático**: Cada 30 segundos
+- **Compresión**: Opcional para archivos grandes
+- **Validación**: Verificación de integridad
 
-## 🤝 Contribuir
+## 📊 Métricas de Performance
 
-Las contribuciones son bienvenidas. Por favor:
+La aplicación incluye monitoreo en tiempo real de:
+- **Tiempo de renderizado**: Promedio y actual
+- **Uso de memoria**: Heap size y garbage collection
+- **Tiempo de respuesta**: Interacciones del usuario
+- **Carga de componentes**: Lazy loading metrics
+
+## 🔒 Privacidad y Seguridad
+
+- **Datos locales**: Todo se almacena en tu dispositivo
+- **Sin tracking**: No se envían datos a servidores externos
+- **Exportación segura**: Archivos locales únicamente
+- **Permisos mínimos**: Solo cámara cuando se usa escáner
+
+## 🐛 Solución de Problemas
+
+### Escáner no funciona
+1. Verifica permisos de cámara
+2. Prueba cambiar de cámara
+3. Activa linterna si hay poca luz
+4. Ajusta zoom para mejor enfoque
+
+### Búsqueda lenta
+1. Usa filtros específicos
+2. Reduce términos de búsqueda
+3. Verifica que no haya demasiados libros
+4. Reinicia la aplicación si es necesario
+
+### Problemas de importación
+1. Verifica formato del archivo
+2. Asegúrate de que sea JSON o CSV válido
+3. Revisa la versión de exportación
+4. Haz respaldo antes de importar
+
+## 🤝 Contribución
+
 1. Fork el proyecto
 2. Crea una rama para tu feature
 3. Commit tus cambios
@@ -133,8 +192,29 @@ Las contribuciones son bienvenidas. Por favor:
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
+
+## 🆕 Changelog
+
+### v7.0.0
+- ✨ Búsqueda y filtros avanzados
+- 📊 Estadísticas avanzadas con gráficos
+- 💾 Exportación/importación de datos
+- 📱 Escáner mejorado con linterna y zoom
+- ⚡ Optimizaciones de performance
+- 🎯 Gestión de sagas mejorada
+- 📈 Historial de escaneos completo
+
+### v6.0.0
+- 🎨 Sistema de temas mejorado
+- 📱 Interfaz responsive
+- 🔧 Configuración avanzada
+- 📊 Progreso visual mejorado
+
+## 📞 Soporte
+
+Para reportar bugs o solicitar features, por favor abre un issue en GitHub.
 
 ---
 
-**¡Disfruta gestionando tu biblioteca personal con estilo! 📚✨** 
+**Guardián de Compras v7.0** - Tu compañero perfecto para gestionar tu biblioteca personal 🚀 
