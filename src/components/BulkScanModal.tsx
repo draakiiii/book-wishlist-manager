@@ -63,6 +63,9 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const scanningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Use ref to track current scanned books for real-time duplicate detection
+  const scannedBooksRef = useRef<ScannedBook[]>([]);
 
   const addFeedback = (type: ScanFeedback['type'], message: string, duration: number = 3000) => {
     const newFeedback: ScanFeedback = {
@@ -261,8 +264,8 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
   };
 
   const handleScannedCode = async (scannedCode: string) => {
-    // Check if book already exists
-    if (scannedBooks.some(book => book.isbn === scannedCode)) {
+    // Check if book already exists using ref for real-time detection
+    if (scannedBooksRef.current.some(book => book.isbn === scannedCode)) {
       addFeedback('warning', 'Este libro ya fue escaneado');
       
       // Add delay to prevent multiple scans of the same code even for duplicates
@@ -292,7 +295,12 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
       status: 'loading'
     };
 
-    setScannedBooks(prev => [...prev, newBook]);
+    setScannedBooks(prev => {
+      const newBooks = [...prev, newBook];
+      // Update ref for real-time duplicate detection
+      scannedBooksRef.current = newBooks;
+      return newBooks;
+    });
     addFeedback('info', `Escaneado: ${scannedCode}`, 2000);
 
     try {
@@ -357,7 +365,12 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
   };
 
   const removeBook = (id: number) => {
-    setScannedBooks(prev => prev.filter(book => book.id !== id));
+    setScannedBooks(prev => {
+      const newBooks = prev.filter(book => book.id !== id);
+      // Update ref for real-time duplicate detection
+      scannedBooksRef.current = newBooks;
+      return newBooks;
+    });
     setSelectedBooks(prev => {
       const newSet = new Set(prev);
       newSet.delete(id);
@@ -445,6 +458,8 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
   useEffect(() => {
     if (isOpen) {
       initializeScanner();
+      // Initialize ref with empty array
+      scannedBooksRef.current = [];
     } else {
       handleCloseModal();
     }
