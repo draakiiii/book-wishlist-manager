@@ -60,7 +60,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
     addFeedback('success', `¡ISBN detectado: ${result}`);
     setLastScanTime(new Date());
     onScan(result);
-  }, [onScan]);
+  }, [onScan, addFeedback]);
 
   const handleCloseModal = useCallback(() => {
     // Stop scanner
@@ -134,7 +134,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
         currentStream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []); // Only run once
+  }, [addFeedback, currentStream]); // Added missing dependencies
 
   // Initialize camera and scanner - only when camera changes
   useEffect(() => {
