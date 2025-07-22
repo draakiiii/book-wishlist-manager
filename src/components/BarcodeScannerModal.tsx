@@ -24,7 +24,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
   const [lastScannedCode, setLastScannedCode] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [hasShownInitialMessage, setHasShownInitialMessage] = useState(false);
+
   const [flashlightEnabled, setFlashlightEnabled] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   
@@ -142,47 +142,30 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
         codeReaderRef.current = new BrowserMultiFormatReader();
       }
 
-      // Request camera permissions first
-      try {
-        await navigator.mediaDevices.getUserMedia({ video: true });
-      } catch (permissionError) {
-        addFeedback('error', 'Permiso de cámara denegado. Por favor, permite el acceso a la cámara.');
-        return;
-      }
-
       // Get available cameras
       const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === 'videoinput');
-      setAvailableCameras(videoDevices);
+      const cameras = devices.filter(device => device.kind === 'videoinput');
+      setAvailableCameras(cameras);
 
-      if (videoDevices.length === 0) {
+      if (cameras.length === 0) {
         addFeedback('error', 'No se encontraron cámaras disponibles');
         return;
       }
 
-      // Find the best camera (prefer saved preference, then back camera, then any camera)
-      const savedPreference = state.config.cameraPreference;
-      let bestCameraIndex = 0;
-      
-      if (savedPreference !== undefined && savedPreference < videoDevices.length) {
-        // Use saved preference if it's valid
-        bestCameraIndex = savedPreference;
-        console.log(`Usando cámara guardada: ${savedPreference}`);
-      } else {
-        // Find the best camera using the algorithm
-        bestCameraIndex = findBestCamera(videoDevices);
-        console.log(`Usando algoritmo de selección: ${bestCameraIndex}`);
-      }
-      
+      const bestCameraIndex = findBestCamera(cameras);
       setCurrentCamera(bestCameraIndex);
-      setIsInitialized(true);
-      
-      // Show camera info without feedback message
-      const cameraName = videoDevices[bestCameraIndex]?.label || 'Cámara sin nombre';
-      console.log(`Cámara seleccionada: ${cameraName}`);
 
-      // Start scanning with best camera
-      await startScanning();
+      // Request camera permissions with specific device
+      await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          deviceId: cameras[bestCameraIndex].deviceId,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      });
+
+      setIsInitialized(true);
+      addFeedback('success', 'Escáner inicializado correctamente', 2000);
     } catch (error) {
       console.error('Error initializing scanner:', error);
       addFeedback('error', 'Error al inicializar el escáner');
@@ -190,103 +173,85 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
   };
 
   const findBestCamera = (cameras: MediaDeviceInfo[]): number => {
-    // Priority order: back camera > front camera > any camera
-    const backCameras = cameras.filter(camera => 
+    // Use configured camera preference if available
+    if (state.config.cameraPreference !== undefined && state.config.cameraPreference < cameras.length) {
+      return state.config.cameraPreference;
+    }
+    
+    // Prefer back camera
+    const backCamera = cameras.findIndex(camera => 
       camera.label.toLowerCase().includes('back') || 
-      camera.label.toLowerCase().includes('trasera') ||
-      camera.label.toLowerCase().includes('posterior')
+      camera.label.toLowerCase().includes('posterior') ||
+      camera.label.toLowerCase().includes('trasera')
     );
     
-    const frontCameras = cameras.filter(camera => 
-      camera.label.toLowerCase().includes('front') || 
-      camera.label.toLowerCase().includes('frontal') ||
-      camera.label.toLowerCase().includes('selfie')
-    );
-
-    // Return back camera if available
-    if (backCameras.length > 0) {
-      const backCameraIndex = cameras.findIndex(camera => camera.deviceId === backCameras[0].deviceId);
-      return backCameraIndex;
-    }
-
-    // Return front camera if available
-    if (frontCameras.length > 0) {
-      const frontCameraIndex = cameras.findIndex(camera => camera.deviceId === frontCameras[0].deviceId);
-      return frontCameraIndex;
-    }
-
-    // Return first camera as fallback
+    if (backCamera !== -1) return backCamera;
+    
+    // Fallback to first camera
     return 0;
   };
 
-    const startScanning = async () => {
-    if (!codeReaderRef.current || !videoRef.current || isScanning) return;
+  const startScanning = async () => {
+    if (!codeReaderRef.current || !videoRef.current || !isInitialized) return;
 
     try {
       setIsScanning(true);
-
-      const selectedDevice = availableCameras[currentCamera];
-      if (!selectedDevice) {
-        addFeedback('error', 'Cámara no disponible');
-        setIsScanning(false);
-        return;
-      }
-
+      addFeedback('info', 'Iniciando escaneo...', 1500);
+      
       await codeReaderRef.current.decodeFromVideoDevice(
-        selectedDevice.deviceId,
+        availableCameras[currentCamera]?.deviceId || null,
         videoRef.current,
         (result: Result | null, error: any) => {
-                      if (result) {
-              const scannedCode = result.getText();
-              
-              // Prevent duplicate scans
-              if (scannedCode === lastScannedCode) return;
-              
-              setLastScannedCode(scannedCode);
-              addFeedback('success', `Código detectado: ${scannedCode}`, 2000);
-              
-              // Add to scan history
-              // Buscar información del libro en las listas existentes
-              const allBooks = [
-                ...state.tbr,
-                ...state.historial,
-                ...state.wishlist,
-                ...state.librosActuales
-              ];
-              const existingBook = allBooks.find(book => book.isbn === scannedCode);
-              
-              if (state.config.scanHistoryEnabled) {
-                dispatch({
-                  type: 'ADD_SCAN_HISTORY',
-                  payload: {
-                    id: Date.now(),
-                    isbn: scannedCode,
-                    titulo: existingBook?.titulo,
-                    autor: existingBook?.autor,
-                    timestamp: Date.now(),
-                    success: validateISBN(scannedCode),
-                    errorMessage: validateISBN(scannedCode) ? undefined : 'ISBN inválido'
-                  }
-                });
-              }
-              
-              // Validate ISBN
-              if (validateISBN(scannedCode)) {
-                setIsProcessing(true);
-                addFeedback('success', 'ISBN válido detectado. Procesando...', 1500);
-                
-                // Stop scanning
-                stopScanning();
-                
-                // Process the ISBN and close modal
-                setTimeout(() => {
-                  onScanSuccess(scannedCode);
-                  onClose(); // Close the scanner modal
-                }, 1500);
-              } else {
-                addFeedback('warning', 'Código detectado pero no es un ISBN válido', 2000);
-              }
+          if (result) {
+            const scannedCode = result.getText();
+            
+            // Prevent duplicate scans
+            if (scannedCode === lastScannedCode) return;
+            
+            setLastScannedCode(scannedCode);
+            addFeedback('success', `Código detectado: ${scannedCode}`, 2000);
+            
+            // Add to scan history
+            const allBooks = [
+              ...state.tbr,
+              ...state.historial,
+              ...state.wishlist,
+              ...state.librosActuales
+            ];
+            const existingBook = allBooks.find(book => book.isbn === scannedCode);
+            
+            if (state.config.scanHistoryEnabled) {
+              dispatch({
+                type: 'ADD_SCAN_HISTORY',
+                payload: {
+                  id: Date.now(),
+                  isbn: scannedCode,
+                  titulo: existingBook?.titulo,
+                  autor: existingBook?.autor,
+                  timestamp: Date.now(),
+                  success: validateISBN(scannedCode),
+                  errorMessage: validateISBN(scannedCode) ? undefined : 'ISBN inválido'
+                }
+              });
             }
+            
+            // Validate ISBN
+            if (validateISBN(scannedCode)) {
+              setIsProcessing(true);
+              addFeedback('success', 'ISBN válido detectado. Procesando...', 1500);
+              
+              // Stop scanning
+              stopScanning();
+              
+              // Process the ISBN and close modal
+              setTimeout(() => {
+                onScanSuccess(scannedCode);
+                onClose();
+              }, 1500);
+            } else {
+              addFeedback('warning', 'Código detectado pero no es un ISBN válido', 2000);
+            }
+          }
           
           if (error) {
             // Only log errors that are not "no code found" errors
@@ -298,16 +263,10 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
           }
         }
       );
-
-      // Only show initial success message once
-      if (isScanning && !hasShownInitialMessage) {
-        addFeedback('success', 'Escáner listo. Apunta al código de barras del libro', 4000);
-        setHasShownInitialMessage(true);
-      }
     } catch (error) {
       console.error('Error starting scanner:', error);
-      addFeedback('error', 'Error al iniciar el escáner');
       setIsScanning(false);
+      addFeedback('error', 'Error al iniciar el escáner');
     }
   };
 
@@ -316,8 +275,8 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       codeReaderRef.current.reset();
     }
     setIsScanning(false);
+    addFeedback('info', 'Escaneo detenido', 1500);
     
-    // Clear any pending timeout
     if (scanningTimeoutRef.current) {
       clearTimeout(scanningTimeoutRef.current);
       scanningTimeoutRef.current = null;
@@ -330,22 +289,20 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       return;
     }
 
-    const wasScanning = isScanning;
-    stopScanning();
     const nextCamera = (currentCamera + 1) % availableCameras.length;
     setCurrentCamera(nextCamera);
     
-    // Save camera preference
+    // Update camera preference in config
     dispatch({ type: 'SET_CAMERA_PREFERENCE', payload: nextCamera });
     
-    const cameraName = availableCameras[nextCamera]?.label || 'Cámara sin nombre';
-    addFeedback('info', `Cambiando a: ${cameraName}`, 1500);
+    addFeedback('info', `Cambiando a cámara ${nextCamera + 1}`, 1500);
     
-    // Restart scanning with new camera after a delay if it was scanning before
-    if (wasScanning) {
-      scanningTimeoutRef.current = setTimeout(() => {
+    // Restart scanning with new camera
+    if (isScanning) {
+      stopScanning();
+      setTimeout(() => {
         startScanning();
-      }, 300);
+      }, 500);
     }
   };
 
