@@ -133,6 +133,9 @@ function appReducer(state: AppState, action: Action): AppState {
     case 'SET_CONFIG':
       return verificarEstadoCompra({ ...state, config: action.payload });
 
+    case 'SET_CAMERA_PREFERENCE':
+      return { ...state, config: { ...state.config, cameraPreference: action.payload } };
+
     case 'RESET_PROGRESS':
       return { ...state, progreso: 0, compraDesbloqueada: false };
 

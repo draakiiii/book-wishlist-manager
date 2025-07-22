@@ -17,7 +17,7 @@ La aplicación ahora incluye un escáner de códigos de barras que permite escan
 ### 2. Escanear un Libro
 1. Haz clic en el botón **"Escanear Código"**
 2. Permite el acceso a la cámara cuando el navegador lo solicite
-3. El sistema seleccionará automáticamente la mejor cámara disponible
+3. El sistema usará tu cámara preferida (configurada en Ajustes) o seleccionará automáticamente la mejor cámara disponible
 4. Apunta la cámara al código de barras del libro
 5. El código debe estar dentro del marco rojo que aparece en pantalla
 6. Mantén el código estable hasta que se detecte
@@ -108,9 +108,17 @@ El escáner incluye validación automática de ISBN:
 
 ## Funcionalidades Adicionales
 
+### Configuración de Cámara
+- **Preferencia Automática**: El sistema recuerda la última cámara utilizada
+- **Configuración Manual**: Ve a Ajustes → Configuración del Sistema para seleccionar tu cámara preferida
+- **Selección Inteligente**: Si no hay preferencia guardada, el sistema selecciona automáticamente la mejor cámara
+- **Persistencia**: Tu preferencia se mantiene entre sesiones
+
 ### Múltiples Cámaras
 - Si tu dispositivo tiene múltiples cámaras, puedes alternar entre ellas
 - Útil para cambiar entre cámara frontal y trasera
+- **Preferencia Guardada**: La cámara seleccionada se guarda automáticamente como preferencia
+- **Configuración Manual**: Puedes seleccionar tu cámara preferida en Ajustes → Configuración del Sistema
 
 ### Feedback en Tiempo Real
 - Mensajes informativos sobre el estado del escáner

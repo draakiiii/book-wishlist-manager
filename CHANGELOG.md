@@ -9,6 +9,11 @@
   - Soporte para múltiples cámaras (frontal/trasera)
   - Validación automática de ISBN-10 e ISBN-13
   - Interfaz moderna con feedback visual en tiempo real
+  - **Sistema de preferencias de cámara**
+    - Guardado automático de la última cámara utilizada
+    - Configuración manual de cámara preferida en Ajustes
+    - Persistencia de preferencias entre sesiones
+    - Selección inteligente de cámara por defecto
   - Botón "Escanear Código" añadido al formulario TBR
 
 ### Changed

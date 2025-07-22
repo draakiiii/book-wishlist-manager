@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X, Camera, CameraOff, RotateCcw, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { BrowserMultiFormatReader, Result } from '@zxing/library';
+import { useAppState } from '../context/AppStateContext';
 
 interface BarcodeScannerModalProps {
   onClose: () => void;
@@ -15,6 +16,7 @@ interface ScanFeedback {
 }
 
 const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onScanSuccess }) => {
+  const { state, dispatch } = useAppState();
   const [isScanning, setIsScanning] = useState(false);
   const [currentCamera, setCurrentCamera] = useState(0);
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
@@ -96,8 +98,20 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
         return;
       }
 
-      // Find the best camera (prefer back camera with highest resolution)
-      const bestCameraIndex = findBestCamera(videoDevices);
+      // Find the best camera (prefer saved preference, then back camera, then any camera)
+      const savedPreference = state.config.cameraPreference;
+      let bestCameraIndex = 0;
+      
+      if (savedPreference !== undefined && savedPreference < videoDevices.length) {
+        // Use saved preference if it's valid
+        bestCameraIndex = savedPreference;
+        console.log(`Usando cámara guardada: ${savedPreference}`);
+      } else {
+        // Find the best camera using the algorithm
+        bestCameraIndex = findBestCamera(videoDevices);
+        console.log(`Usando algoritmo de selección: ${bestCameraIndex}`);
+      }
+      
       setCurrentCamera(bestCameraIndex);
       setIsInitialized(true);
       
@@ -233,6 +247,9 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     stopScanning();
     const nextCamera = (currentCamera + 1) % availableCameras.length;
     setCurrentCamera(nextCamera);
+    
+    // Save camera preference
+    dispatch({ type: 'SET_CAMERA_PREFERENCE', payload: nextCamera });
     
     const cameraName = availableCameras[nextCamera]?.label || 'Cámara sin nombre';
     addFeedback('info', `Cambiando a: ${cameraName}`, 1500);
