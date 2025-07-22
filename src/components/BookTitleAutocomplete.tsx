@@ -11,6 +11,7 @@ interface BookTitleAutocompleteProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  disableAutocomplete?: boolean;
 }
 
 const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
@@ -19,7 +20,8 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   onBookSelect,
   placeholder = "Ej: El Hobbit",
   className = "",
-  disabled = false
+  disabled = false,
+  disableAutocomplete = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
@@ -47,7 +49,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   // Search for books when debounced value changes
   useEffect(() => {
     const searchBooks = async () => {
-      if (disabled || debouncedValue.trim().length < 2) {
+      if (disabled || disableAutocomplete || debouncedValue.trim().length < 2) {
         setSuggestions([]);
         setIsOpen(false);
         return;
@@ -68,7 +70,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     };
 
     searchBooks();
-  }, [debouncedValue, disabled]);
+  }, [debouncedValue, disabled, disableAutocomplete]);
 
   // Handle click outside
   useEffect(() => {
@@ -93,6 +95,11 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     const newValue = e.target.value;
     setInputValue(newValue);
     onChange(newValue);
+    
+    // Close autocomplete if disabled
+    if (disableAutocomplete) {
+      setIsOpen(false);
+    }
   };
 
   const handleBookSelect = (book: BookData) => {
@@ -106,7 +113,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   };
 
   const handleInputFocus = () => {
-    if (disabled) return;
+    if (disabled || disableAutocomplete) return;
     
     if (suggestions.length > 0) {
       setIsOpen(true);

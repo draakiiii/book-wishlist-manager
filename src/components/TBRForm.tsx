@@ -256,7 +256,7 @@ const TBRForm: React.FC = () => {
                   onChange={setTitulo}
                   onBookSelect={handleBookSelect}
                   placeholder="Ej: El Hobbit"
-                  disabled={isBookFromScan}
+                  disableAutocomplete={isBookFromScan}
                 />
               </div>
               
