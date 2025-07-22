@@ -332,6 +332,11 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
     scanningTimeoutRef.current = setTimeout(() => {
       // Resume scanning after delay
     }, 2000); // 2 second delay
+
+    // Stop scanning if in single mode
+    if (scanMode === 'single') {
+      stopScanning();
+    }
   };
 
   const updateBook = (id: number, updates: Partial<ScannedBook>) => {
@@ -398,13 +403,31 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
     addFeedback('info', 'Selección limpiada');
   };
 
-  const handleCloseModal = () => {
+  const handleCloseModal = async () => {
+    // Turn off flashlight before closing
+    if (flashlightEnabled && videoRef.current) {
+      try {
+        const stream = videoRef.current.srcObject as MediaStream;
+        if (stream) {
+          const track = stream.getVideoTracks()[0];
+          if (track) {
+            await track.applyConstraints({
+              advanced: [{ torch: false } as any]
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error turning off flashlight:', error);
+      }
+    }
+
     stopScanning();
     setScannedBooks([]);
     setEditingBook(null);
     setSelectedBooks(new Set());
     setShowBooksList(false);
     setFeedbackMessages([]);
+    setFlashlightEnabled(false);
     onClose();
   };
 
@@ -653,7 +676,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
                 </div>
               </div>
 
-              <div className="max-h-64 overflow-y-auto p-4 space-y-3">
+              <div className="max-h-64 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent">
                 {scannedBooks.length === 0 ? (
                   <div className="text-center py-8">
                     <Barcode className="h-12 w-12 text-slate-400 mx-auto mb-4" />

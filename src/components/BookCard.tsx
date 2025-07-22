@@ -12,16 +12,18 @@ import {
   Calendar,
   User,
   FileText,
-  Star
+  Star,
+  Edit3
 } from 'lucide-react';
 
 interface BookCardProps {
   book: Libro;
   type: 'tbr' | 'historial' | 'wishlist' | 'actual';
   onDelete?: (id: number) => void;
+  onEdit?: (book: Libro) => void;
 }
 
-const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete }) => {
+const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => {
   const { state, dispatch } = useAppState();
   const [showActions, setShowActions] = useState(false);
 
@@ -227,6 +229,19 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete }) => {
             >
               <ShoppingCart className="h-3 w-3" />
               <span>Comprar</span>
+            </motion.button>
+          )}
+
+          {/* Edit button for TBR and Wishlist */}
+          {(type === 'tbr' || type === 'wishlist') && onEdit && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => onEdit(book)}
+              className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-slate-500 hover:bg-slate-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
+            >
+              <Edit3 className="h-3 w-3" />
+              <span>Editar</span>
             </motion.button>
           )}
 

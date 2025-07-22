@@ -349,8 +349,26 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     }
   };
 
-  const handleCloseModal = () => {
+  const handleCloseModal = async () => {
+    // Turn off flashlight before closing
+    if (flashlightEnabled && videoRef.current) {
+      try {
+        const stream = videoRef.current.srcObject as MediaStream;
+        if (stream) {
+          const track = stream.getVideoTracks()[0];
+          if (track) {
+            await track.applyConstraints({
+              advanced: [{ torch: false } as any]
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error turning off flashlight:', error);
+      }
+    }
+
     stopScanning();
+    setFlashlightEnabled(false);
     onClose();
   };
 

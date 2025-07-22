@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Libro } from '../types';
 import BookCard from './BookCard';
+import BookEditModal from './BookEditModal';
 import { motion } from 'framer-motion';
 import { BookOpen, Inbox } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
@@ -13,9 +14,14 @@ interface BookListProps {
 
 const BookList: React.FC<BookListProps> = ({ books, type, emptyMessage }) => {
   const { dispatch } = useAppState();
+  const [editingBook, setEditingBook] = useState<Libro | null>(null);
 
   const handleDelete = (id: number) => {
     dispatch({ type: 'DELETE_BOOK', payload: { id, listType: type } });
+  };
+
+  const handleEdit = (book: Libro) => {
+    setEditingBook(book);
   };
 
   if (books.length === 0) {
@@ -70,10 +76,21 @@ const BookList: React.FC<BookListProps> = ({ books, type, emptyMessage }) => {
               book={book}
               type={type}
               onDelete={handleDelete}
+              onEdit={handleEdit}
             />
           </motion.div>
         ))}
       </div>
+
+      {/* Edit Modal */}
+      {editingBook && (type === 'tbr' || type === 'wishlist') && (
+        <BookEditModal
+          isOpen={!!editingBook}
+          onClose={() => setEditingBook(null)}
+          book={editingBook}
+          listType={type as 'tbr' | 'wishlist'}
+        />
+      )}
     </div>
   );
 };
