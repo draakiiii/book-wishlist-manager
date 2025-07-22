@@ -21,9 +21,11 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
   const [feedbackMessages, setFeedbackMessages] = useState<ScanFeedback[]>([]);
   const [lastScannedCode, setLastScannedCode] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  const scanningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const addFeedback = (type: ScanFeedback['type'], message: string) => {
     const newFeedback: ScanFeedback = {
@@ -69,8 +71,18 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
 
   const initializeScanner = async () => {
     try {
+      if (isInitialized) return;
+      
       if (!codeReaderRef.current) {
         codeReaderRef.current = new BrowserMultiFormatReader();
+      }
+
+      // Request camera permissions first
+      try {
+        await navigator.mediaDevices.getUserMedia({ video: true });
+      } catch (permissionError) {
+        addFeedback('error', 'Permiso de cámara denegado. Por favor, permite el acceso a la cámara.');
+        return;
       }
 
       // Get available cameras
@@ -86,6 +98,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       // Find the best camera (prefer back camera with highest resolution)
       const bestCameraIndex = findBestCamera(videoDevices);
       setCurrentCamera(bestCameraIndex);
+      setIsInitialized(true);
       addFeedback('info', `Cámara seleccionada: ${videoDevices[bestCameraIndex]?.label || 'Cámara sin nombre'}`);
 
       // Start scanning with best camera
@@ -126,8 +139,8 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     return 0;
   };
 
-  const startScanning = async () => {
-    if (!codeReaderRef.current || !videoRef.current) return;
+    const startScanning = async () => {
+    if (!codeReaderRef.current || !videoRef.current || isScanning) return;
 
     try {
       setIsScanning(true);
@@ -136,6 +149,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       const selectedDevice = availableCameras[currentCamera];
       if (!selectedDevice) {
         addFeedback('error', 'Cámara no disponible');
+        setIsScanning(false);
         return;
       }
 
@@ -152,22 +166,22 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
             setLastScannedCode(scannedCode);
             addFeedback('success', `Código detectado: ${scannedCode}`);
             
-                         // Validate ISBN
-             if (validateISBN(scannedCode)) {
-               setIsProcessing(true);
-               addFeedback('success', 'ISBN válido detectado. Procesando...');
-               
-               // Stop scanning
-               stopScanning();
-               
-               // Process the ISBN and close modal
-               setTimeout(() => {
-                 onScanSuccess(scannedCode);
-                 onClose(); // Close the scanner modal
-               }, 1500);
-             } else {
-               addFeedback('warning', 'Código detectado pero no es un ISBN válido');
-             }
+            // Validate ISBN
+            if (validateISBN(scannedCode)) {
+              setIsProcessing(true);
+              addFeedback('success', 'ISBN válido detectado. Procesando...');
+              
+              // Stop scanning
+              stopScanning();
+              
+              // Process the ISBN and close modal
+              setTimeout(() => {
+                onScanSuccess(scannedCode);
+                onClose(); // Close the scanner modal
+              }, 1500);
+            } else {
+              addFeedback('warning', 'Código detectado pero no es un ISBN válido');
+            }
           }
           
           if (error && error.name !== 'NotFoundException') {
@@ -189,6 +203,12 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       codeReaderRef.current.reset();
     }
     setIsScanning(false);
+    
+    // Clear any pending timeout
+    if (scanningTimeoutRef.current) {
+      clearTimeout(scanningTimeoutRef.current);
+      scanningTimeoutRef.current = null;
+    }
   };
 
   const switchCamera = async () => {
@@ -204,8 +224,8 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     const cameraName = availableCameras[nextCamera]?.label || 'Cámara sin nombre';
     addFeedback('info', `Cambiando a: ${cameraName}`);
     
-    // Restart scanning with new camera
-    setTimeout(() => {
+    // Restart scanning with new camera after a delay
+    scanningTimeoutRef.current = setTimeout(() => {
       startScanning();
     }, 500);
   };
@@ -223,11 +243,12 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     };
   }, []);
 
+  // Only start scanning when cameras are available and not already scanning
   useEffect(() => {
-    if (availableCameras.length > 0 && !isScanning) {
+    if (availableCameras.length > 0 && !isScanning && isInitialized) {
       startScanning();
     }
-  }, [availableCameras, currentCamera]);
+  }, [availableCameras, currentCamera, isInitialized]);
 
   return (
     <motion.div

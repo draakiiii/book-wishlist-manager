@@ -68,6 +68,11 @@ const TBRForm: React.FC = () => {
       const bookData = await fetchBookData(result);
       
       if (bookData) {
+        console.log('Book data received:', bookData);
+        console.log('Setting title to:', bookData.titulo);
+        console.log('Setting author to:', bookData.autor);
+        console.log('Setting pages to:', bookData.paginas);
+        
         setTitulo(bookData.titulo);
         setAutor(bookData.autor || '');
         setPaginas(bookData.paginas?.toString() || '');
