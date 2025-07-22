@@ -263,6 +263,16 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
     // Check if book already exists
     if (scannedBooks.some(book => book.isbn === scannedCode)) {
       addFeedback('warning', 'Este libro ya fue escaneado');
+      
+      // Add delay to prevent multiple scans of the same code even for duplicates
+      if (scanningTimeoutRef.current) {
+        clearTimeout(scanningTimeoutRef.current);
+      }
+      
+      scanningTimeoutRef.current = setTimeout(() => {
+        // Resume scanning after delay
+      }, 2000); // 2 second delay for duplicates too
+      
       return;
     }
 

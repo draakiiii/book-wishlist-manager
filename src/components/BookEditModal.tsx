@@ -26,6 +26,7 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
   const [precio, setPrecio] = useState(book.precio?.toString() || '');
   const [calificacion, setCalificacion] = useState(book.calificacion?.toString() || '');
   const [notas, setNotas] = useState(book.notas || '');
+  const [showFloatingSave, setShowFloatingSave] = useState(false);
 
   useEffect(() => {
     if (isOpen && book) {
@@ -40,6 +41,18 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
       setPrecio(book.precio?.toString() || '');
       setCalificacion(book.calificacion?.toString() || '');
       setNotas(book.notas || '');
+      
+      // Check if form is long enough to need floating save button
+      setTimeout(() => {
+        const form = document.querySelector('form');
+        if (form) {
+          const scrollHeight = form.scrollHeight;
+          const clientHeight = form.clientHeight;
+          if (scrollHeight > clientHeight * 1.5) {
+            setShowFloatingSave(true);
+          }
+        }
+      }, 100);
     }
   }, [isOpen, book]);
 
@@ -127,7 +140,23 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 space-y-4 max-h-[calc(90vh-80px)] overflow-y-auto">
+        <form 
+          onSubmit={handleSubmit} 
+          className="p-4 space-y-4 max-h-[calc(90vh-80px)] overflow-y-auto"
+          onScroll={(e) => {
+            const target = e.target as HTMLFormElement;
+            const scrollTop = target.scrollTop;
+            const scrollHeight = target.scrollHeight;
+            const clientHeight = target.clientHeight;
+            
+            // Show floating save button when scrolled down more than 50% of the form
+            if (scrollTop > (scrollHeight - clientHeight) * 0.5) {
+              setShowFloatingSave(true);
+            } else {
+              setShowFloatingSave(false);
+            }
+          }}
+        >
           {/* Basic Information */}
           <div className="space-y-4">
             <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2">
@@ -326,6 +355,19 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
             </button>
           </div>
         </div>
+
+        {/* Floating Save Button for Mobile */}
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ 
+            opacity: showFloatingSave ? 1 : 0, 
+            scale: showFloatingSave ? 1 : 0.8 
+          }}
+          onClick={handleSubmit}
+          className="fixed bottom-6 right-6 md:hidden z-50 p-4 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-lg transition-colors duration-200"
+        >
+          <Save className="h-6 w-6" />
+        </motion.button>
       </motion.div>
     </motion.div>
   );
