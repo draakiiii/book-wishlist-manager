@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Heart, Plus, ShoppingCart, Lock } from 'lucide-react';
+import { Heart, Plus, ShoppingCart } from 'lucide-react';
+import BookTitleAutocomplete from './BookTitleAutocomplete';
+import { BookData } from '../types';
 
 const WishlistForm: React.FC = () => {
   const { state, dispatch } = useAppState();
@@ -22,8 +24,10 @@ const WishlistForm: React.FC = () => {
     }
   };
 
-  // Permitir añadir libros aunque tengas 0 puntos
-  const canAddToWishlist = true;
+  const handleBookSelect = (bookData: BookData) => {
+    setTitulo(bookData.titulo);
+    setAutor(bookData.autor || '');
+  };
 
   return (
     <div className="space-y-3 sm:space-y-4">
@@ -90,13 +94,11 @@ const WishlistForm: React.FC = () => {
                 <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
                   Título del Libro
                 </label>
-                <input
-                  type="text"
+                <BookTitleAutocomplete
                   value={titulo}
-                  onChange={(e) => setTitulo(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-secondary-500 focus:border-transparent transition-colors duration-200 text-sm"
+                  onChange={setTitulo}
+                  onBookSelect={handleBookSelect}
                   placeholder="Ej: El Señor de los Anillos"
-                  required
                 />
               </div>
               
