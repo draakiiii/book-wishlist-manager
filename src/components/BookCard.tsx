@@ -13,8 +13,10 @@ import {
   User,
   FileText,
   Star,
-  Edit3
+  Edit3,
+  Eye
 } from 'lucide-react';
+import BookDescriptionModal from './BookDescriptionModal';
 
 interface BookCardProps {
   book: Libro;
@@ -26,6 +28,7 @@ interface BookCardProps {
 const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => {
   const { state, dispatch } = useAppState();
   const [showActions, setShowActions] = useState(false);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
 
   // Función para calcular el número del libro en la saga
   const getBookNumberInSaga = (book: Libro): number | null => {
@@ -62,13 +65,22 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   };
 
   const handlePurchaseWishlistBook = () => {
-    const pages = prompt('¿Cuántas páginas tiene el libro?');
-    if (pages && !isNaN(parseInt(pages))) {
-      dispatch({ 
-        type: 'PURCHASE_WISHLIST_BOOK', 
-        payload: { id: book.id, pages: parseInt(pages) } 
-      });
+    let pages = book.paginas; // Usar las páginas que ya tiene el libro
+    
+    // Solo preguntar si el libro no tiene páginas
+    if (!pages) {
+      const pagesInput = prompt('¿Cuántas páginas tiene el libro?');
+      if (pagesInput && !isNaN(parseInt(pagesInput))) {
+        pages = parseInt(pagesInput);
+      } else {
+        return; // Si no se proporciona un número válido, cancelar la compra
+      }
     }
+    
+    dispatch({ 
+      type: 'PURCHASE_WISHLIST_BOOK', 
+      payload: { id: book.id, pages: pages! } 
+    });
   };
 
   const handleDelete = () => {
@@ -77,6 +89,10 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
     } else {
       dispatch({ type: 'DELETE_BOOK', payload: { id: book.id, listType: type } });
     }
+  };
+
+  const handleShowDescription = () => {
+    setShowDescriptionModal(true);
   };
 
   const getTypeColor = () => {
@@ -110,14 +126,15 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      className={`relative rounded-xl border-2 p-3 sm:p-4 transition-all duration-300 hover:shadow-lg ${getTypeColor()}`}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-    >
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ y: -2 }}
+        className={`relative rounded-xl border-2 p-3 sm:p-4 transition-all duration-300 hover:shadow-lg ${getTypeColor()}`}
+        onMouseEnter={() => setShowActions(true)}
+        onMouseLeave={() => setShowActions(false)}
+      >
       {/* Type Badge */}
       <div className="absolute top-2 right-2 flex items-center space-x-1 px-2 py-1 bg-white/80 dark:bg-slate-800/80 rounded-full text-xs font-medium">
         {getTypeIcon()}
@@ -237,7 +254,10 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => onEdit(book)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(book);
+              }}
               className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-slate-500 hover:bg-slate-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
             >
               <Edit3 className="h-3 w-3" />
@@ -248,15 +268,40 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={handleDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete();
+            }}
             className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
           >
             <Trash2 className="h-3 w-3" />
             <span>Eliminar</span>
           </motion.button>
+
+          {/* View button for all books - placed last to be the largest */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleShowDescription();
+            }}
+            className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
+          >
+            <Eye className="h-3 w-3" />
+            <span>Visualizar</span>
+          </motion.button>
         </motion.div>
       </div>
     </motion.div>
+
+    {/* Description Modal */}
+    <BookDescriptionModal
+      isOpen={showDescriptionModal}
+      onClose={() => setShowDescriptionModal(false)}
+      book={book}
+    />
+    </>
   );
 };
 

@@ -24,17 +24,40 @@ const TBRForm: React.FC = () => {
   const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'found' | 'error'>('idle');
   const [scanMessage, setScanMessage] = useState('');
   const [isBookFromScan, setIsBookFromScan] = useState(false);
+  const [selectedBookData, setSelectedBookData] = useState<BookData | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (titulo.trim()) {
-      const nuevoLibro = {
-        id: Date.now(),
-        titulo: titulo.trim(),
-        autor: autor.trim() || undefined,
-        paginas: paginas ? parseInt(paginas) : undefined,
-        sagaName: sagaName || undefined
-      };
+      let nuevoLibro;
+      
+      // Si tenemos datos completos del libro seleccionado, usarlos
+      if (selectedBookData) {
+        nuevoLibro = {
+          id: Date.now(),
+          titulo: selectedBookData.titulo,
+          autor: selectedBookData.autor,
+          paginas: selectedBookData.paginas,
+          isbn: selectedBookData.isbn,
+          publicacion: selectedBookData.publicacion,
+          editorial: selectedBookData.editorial,
+          descripcion: selectedBookData.descripcion,
+          categorias: selectedBookData.categorias,
+          idioma: selectedBookData.idioma,
+          calificacion: selectedBookData.calificacion,
+          numCalificaciones: selectedBookData.numCalificaciones,
+          sagaName: sagaName || undefined
+        };
+      } else {
+        // Si no hay datos completos, usar los campos del formulario
+        nuevoLibro = {
+          id: Date.now(),
+          titulo: titulo.trim(),
+          autor: autor.trim() || undefined,
+          paginas: paginas ? parseInt(paginas) : undefined,
+          sagaName: sagaName || undefined
+        };
+      }
 
       dispatch({ type: 'ADD_TO_TBR', payload: nuevoLibro });
       
@@ -46,6 +69,7 @@ const TBRForm: React.FC = () => {
       setIsExpanded(false);
       setScanStatus('idle');
       setScanMessage('');
+      setSelectedBookData(null);
     }
   };
 
@@ -74,18 +98,15 @@ const TBRForm: React.FC = () => {
       
       if (bookData) {
         console.log('Book data received:', bookData);
-        console.log('Setting title to:', bookData.titulo);
-        console.log('Setting author to:', bookData.autor);
-        console.log('Setting pages to:', bookData.paginas);
         
+        // Siempre actualizar los campos del formulario primero
         setTitulo(bookData.titulo);
         setAutor(bookData.autor || '');
         setPaginas(bookData.paginas?.toString() || '');
-        setIsExpanded(true); // Expand the form to show the populated data
+        setIsExpanded(true);
         setScanStatus('found');
         setScanMessage(`¡Libro encontrado: ${bookData.titulo}`);
         
-        // Show additional book info if available
         if (bookData.editorial || bookData.publicacion) {
           const additionalInfo: string[] = [];
           if (bookData.editorial) additionalInfo.push(bookData.editorial);
@@ -94,6 +115,9 @@ const TBRForm: React.FC = () => {
             setScanMessage(prev => `${prev} (${additionalInfo.join(', ')})`);
           }
         }
+        
+        // Guardar los datos completos del libro para usarlos en el submit
+        setSelectedBookData(bookData);
       } else {
         setScanStatus('error');
         setScanMessage('No se encontró información del libro. Puedes agregarlo manualmente.');
@@ -112,15 +136,15 @@ const TBRForm: React.FC = () => {
   };
 
   const handleBookSelect = (bookData: BookData) => {
+    // Siempre actualizar los campos del formulario primero
     setTitulo(bookData.titulo);
     setAutor(bookData.autor || '');
     setPaginas(bookData.paginas?.toString() || '');
     setIsExpanded(true);
-    setIsBookFromScan(false); // Book came from autocomplete, not scanning
+    setIsBookFromScan(false);
     setScanStatus('found');
     setScanMessage(`¡Libro seleccionado: ${bookData.titulo}`);
     
-    // Show additional book info if available
     if (bookData.editorial || bookData.publicacion) {
       const additionalInfo: string[] = [];
       if (bookData.editorial) additionalInfo.push(bookData.editorial);
@@ -129,6 +153,9 @@ const TBRForm: React.FC = () => {
         setScanMessage(prev => `${prev} (${additionalInfo.join(', ')})`);
       }
     }
+    
+    // Guardar los datos completos del libro para usarlos en el submit
+    setSelectedBookData(bookData);
   };
 
   const getStatusIcon = () => {

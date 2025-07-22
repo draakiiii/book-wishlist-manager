@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
-import { AppState, Action, Libro, ScanHistory, Statistics } from '../types';
+import { AppState, Action, Libro, ScanHistory, Statistics, Saga } from '../types';
 import { getInitialTheme, persistThemePreference } from '../utils/themeConfig';
 
 const STORAGE_KEY = 'guardianComprasState_v7_0';
@@ -73,7 +73,10 @@ function actualizarContadoresSagas(state: AppState): AppState {
     ...state.librosActuales
   ];
 
-  const sagasActualizadas = state.sagas.map(saga => {
+  // Primero limpiar sagas duplicadas
+  const estadoLimpio = limpiarSagasHuerfanas(state);
+
+  const sagasActualizadas = estadoLimpio.sagas.map(saga => {
     const librosDeLaSaga = todosLosLibros.filter(libro => libro.sagaId === saga.id);
     const librosLeidosDeLaSaga = state.historial.filter(libro => libro.sagaId === saga.id);
     
@@ -97,7 +100,7 @@ function actualizarContadoresSagas(state: AppState): AppState {
     };
   });
 
-  return { ...state, sagas: sagasActualizadas };
+  return { ...estadoLimpio, sagas: sagasActualizadas };
 }
 
 // Función de utilidad para verificar si una saga está completa
@@ -131,7 +134,29 @@ function limpiarSagasHuerfanas(state: AppState): AppState {
     todosLosLibros.map(l => l.sagaId).filter(id => id !== undefined)
   );
   
-  const sagasFiltradas = state.sagas.filter(saga => idsDeSagasEnUso.has(saga.id));
+  // Filtrar sagas que no están en uso
+  let sagasFiltradas = state.sagas.filter(saga => idsDeSagasEnUso.has(saga.id));
+  
+  // Eliminar sagas duplicadas (mismo nombre normalizado)
+  const sagasUnicas = new Map<string, Saga>();
+  
+  sagasFiltradas.forEach(saga => {
+    const nombreNormalizado = saga.name.trim().toLowerCase();
+    if (!sagasUnicas.has(nombreNormalizado)) {
+      sagasUnicas.set(nombreNormalizado, saga);
+    } else {
+      // Si ya existe una saga con ese nombre, mantener la que tiene más libros
+      const sagaExistente = sagasUnicas.get(nombreNormalizado)!;
+      const librosSagaExistente = todosLosLibros.filter(l => l.sagaId === sagaExistente.id).length;
+      const librosSagaNueva = todosLosLibros.filter(l => l.sagaId === saga.id).length;
+      
+      if (librosSagaNueva > librosSagaExistente) {
+        sagasUnicas.set(nombreNormalizado, saga);
+      }
+    }
+  });
+  
+  sagasFiltradas = Array.from(sagasUnicas.values());
   
   return { ...state, sagas: sagasFiltradas };
 }
@@ -176,7 +201,13 @@ function appReducer(state: AppState, action: Action): AppState {
       
       // Si el libro tiene nombre de saga, buscar si ya existe una saga con ese nombre
       if (nuevoLibro.sagaName) {
-        let sagaExistente = state.sagas.find(s => s.name === nuevoLibro.sagaName);
+        // Normalizar el nombre de la saga para evitar duplicados
+        const sagaNameNormalized = nuevoLibro.sagaName.trim().toLowerCase();
+        
+        // Buscar saga existente (case-insensitive y ignorando espacios extra)
+        let sagaExistente = state.sagas.find(s => 
+          s.name.trim().toLowerCase() === sagaNameNormalized
+        );
         
         if (sagaExistente) {
           // Si existe una saga con ese nombre, asignar su ID
@@ -188,7 +219,7 @@ function appReducer(state: AppState, action: Action): AppState {
           // Si no existe, crear nueva saga
           const nuevaSaga = {
             id: Date.now(),
-            name: nuevoLibro.sagaName,
+            name: nuevoLibro.sagaName.trim(), // Usar el nombre normalizado
             count: 1,
             isComplete: false
           };
@@ -285,7 +316,15 @@ function appReducer(state: AppState, action: Action): AppState {
         id: Date.now(),
         titulo: action.payload.titulo,
         autor: action.payload.autor,
-        paginas: action.payload.paginas
+        paginas: action.payload.paginas,
+        isbn: action.payload.isbn,
+        publicacion: action.payload.publicacion,
+        editorial: action.payload.editorial,
+        descripcion: action.payload.descripcion,
+        categorias: action.payload.categorias,
+        idioma: action.payload.idioma,
+        calificacion: action.payload.calificacion,
+        numCalificaciones: action.payload.numCalificaciones
       };
       
       return {
@@ -639,6 +678,9 @@ function appReducer(state: AppState, action: Action): AppState {
         lastBackup: action.payload
       };
     }
+
+    case 'CLEAN_DUPLICATE_SAGAS':
+      return limpiarSagasHuerfanas(state);
 
     default:
       return state;

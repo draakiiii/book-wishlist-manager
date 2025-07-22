@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Heart, Plus, ShoppingCart } from 'lucide-react';
+import { Heart, Plus, ShoppingCart, Search, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import { BookData } from '../types';
+import { fetchBookData, validateISBN } from '../services/googleBooksAPI';
 
 const WishlistForm: React.FC = () => {
   const { state, dispatch } = useAppState();
@@ -11,6 +12,12 @@ const WishlistForm: React.FC = () => {
   const [autor, setAutor] = useState('');
   const [paginas, setPaginas] = useState<number | undefined>(undefined);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [showISBNInput, setShowISBNInput] = useState(false);
+  const [isLoadingBook, setIsLoadingBook] = useState(false);
+  const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'found' | 'error'>('idle');
+  const [scanMessage, setScanMessage] = useState('');
+  const [isBookFromScan, setIsBookFromScan] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +41,131 @@ const WishlistForm: React.FC = () => {
     setTitulo(bookData.titulo);
     setAutor(bookData.autor || '');
     setPaginas(bookData.paginas);
+    
+    // Si el libro tiene información completa, añadirlo directamente a la wishlist
+    if (bookData.isbn || bookData.descripcion || bookData.editorial) {
+      dispatch({ 
+        type: 'ADD_TO_WISHLIST', 
+        payload: { 
+          titulo: bookData.titulo,
+          autor: bookData.autor,
+          paginas: bookData.paginas,
+          isbn: bookData.isbn,
+          publicacion: bookData.publicacion,
+          editorial: bookData.editorial,
+          descripcion: bookData.descripcion,
+          categorias: bookData.categorias,
+          idioma: bookData.idioma,
+          calificacion: bookData.calificacion,
+          numCalificaciones: bookData.numCalificaciones
+        } 
+      });
+      setTitulo('');
+      setAutor('');
+      setPaginas(undefined);
+      setIsExpanded(false);
+    }
+  };
+
+  const handleSearchResult = async (result: string) => {
+    setShowISBNInput(false);
+    setShowBarcodeScanner(false);
+    setIsLoadingBook(true);
+    setScanStatus('scanning');
+    setScanMessage('Validando ISBN...');
+    setIsBookFromScan(true);
+    
+    try {
+      if (!validateISBN(result)) {
+        setScanStatus('error');
+        setScanMessage('Código de barras no válido. Debe ser un ISBN de 10 o 13 dígitos.');
+        setIsLoadingBook(false);
+        setIsBookFromScan(false);
+        return;
+      }
+      
+      setScanMessage('Buscando información del libro...');
+      
+      const bookData = await fetchBookData(result);
+      
+      if (bookData) {
+        console.log('Book data received:', bookData);
+        
+        // Añadir directamente a la wishlist con toda la información
+        dispatch({ 
+          type: 'ADD_TO_WISHLIST', 
+          payload: { 
+            titulo: bookData.titulo,
+            autor: bookData.autor,
+            paginas: bookData.paginas,
+            isbn: bookData.isbn,
+            publicacion: bookData.publicacion,
+            editorial: bookData.editorial,
+            descripcion: bookData.descripcion,
+            categorias: bookData.categorias,
+            idioma: bookData.idioma,
+            calificacion: bookData.calificacion,
+            numCalificaciones: bookData.numCalificaciones
+          } 
+        });
+        
+        setScanStatus('found');
+        setScanMessage(`¡Libro añadido a la wishlist: ${bookData.titulo}`);
+        
+        if (bookData.editorial || bookData.publicacion) {
+          const additionalInfo: string[] = [];
+          if (bookData.editorial) additionalInfo.push(bookData.editorial);
+          if (bookData.publicacion) additionalInfo.push(bookData.publicacion.toString());
+          if (additionalInfo.length > 0) {
+            setScanMessage(prev => `${prev} (${additionalInfo.join(', ')})`);
+          }
+        }
+        
+        // Reset form after a delay
+        setTimeout(() => {
+          setScanStatus('idle');
+          setScanMessage('');
+          setIsBookFromScan(false);
+        }, 3000);
+      } else {
+        setScanStatus('error');
+        setScanMessage('No se encontró información del libro. Puedes agregarlo manualmente.');
+        setIsBookFromScan(false);
+      }
+    } catch (error) {
+      console.error('Error fetching book data:', error);
+      setScanStatus('error');
+      setScanMessage('Error al buscar información del libro. Puedes agregarlo manualmente.');
+      setIsBookFromScan(false);
+    } finally {
+      setIsLoadingBook(false);
+    }
+  };
+
+  const getStatusIcon = () => {
+    switch (scanStatus) {
+      case 'scanning':
+        return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
+      case 'found':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'error':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return <Search className="h-4 w-4 text-slate-500" />;
+    }
+  };
+
+  const getStatusColor = () => {
+    switch (scanStatus) {
+      case 'scanning':
+        return 'text-blue-600 dark:text-blue-400';
+      case 'found':
+        return 'text-green-600 dark:text-green-400';
+      case 'error':
+        return 'text-red-600 dark:text-red-400';
+      default:
+        return 'text-slate-600 dark:text-slate-400';
+    }
   };
 
   return (
@@ -72,6 +204,29 @@ const WishlistForm: React.FC = () => {
         </motion.div>
       )}
 
+      {/* Scan Status Message */}
+      {scanStatus !== 'idle' && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg p-3 sm:p-4`}
+        >
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            {getStatusIcon()}
+            <div>
+              <p className={`text-xs sm:text-sm font-medium ${getStatusColor()}`}>
+                {scanStatus === 'scanning' && 'Procesando...'}
+                {scanStatus === 'found' && '¡Libro encontrado!'}
+                {scanStatus === 'error' && 'Error'}
+              </p>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+                {scanMessage}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Form */}
       <motion.div
         initial={{ opacity: 0, height: 0 }}
@@ -79,21 +234,61 @@ const WishlistForm: React.FC = () => {
         className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
       >
         {!isExpanded ? (
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setIsExpanded(true)}
-            className="w-full p-3 sm:p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors duration-200"
-          >
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="p-1.5 sm:p-2 bg-secondary-500 rounded-lg">
-                <Plus className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+          <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+            {/* Quick Add Button */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setIsExpanded(true)}
+              className="w-full p-3 sm:p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors duration-200 rounded-lg border border-slate-200 dark:border-slate-600"
+            >
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="p-1.5 sm:p-2 bg-secondary-500 rounded-lg">
+                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                </div>
+                <span className="text-sm sm:text-base text-slate-700 dark:text-slate-300 font-medium">
+                  Agregar manualmente
+                </span>
               </div>
-              <span className="text-sm sm:text-base text-slate-700 dark:text-slate-300 font-medium">
-                Agregar nuevo libro a la lista de deseos
-              </span>
+            </motion.button>
+
+            {/* Scan Options - Temporarily Disabled */}
+            {/* 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowBarcodeScanner(true)}
+                className="p-3 sm:p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors duration-200 rounded-lg border border-slate-200 dark:border-slate-600"
+              >
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <div className="p-1.5 sm:p-2 bg-blue-500 rounded-lg">
+                    <Camera className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                  </div>
+                  <span className="text-sm sm:text-base text-slate-700 dark:text-slate-300 font-medium">
+                    Escanear código
+                  </span>
+                </div>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowISBNInput(true)}
+                className="p-3 sm:p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors duration-200 rounded-lg border border-slate-200 dark:border-slate-600"
+              >
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <div className="p-1.5 sm:p-2 bg-green-500 rounded-lg">
+                    <Hash className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                  </div>
+                  <span className="text-sm sm:text-base text-slate-700 dark:text-slate-300 font-medium">
+                    Introducir ISBN
+                  </span>
+                </div>
+              </motion.button>
             </div>
-          </motion.button>
+            */}
+          </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-3 sm:p-4 space-y-3 sm:space-y-4">
             <div className="grid grid-cols-1 gap-3 sm:gap-4">
@@ -159,7 +354,15 @@ const WishlistForm: React.FC = () => {
                 type="button"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setIsExpanded(false)}
+                onClick={() => {
+                  setIsExpanded(false);
+                  setTitulo('');
+                  setAutor('');
+                  setPaginas(undefined);
+                  setScanStatus('idle');
+                  setScanMessage('');
+                  setIsBookFromScan(false);
+                }}
                 className="w-full sm:w-auto px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors duration-200 text-sm"
               >
                 Cancelar
@@ -189,6 +392,23 @@ const WishlistForm: React.FC = () => {
           </div>
         </motion.div>
       )}
+
+      {/* ISBN Input Modal - Temporarily Disabled */}
+      {/*
+      {showISBNInput && (
+        <ISBNInputModal
+          onClose={() => setShowISBNInput(false)}
+          onSearch={handleSearchResult}
+        />
+      )}
+
+      {showBarcodeScanner && (
+        <BarcodeScannerModal
+          onClose={() => setShowBarcodeScanner(false)}
+          onScanSuccess={handleSearchResult}
+        />
+      )}
+      */}
     </div>
   );
 };

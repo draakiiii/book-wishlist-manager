@@ -14,6 +14,10 @@ export interface Libro {
   idioma?: string;
   genero?: string;
   precio?: number;
+  publicacion?: number;
+  descripcion?: string;
+  categorias?: string[];
+  numCalificaciones?: number;
 }
 
 export interface Saga {
@@ -125,7 +129,7 @@ export type Action =
   | { type: 'START_BOOK'; payload: number }
   | { type: 'FINISH_BOOK'; payload: number }
   | { type: 'ABANDON_BOOK'; payload: number }
-  | { type: 'ADD_TO_WISHLIST'; payload: { titulo: string; autor?: string; paginas?: number } }
+  | { type: 'ADD_TO_WISHLIST'; payload: { titulo: string; autor?: string; paginas?: number; isbn?: string; publicacion?: number; editorial?: string; descripcion?: string; categorias?: string[]; idioma?: string; calificacion?: number; numCalificaciones?: number } }
   | { type: 'PURCHASE_WISHLIST_BOOK'; payload: { id: number; pages: number } }
   | { type: 'DELETE_BOOK'; payload: { id: number; listType: 'tbr' | 'actual' | 'historial' | 'wishlist' } }
   | { type: 'MOVE_BACK_FROM_HISTORY'; payload: number }
@@ -142,7 +146,8 @@ export type Action =
   | { type: 'IMPORT_DATA'; payload: { libros: { tbr: Libro[]; historial: Libro[]; wishlist: Libro[]; actual: Libro | null }; sagas: Saga[]; config?: Configuracion; progreso?: number; compraDesbloqueada?: boolean; scanHistory?: ScanHistory[]; searchHistory?: string[]; lastBackup?: number; performanceMetrics?: { lastRenderTime: number; averageRenderTime: number; memoryUsage?: number } } }
   | { type: 'EXPORT_DATA' }
   | { type: 'SET_PERFORMANCE_METRICS'; payload: { lastRenderTime: number; averageRenderTime: number; memoryUsage?: number } }
-  | { type: 'SET_LAST_BACKUP'; payload: number };
+  | { type: 'SET_LAST_BACKUP'; payload: number }
+  | { type: 'CLEAN_DUPLICATE_SAGAS' };
 
 export type BookListType = 'tbr' | 'actual' | 'historial' | 'wishlist';
 
