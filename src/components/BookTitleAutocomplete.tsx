@@ -29,6 +29,8 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [debouncedValue, setDebouncedValue] = useState(value);
   const [justSelected, setJustSelected] = useState(false);
+  const [isUserTyping, setIsUserTyping] = useState(false);
+  const [lastTypedValue, setLastTypedValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +38,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   useEffect(() => {
     setInputValue(value);
     setDebouncedValue(value);
+    setLastTypedValue(value);
   }, [value]);
 
   // Debounce the search to avoid too many API calls
@@ -56,6 +59,11 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
         return;
       }
 
+      // Only search if the user is actively typing and the value has changed
+      if (!isUserTyping || debouncedValue === lastTypedValue) {
+        return;
+      }
+
       setIsLoading(true);
       try {
         const results = await searchBooksByTitle(debouncedValue);
@@ -71,7 +79,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     };
 
     searchBooks();
-  }, [debouncedValue, disabled, disableAutocomplete, justSelected]);
+  }, [debouncedValue, disabled, disableAutocomplete, justSelected, isUserTyping, lastTypedValue]);
 
   // Handle click outside
   useEffect(() => {
@@ -83,6 +91,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
         !inputRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
+        setIsUserTyping(false);
       }
     };
 
@@ -97,6 +106,10 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     setInputValue(newValue);
     onChange(newValue);
     
+    // Mark that user is actively typing
+    setIsUserTyping(true);
+    setLastTypedValue(newValue);
+    
     // Reset justSelected flag when user starts typing manually
     if (justSelected) {
       setJustSelected(false);
@@ -110,8 +123,10 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
 
   const handleBookSelect = (book: BookData) => {
     setInputValue(book.titulo);
-    setDebouncedValue(book.titulo); // Set debounced value to prevent re-search
-    setJustSelected(true); // Mark that we just selected a book
+    setDebouncedValue(book.titulo);
+    setLastTypedValue(book.titulo);
+    setJustSelected(true);
+    setIsUserTyping(false);
     onChange(book.titulo);
     setIsOpen(false);
     
@@ -128,15 +143,21 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   const handleInputFocus = () => {
     if (disabled || disableAutocomplete || justSelected) return;
     
-    // Only show suggestions if user is actively typing and there are suggestions
-    if (inputValue.trim().length >= 2 && suggestions.length > 0) {
+    // Only show suggestions if user is actively typing, there's enough text, and there are suggestions
+    if (isUserTyping && inputValue.trim().length >= 2 && suggestions.length > 0) {
       setIsOpen(true);
     }
+  };
+
+  const handleInputBlur = () => {
+    // Don't immediately close on blur to allow clicking on suggestions
+    // The click outside handler will take care of closing
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       setIsOpen(false);
+      setIsUserTyping(false);
     } else if (e.key === 'Enter' && isOpen && suggestions.length > 0) {
       e.preventDefault();
       handleBookSelect(suggestions[0]);
@@ -160,6 +181,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
           value={inputValue}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
           onKeyDown={handleInputKeyDown}
           disabled={disabled}
           className={`w-full px-3 py-2 pr-10 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-warning-500 focus:border-transparent transition-colors duration-200 text-sm ${
@@ -181,61 +203,63 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
           initial={{ opacity: 0, y: -10, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.15 }}
-          className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-80 overflow-y-auto"
+          className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-80 overflow-hidden"
         >
-          {suggestions.length > 0 && (
-            <div className="py-1">
-              {suggestions.map((book, index) => (
-                <motion.button
-                  key={index}
-                  whileHover={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}
-                  onClick={() => handleBookSelect(book)}
-                  className="w-full px-3 py-3 text-left hover:bg-warning-50 dark:hover:bg-warning-900/20 transition-colors duration-150 border-b border-slate-100 dark:border-slate-700 last:border-b-0"
-                >
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 p-1.5 bg-warning-100 dark:bg-warning-900/30 rounded-lg">
-                      <BookOpen className="h-4 w-4 text-warning-600 dark:text-warning-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h4 className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                          {book.titulo}
-                        </h4>
-                        {book.calificacion && (
-                          <div className="flex items-center space-x-1">
-                            <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
-                              {book.calificacion.toFixed(1)}
-                            </span>
-                          </div>
+          <div className="max-h-80 overflow-y-auto autocomplete-dropdown">
+            {suggestions.length > 0 && (
+              <div className="py-1">
+                {suggestions.map((book, index) => (
+                  <motion.button
+                    key={index}
+                    whileHover={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}
+                    onClick={() => handleBookSelect(book)}
+                    className="w-full px-3 py-3 text-left hover:bg-warning-50 dark:hover:bg-warning-900/20 transition-colors duration-150 border-b border-slate-100 dark:border-slate-700 last:border-b-0"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 p-1.5 bg-warning-100 dark:bg-warning-900/30 rounded-lg">
+                        <BookOpen className="h-4 w-4 text-warning-600 dark:text-warning-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h4 className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                            {book.titulo}
+                          </h4>
+                          {book.calificacion && (
+                            <div className="flex items-center space-x-1">
+                              <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                              <span className="text-xs text-slate-500 dark:text-slate-400">
+                                {book.calificacion.toFixed(1)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
+                          {formatBookInfo(book)}
+                        </p>
+                        {book.editorial && (
+                          <p className="text-xs text-slate-500 dark:text-slate-500">
+                            {book.editorial}
+                          </p>
                         )}
                       </div>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
-                        {formatBookInfo(book)}
-                      </p>
-                      {book.editorial && (
-                        <p className="text-xs text-slate-500 dark:text-slate-500">
-                          {book.editorial}
-                        </p>
-                      )}
                     </div>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-          )}
-          
-          {suggestions.length === 0 && !isLoading && debouncedValue.trim().length >= 2 && (
-            <div className="py-4 px-3 text-center">
-              <BookOpen className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                No se encontraron libros con ese título
-              </p>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                Puedes agregarlo manualmente
-              </p>
-            </div>
-          )}
+                  </motion.button>
+                ))}
+              </div>
+            )}
+            
+            {suggestions.length === 0 && !isLoading && debouncedValue.trim().length >= 2 && isUserTyping && (
+              <div className="py-4 px-3 text-center">
+                <BookOpen className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  No se encontraron libros con ese título
+                </p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                  Puedes agregarlo manualmente
+                </p>
+              </div>
+            )}
+          </div>
         </motion.div>
       )}
     </div>
