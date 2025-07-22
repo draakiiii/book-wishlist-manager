@@ -178,14 +178,20 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       const bestCameraIndex = findBestCamera(cameras);
       setCurrentCamera(bestCameraIndex);
 
-      // Request camera permissions with specific device
-      await navigator.mediaDevices.getUserMedia({ 
+      // Request camera permissions and setup video stream
+      const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           deviceId: cameras[bestCameraIndex].deviceId,
           width: { ideal: 1280 },
           height: { ideal: 720 }
         } 
       });
+
+      // Assign stream to video element
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
 
       setIsInitialized(true);
       addFeedback('success', 'Escáner inicializado correctamente', 2000);
@@ -215,14 +221,20 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
   };
 
   const startScanning = async () => {
-    if (!codeReaderRef.current || !videoRef.current || !isInitialized) return;
+    if (!codeReaderRef.current || !videoRef.current || !isInitialized) {
+      addFeedback('error', 'Escáner no inicializado. Reintentando...', 2000);
+      // Try to reinitialize if not ready
+      if (!isInitialized) {
+        await initializeScanner();
+      }
+      return;
+    }
 
     try {
       setIsScanning(true);
       addFeedback('info', 'Iniciando escaneo...', 1500);
       
-      await codeReaderRef.current.decodeFromVideoDevice(
-        availableCameras[currentCamera]?.deviceId || null,
+      await codeReaderRef.current.decodeFromVideoElement(
         videoRef.current,
         (result: Result | null, error: any) => {
           if (result) {
@@ -312,29 +324,64 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       return;
     }
 
-    const nextCamera = (currentCamera + 1) % availableCameras.length;
-    setCurrentCamera(nextCamera);
-    
-    // Update camera preference in config
-    dispatch({ type: 'SET_CAMERA_PREFERENCE', payload: nextCamera });
-    
-    addFeedback('info', `Cambiando a cámara ${nextCamera + 1}`, 1500);
-    
-    // Restart scanning with new camera
-    if (isScanning) {
+    const wasScanning = isScanning;
+    if (wasScanning) {
       stopScanning();
-      setTimeout(() => {
-        startScanning();
-      }, 500);
+    }
+
+    try {
+      const nextCamera = (currentCamera + 1) % availableCameras.length;
+      
+      // Stop current stream
+      if (videoRef.current && videoRef.current.srcObject) {
+        const currentStream = videoRef.current.srcObject as MediaStream;
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+
+      // Setup new camera
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          deviceId: availableCameras[nextCamera].deviceId,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      });
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+
+      setCurrentCamera(nextCamera);
+      
+      // Update camera preference in config
+      dispatch({ type: 'SET_CAMERA_PREFERENCE', payload: nextCamera });
+      
+      addFeedback('success', `Cámara ${nextCamera + 1} activada`, 1500);
+      
+      // Restart scanning if it was active
+      if (wasScanning) {
+        setTimeout(() => {
+          startScanning();
+        }, 500);
+      }
+    } catch (error) {
+      console.error('Error switching camera:', error);
+      addFeedback('error', 'Error al cambiar de cámara');
     }
   };
 
   const handleCloseModal = async () => {
-    // Turn off flashlight before closing
-    if (flashlightEnabled && videoRef.current) {
+    // Stop scanning first
+    stopScanning();
+
+    // Turn off flashlight and stop video stream
+    if (videoRef.current && videoRef.current.srcObject) {
       try {
         const stream = videoRef.current.srcObject as MediaStream;
-        if (stream) {
+        
+        // Turn off flashlight if enabled
+        if (flashlightEnabled) {
           const track = stream.getVideoTracks()[0];
           if (track) {
             await track.applyConstraints({
@@ -342,20 +389,33 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
             });
           }
         }
+        
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
       } catch (error) {
-        console.error('Error turning off flashlight:', error);
+        console.error('Error cleaning up video stream:', error);
       }
     }
 
-    stopScanning();
+    // Reset states
     setFlashlightEnabled(false);
+    setZoomLevel(1);
+    setIsInitialized(false);
+    
     onClose();
   };
 
   useEffect(() => {
     initializeScanner();
     
-    // Keyboard shortcuts
+    return () => {
+      stopScanning();
+    };
+  }, []);
+
+  // Separate useEffect for keyboard shortcuts to avoid re-initialization
+  useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (isProcessing) return;
       
@@ -397,17 +457,12 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     document.addEventListener('keydown', handleKeyPress);
     
     return () => {
-      stopScanning();
       document.removeEventListener('keydown', handleKeyPress);
     };
-  }, [isScanning, isProcessing, flashlightEnabled, zoomLevel]);
+  }, [isScanning, isProcessing]);
 
-  // Only start scanning when cameras are available and not already scanning
-  useEffect(() => {
-    if (availableCameras.length > 0 && !isScanning && isInitialized) {
-      startScanning();
-    }
-  }, [availableCameras, currentCamera, isInitialized]);
+  // Note: Removed auto-start scanning to allow manual control by user
+  // Previously auto-started scanning when cameras were available
 
   return (
     <motion.div
