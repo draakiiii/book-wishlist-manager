@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X, Camera, CameraOff, RotateCcw, AlertCircle, CheckCircle, Loader2, Zap } from 'lucide-react';
-import { BrowserMultiFormatReader, Result } from '@zxing/library';
+import { BrowserMultiFormatReader } from '@zxing/library';
 import { useAppState } from '../context/AppStateContext';
 
 interface BarcodeScannerModalProps {
@@ -234,14 +234,20 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       setIsScanning(true);
       addFeedback('info', 'Iniciando escaneo...', 1500);
       
-      await codeReaderRef.current.decodeFromVideoElement(
-        videoRef.current,
-        (result: Result | null, error: any) => {
+      // Start continuous scanning
+      const scanFrame = async () => {
+        if (!isScanning || !codeReaderRef.current || !videoRef.current) return;
+        
+        try {
+          const result = await codeReaderRef.current.decodeFromVideoElement(videoRef.current);
           if (result) {
             const scannedCode = result.getText();
             
             // Prevent duplicate scans
-            if (scannedCode === lastScannedCode) return;
+            if (scannedCode === lastScannedCode) {
+              setTimeout(scanFrame, 500);
+              return;
+            }
             
             setLastScannedCode(scannedCode);
             addFeedback('success', `Código detectado: ${scannedCode}`, 2000);
@@ -283,21 +289,29 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
                 onScanSuccess(scannedCode);
                 onClose();
               }, 1500);
+              return;
             } else {
               addFeedback('warning', 'Código detectado pero no es un ISBN válido', 2000);
             }
           }
-          
-          if (error) {
-            // Only log errors that are not "no code found" errors
-            if (error.name !== 'NotFoundException' && 
-                error.name !== 'NoMultiFormatReaderWasFoundException' &&
-                !error.message?.includes('No MultiFormat Readers were able to detect')) {
-              console.error('Scanning error:', error);
-            }
+        } catch (error) {
+          // Only log errors that are not "no code found" errors
+          if (error instanceof Error && 
+              error.name !== 'NotFoundException' && 
+              error.name !== 'NoMultiFormatReaderWasFoundException' &&
+              !error.message?.includes('No MultiFormat Readers were able to detect')) {
+            console.error('Scanning error:', error);
           }
         }
-      );
+        
+        // Continue scanning if still active
+        if (isScanning) {
+          setTimeout(scanFrame, 100);
+        }
+      };
+      
+      // Start the scanning loop
+      scanFrame();
     } catch (error) {
       console.error('Error starting scanner:', error);
       setIsScanning(false);
