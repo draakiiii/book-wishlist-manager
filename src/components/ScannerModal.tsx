@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { X, Camera, Zap, ZapOff, RotateCcw, Focus } from 'lucide-react';
-import { Html5Qrcode, Html5QrcodeScanType, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { X, Camera, Zap, ZapOff, RotateCcw, Focus, AlertCircle, CheckCircle } from 'lucide-react';
+import { BrowserMultiFormatReader, Result } from '@zxing/library';
 
 interface ScannerModalProps {
   onClose: () => void;
   onScan: (result: string) => void;
+}
+
+interface ScanFeedback {
+  type: 'info' | 'success' | 'error' | 'warning';
+  message: string;
+  timestamp: number;
 }
 
 const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
@@ -17,29 +23,52 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
   const [lastScanTime, setLastScanTime] = useState<Date | null>(null);
   const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
+  const [currentStream, setCurrentStream] = useState<MediaStream | null>(null);
+  const [feedbackMessages, setFeedbackMessages] = useState<ScanFeedback[]>([]);
+  const [isFocusing, setIsFocusing] = useState(false);
   
-  const scannerRef = useRef<Html5Qrcode | null>(null);
-  const videoElementRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const scannerRef = useRef<BrowserMultiFormatReader | null>(null);
+
+  const addFeedback = useCallback((type: ScanFeedback['type'], message: string) => {
+    const newFeedback: ScanFeedback = {
+      type,
+      message,
+      timestamp: Date.now()
+    };
+    
+    setFeedbackMessages(prev => {
+      const updated = [newFeedback, ...prev.slice(0, 4)]; // Keep last 5 messages
+      return updated;
+    });
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+      setFeedbackMessages(prev => prev.filter(f => f.timestamp !== newFeedback.timestamp));
+    }, 3000);
+  }, []);
 
   const handleScanResult = useCallback((result: string) => {
-    setStatusMessage('¡Código detectado!');
+    addFeedback('success', `¡Código detectado: ${result}`);
     setLastScanTime(new Date());
     onScan(result);
-  }, [onScan]);
+  }, [onScan, addFeedback]);
 
   const handleCloseModal = useCallback(() => {
     if (scannerRef.current) {
-      scannerRef.current.stop().then(() => {
-        scannerRef.current = null;
-      }).catch(console.error);
+      scannerRef.current.reset();
+    }
+    if (currentStream) {
+      currentStream.getTracks().forEach(track => track.stop());
     }
     onClose();
-  }, [onClose]);
+  }, [currentStream, onClose]);
 
   // Get available cameras
   useEffect(() => {
     const getCameras = async () => {
       try {
+        addFeedback('info', 'Detectando cámaras disponibles...');
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');
         setCameraDevices(videoDevices);
@@ -51,154 +80,234 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
           device.label.toLowerCase().includes('environment')
         );
         
-        setSelectedCamera(backCamera?.deviceId || videoDevices[0]?.deviceId || '');
+        const selectedId = backCamera?.deviceId || videoDevices[0]?.deviceId || '';
+        setSelectedCamera(selectedId);
+        
+        if (backCamera) {
+          addFeedback('info', `Cámara trasera seleccionada: ${backCamera.label}`);
+        } else {
+          addFeedback('info', `Cámara seleccionada: ${videoDevices[0]?.label || 'Cámara por defecto'}`);
+        }
       } catch (error) {
         console.error('Error getting cameras:', error);
+        addFeedback('error', 'Error al detectar cámaras');
       }
     };
     
     getCameras();
-  }, []);
+  }, [addFeedback]);
 
+  // Initialize camera and scanner
   useEffect(() => {
-    const initScanner = async () => {
-      if (!videoElementRef.current || !selectedCamera) return;
+    const initCamera = async () => {
+      if (!selectedCamera || !videoRef.current) return;
 
       try {
+        addFeedback('info', 'Iniciando cámara...');
         setStatusMessage('Iniciando cámara...');
         setIsScanning(false);
         
-        scannerRef.current = new Html5Qrcode('scanner-container');
+        // Stop previous stream
+        if (currentStream) {
+          currentStream.getTracks().forEach(track => track.stop());
+        }
+
+        // Get camera stream with better constraints for mobile
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            deviceId: selectedCamera,
+            width: { ideal: 1920, min: 1280 },
+            height: { ideal: 1080, min: 720 },
+            facingMode: 'environment',
+            focusMode: 'continuous',
+            exposureMode: 'continuous',
+            whiteBalanceMode: 'continuous'
+          } as any
+        });
+
+        setCurrentStream(stream);
+        videoRef.current.srcObject = stream;
         
-        const config = {
-          fps: 10,
-          qrbox: { width: 250, height: 150 },
-          aspectRatio: 1.0,
-          supportedScanTypes: [
-            Html5QrcodeScanType.SCAN_TYPE_CAMERA
-          ],
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.ITF,
-            Html5QrcodeSupportedFormats.QR_CODE
-          ]
-        };
-
-        await scannerRef.current.start(
-          { deviceId: selectedCamera },
-          config,
-          (decodedText, decodedResult) => {
-            setScanAttempts(prev => prev + 1);
-            setStatusMessage(`Detectando: ${decodedText.substring(0, 20)}...`);
-            handleScanResult(decodedText);
-          },
-          (errorMessage) => {
-            // This is called for every scan attempt, even when no barcode is found
-            setScanAttempts(prev => prev + 1);
-            if (errorMessage.includes('NotFoundException')) {
-              setStatusMessage('Apunta la cámara al código de barras');
-            } else {
-              console.log('Scan error:', errorMessage);
-            }
+        // Wait for video to be ready
+        await new Promise((resolve) => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = resolve;
           }
-        );
+        });
 
-        setIsScanning(true);
+        addFeedback('success', 'Cámara iniciada correctamente');
         setStatusMessage('Apunta la cámara al código de barras');
+        setIsScanning(true);
         
         // Check for torch capability
-        checkTorchCapability();
+        checkTorchCapability(stream);
+        
+        // Start scanning with ZXing
+        startZXingScanner(stream);
 
       } catch (error: unknown) {
-        console.error('Scanner error:', error);
+        console.error('Camera error:', error);
         if ((error as any).name === 'NotAllowedError') {
+          addFeedback('error', 'Permiso de cámara denegado');
           setStatusMessage('Error: Has denegado el permiso para usar la cámara.');
         } else {
+          addFeedback('error', 'Error al iniciar la cámara');
           setStatusMessage('Error: No se pudo iniciar la cámara.');
         }
       }
     };
 
-    if (selectedCamera) {
-      initScanner();
-    }
-
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(console.error);
+          if (selectedCamera) {
+        initCamera();
       }
-    };
-  }, [selectedCamera, handleScanResult]);
 
-  const checkTorchCapability = async () => {
+      return () => {
+        if (scannerRef.current) {
+          scannerRef.current.reset();
+        }
+        if (currentStream) {
+          currentStream.getTracks().forEach(track => track.stop());
+        }
+      };
+    }, [selectedCamera, addFeedback, currentStream]);
+
+  const checkTorchCapability = async (stream: MediaStream) => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { deviceId: selectedCamera } 
-      });
       const track = stream.getVideoTracks()[0];
       const capabilities = track.getCapabilities();
       
       if (capabilities && 'torch' in capabilities) {
         setShowTorchButton(true);
+        addFeedback('info', 'Flash disponible');
       }
-      
-      // Stop the test stream
-      stream.getTracks().forEach(track => track.stop());
     } catch (error) {
       console.log('Torch not available');
     }
   };
 
+  const startZXingScanner = async (stream: MediaStream) => {
+    if (!videoRef.current) return;
+
+    try {
+      addFeedback('info', 'Iniciando detector de códigos...');
+      
+      scannerRef.current = new BrowserMultiFormatReader();
+      
+      // Set video source
+      videoRef.current.srcObject = stream;
+      
+      // Wait for video to be ready
+      await new Promise((resolve) => {
+        if (videoRef.current) {
+          videoRef.current.onloadedmetadata = resolve;
+        }
+      });
+
+      addFeedback('success', 'Detector iniciado - Escaneando...');
+      
+      // Start decoding
+      scannerRef.current.decodeFromVideoDevice(
+        selectedCamera,
+        videoRef.current,
+        (result: Result | null, error: any) => {
+          if (result) {
+            const scannedText = result.getText();
+            addFeedback('success', `¡Código detectado: ${scannedText}`);
+            setScanAttempts(prev => prev + 1);
+            handleScanResult(scannedText);
+          } else if (error && error.name !== 'NotFoundException') {
+            console.error('Scan error:', error);
+            addFeedback('error', 'Error al escanear');
+          } else {
+            // This is called for every scan attempt
+            setScanAttempts(prev => prev + 1);
+          }
+        }
+      );
+
+    } catch (error) {
+      console.error('ZXing scanner error:', error);
+      addFeedback('error', 'Error al iniciar detector');
+    }
+  };
+
   const handleToggleTorch = async () => {
-    if (!scannerRef.current) return;
+    if (!currentStream) return;
     
     try {
+      setIsFocusing(true);
+      const track = currentStream.getVideoTracks()[0];
       const newTorchState = !isTorchOn;
-      await scannerRef.current.applyVideoConstraints({
+      
+      await track.applyConstraints({
         advanced: [{ torch: newTorchState } as any]
       });
+      
       setIsTorchOn(newTorchState);
+      addFeedback('success', newTorchState ? 'Flash activado' : 'Flash desactivado');
     } catch (error) {
       console.error('Error toggling torch:', error);
+      addFeedback('error', 'Error al cambiar flash');
+    } finally {
+      setIsFocusing(false);
     }
   };
 
   const handleSwitchCamera = async () => {
-    if (!scannerRef.current || cameraDevices.length < 2) return;
+    if (cameraDevices.length < 2) return;
     
     try {
-      await scannerRef.current.stop();
+      addFeedback('info', 'Cambiando cámara...');
       const currentIndex = cameraDevices.findIndex(device => device.deviceId === selectedCamera);
       const nextIndex = (currentIndex + 1) % cameraDevices.length;
-      setSelectedCamera(cameraDevices[nextIndex].deviceId);
+      const nextCamera = cameraDevices[nextIndex];
+      
+      setSelectedCamera(nextCamera.deviceId);
+      addFeedback('info', `Cambiado a: ${nextCamera.label}`);
     } catch (error) {
       console.error('Error switching camera:', error);
+      addFeedback('error', 'Error al cambiar cámara');
     }
   };
 
   const handleTapToFocus = async () => {
-    if (!scannerRef.current) return;
+    if (!currentStream) return;
     
     try {
-      await scannerRef.current.applyVideoConstraints({
-        focusMode: 'manual',
-        focusDistance: 0.1
-      } as any);
-      setStatusMessage('Enfoque ajustado');
+      setIsFocusing(true);
+      addFeedback('info', 'Ajustando enfoque...');
+      
+      const track = currentStream.getVideoTracks()[0];
+      
+      // Try different focus modes
+      const focusModes = ['manual', 'continuous', 'auto'];
+      
+      for (const mode of focusModes) {
+        try {
+          await track.applyConstraints({
+            focusMode: mode as any,
+            focusDistance: mode === 'manual' ? 0.1 : undefined
+          } as any);
+          
+          addFeedback('success', `Enfoque ajustado: ${mode}`);
+          break;
+        } catch (e) {
+          console.log(`Focus mode ${mode} not supported`);
+        }
+      }
     } catch (error) {
       console.error('Error focusing:', error);
+      addFeedback('error', 'Error al ajustar enfoque');
+    } finally {
+      setIsFocusing(false);
     }
   };
 
   const formatScanStats = () => {
     if (scanAttempts === 0) return '';
     
-    const attemptsPerSecond = scanAttempts / Math.max(1, (Date.now() - (lastScanTime?.getTime() || Date.now())) / 1000);
+    const timeElapsed = (Date.now() - (lastScanTime?.getTime() || Date.now())) / 1000;
+    const attemptsPerSecond = scanAttempts / Math.max(1, timeElapsed);
     return `${scanAttempts} intentos (${attemptsPerSecond.toFixed(1)}/s)`;
   };
 
@@ -234,10 +343,12 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
         <div className="p-4 space-y-4">
           {/* Video Container */}
           <div className="relative bg-slate-900 rounded-lg overflow-hidden aspect-video">
-            <div 
-              id="scanner-container"
-              ref={videoElementRef}
-              className="w-full h-full"
+            <video 
+              ref={videoRef}
+              className="w-full h-full object-cover"
+              autoPlay
+              playsInline
+              muted
             />
             
             {/* Scanner Overlay */}
@@ -268,11 +379,39 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleTapToFocus}
-                className="p-2 bg-black/50 hover:bg-black/70 text-white rounded-lg transition-colors duration-200"
+                disabled={isFocusing}
+                className="p-2 bg-black/50 hover:bg-black/70 disabled:bg-black/30 text-white rounded-lg transition-colors duration-200"
               >
-                <Focus className="h-4 w-4" />
+                <Focus className={`h-4 w-4 ${isFocusing ? 'animate-spin' : ''}`} />
               </motion.button>
             </div>
+          </div>
+
+          {/* Feedback Messages */}
+          <div className="space-y-2">
+            {feedbackMessages.map((feedback) => (
+              <motion.div
+                key={feedback.timestamp}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className={`flex items-center space-x-2 p-2 rounded-lg text-sm ${
+                  feedback.type === 'success' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                  feedback.type === 'error' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
+                  feedback.type === 'warning' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' :
+                  'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                }`}
+              >
+                {feedback.type === 'success' ? (
+                  <CheckCircle className="h-4 w-4" />
+                ) : feedback.type === 'error' ? (
+                  <AlertCircle className="h-4 w-4" />
+                ) : (
+                  <Camera className="h-4 w-4" />
+                )}
+                <span>{feedback.message}</span>
+              </motion.div>
+            ))}
           </div>
 
           {/* Status Message */}
@@ -294,7 +433,8 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleToggleTorch}
-                className="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
+                disabled={isFocusing}
+                className="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:bg-slate-50 dark:disabled:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
               >
                 {isTorchOn ? (
                   <>
