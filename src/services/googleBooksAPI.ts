@@ -1,9 +1,68 @@
 import { BookData } from '../types';
 
+// Cache para evitar llamadas repetidas a la API
+const bookCache = new Map<string, BookData>();
+const searchCache = new Map<string, BookData[]>();
+
+// Configuración de la API
+const API_CONFIG = {
+  baseUrl: 'https://www.googleapis.com/books/v1/volumes',
+  maxResults: 10,
+  language: 'es',
+  timeout: 10000, // 10 segundos
+};
+
+// Función para limpiar el caché periódicamente
+const cleanupCache = () => {
+  const now = Date.now();
+  const maxAge = 30 * 60 * 1000; // 30 minutos
+  
+  for (const [key, value] of bookCache.entries()) {
+    if (now - (value as any).timestamp > maxAge) {
+      bookCache.delete(key);
+    }
+  }
+  
+  for (const [key, value] of searchCache.entries()) {
+    if (now - (value as any).timestamp > maxAge) {
+      searchCache.delete(key);
+    }
+  }
+};
+
+// Limpiar caché cada 5 minutos
+setInterval(cleanupCache, 5 * 60 * 1000);
+
+// Función para hacer peticiones con timeout
+const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout: number = API_CONFIG.timeout): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+};
+
 export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
   try {
     // Clean the ISBN (remove any non-numeric characters except 'X')
     const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
+    
+    // Check cache first
+    const cacheKey = `isbn_${cleanIsbn}`;
+    if (bookCache.has(cacheKey)) {
+      const cachedData = bookCache.get(cacheKey);
+      console.log('Using cached book data for ISBN:', cleanIsbn);
+      return cachedData || null;
+    }
     
     // Try multiple search strategies
     const searchQueries = [
@@ -16,10 +75,11 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
 
     for (const query of searchQueries) {
       try {
-        const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&langRestrict=es`);
+        const url = `${API_CONFIG.baseUrl}?q=${encodeURIComponent(query)}&langRestrict=${API_CONFIG.language}`;
+        const response = await fetchWithTimeout(url);
         
         if (!response.ok) {
-          console.warn(`API request failed for query: ${query}`);
+          console.warn(`API request failed for query: ${query}`, response.status, response.statusText);
           continue;
         }
         
@@ -89,11 +149,19 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
             numCalificaciones: ratingsCount > 0 ? ratingsCount : undefined
           };
           
-          console.log('Book data found:', bookData);
+          // Cache the result
+          (bookData as any).timestamp = Date.now();
+          bookCache.set(cacheKey, bookData);
+          
+          console.log('Book data found and cached:', bookData);
           break; // Found the book, exit the loop
         }
       } catch (error) {
-        console.warn(`Error searching with query "${query}":`, error);
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.warn(`Request timeout for query: ${query}`);
+        } else {
+          console.warn(`Error searching with query "${query}":`, error);
+        }
         continue;
       }
     }
@@ -156,19 +224,43 @@ export const convertISBN10To13 = (isbn10: string): string => {
   return isbn13 + checkDigit;
 };
 
-// New function to search books by title for autocomplete
-export const searchBooksByTitle = async (query: string): Promise<BookData[]> => {
+// Función para limpiar el caché manualmente
+export const clearCache = () => {
+  bookCache.clear();
+  searchCache.clear();
+  console.log('API cache cleared');
+};
+
+// Función para obtener estadísticas del caché
+export const getCacheStats = () => {
+  return {
+    bookCacheSize: bookCache.size,
+    searchCacheSize: searchCache.size,
+    totalCachedItems: bookCache.size + searchCache.size
+  };
+};
+
+// Función para buscar libros por autor
+export const searchBooksByAuthor = async (author: string): Promise<BookData[]> => {
   try {
-    if (!query.trim() || query.length < 2) {
+    if (!author.trim() || author.length < 2) {
       return [];
     }
 
-    const response = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&langRestrict=es&maxResults=10&orderBy=relevance`
-    );
+    const query = `inauthor:"${author.trim()}"`;
+    const cacheKey = `author_${author.toLowerCase().trim()}`;
+    
+    if (searchCache.has(cacheKey)) {
+      const cachedData = searchCache.get(cacheKey);
+      console.log('Using cached author search results for:', author);
+      return cachedData || [];
+    }
+
+    const url = `${API_CONFIG.baseUrl}?q=${encodeURIComponent(query)}&langRestrict=${API_CONFIG.language}&maxResults=${API_CONFIG.maxResults}&orderBy=relevance`;
+    const response = await fetchWithTimeout(url);
 
     if (!response.ok) {
-      console.warn('API request failed for title search');
+      console.warn('API request failed for author search', response.status, response.statusText);
       return [];
     }
 
@@ -178,7 +270,101 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
       return [];
     }
 
-    return data.items.map((item: any) => {
+    const results = data.items.map((item: any) => {
+      const book = item.volumeInfo;
+      
+      let title = book.title || '';
+      if (book.subtitle) {
+        title += `: ${book.subtitle}`;
+      }
+      
+      let authorName = '';
+      if (book.authors && book.authors.length > 0) {
+        authorName = book.authors.join(', ');
+      }
+      
+      let pages: number | undefined;
+      if (book.pageCount) {
+        pages = book.pageCount;
+      } else if (book.printedPageCount) {
+        pages = book.printedPageCount;
+      }
+      
+      let publicationYear: number | undefined;
+      if (book.publishedDate) {
+        const year = parseInt(book.publishedDate.substring(0, 4));
+        if (!isNaN(year)) {
+          publicationYear = year;
+        }
+      }
+      
+      let isbn: string | undefined;
+      if (book.industryIdentifiers) {
+        const isbn13 = book.industryIdentifiers.find((id: any) => id.type === 'ISBN_13');
+        const isbn10 = book.industryIdentifiers.find((id: any) => id.type === 'ISBN_10');
+        isbn = isbn13?.identifier || isbn10?.identifier;
+      }
+      
+      return {
+        titulo: title,
+        autor: authorName || undefined,
+        paginas: pages,
+        isbn: isbn,
+        publicacion: publicationYear,
+        editorial: book.publisher || undefined,
+        descripcion: book.description || undefined,
+        categorias: book.categories?.length > 0 ? book.categories : undefined,
+        idioma: book.language || undefined,
+        calificacion: book.averageRating > 0 ? book.averageRating : undefined,
+        numCalificaciones: book.ratingsCount > 0 ? book.ratingsCount : undefined
+      };
+    });
+
+    (results as any).timestamp = Date.now();
+    searchCache.set(cacheKey, results);
+    
+    console.log(`Found ${results.length} books by author: ${author}`);
+    return results;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.warn('Author search request timeout for:', author);
+    } else {
+      console.error('Error searching books by author:', error);
+    }
+    return [];
+  }
+};
+
+// New function to search books by title for autocomplete
+export const searchBooksByTitle = async (query: string): Promise<BookData[]> => {
+  try {
+    if (!query.trim() || query.length < 2) {
+      return [];
+    }
+
+    // Check cache first
+    const cacheKey = `search_${query.toLowerCase().trim()}`;
+    if (searchCache.has(cacheKey)) {
+      const cachedData = searchCache.get(cacheKey);
+      console.log('Using cached search results for query:', query);
+      return cachedData || [];
+    }
+
+    const url = `${API_CONFIG.baseUrl}?q=${encodeURIComponent(query)}&langRestrict=${API_CONFIG.language}&maxResults=${API_CONFIG.maxResults}&orderBy=relevance`;
+    const response = await fetchWithTimeout(url);
+
+    if (!response.ok) {
+      console.warn('API request failed for title search', response.status, response.statusText);
+      return [];
+    }
+
+    const data = await response.json();
+    
+    if (data.totalItems === 0) {
+      return [];
+    }
+
+    const results = data.items.map((item: any) => {
       const book = item.volumeInfo;
       
       // Extract and clean the title
@@ -250,8 +436,19 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
         numCalificaciones: ratingsCount > 0 ? ratingsCount : undefined
       };
     });
+
+    // Cache the results
+    (results as any).timestamp = Date.now();
+    searchCache.set(cacheKey, results);
+    
+    console.log(`Found ${results.length} books for query: ${query}`);
+    return results;
   } catch (error) {
-    console.error('Error searching books by title:', error);
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.warn('Search request timeout for query:', query);
+    } else {
+      console.error('Error searching books by title:', error);
+    }
     return [];
   }
 }; 

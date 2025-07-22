@@ -285,7 +285,15 @@ function appReducer(state: AppState, action: Action): AppState {
         id: Date.now(),
         titulo: action.payload.titulo,
         autor: action.payload.autor,
-        paginas: action.payload.paginas
+        paginas: action.payload.paginas,
+        isbn: action.payload.isbn,
+        publicacion: action.payload.publicacion,
+        editorial: action.payload.editorial,
+        descripcion: action.payload.descripcion,
+        categorias: action.payload.categorias,
+        idioma: action.payload.idioma,
+        calificacion: action.payload.calificacion,
+        numCalificaciones: action.payload.numCalificaciones
       };
       
       return {
