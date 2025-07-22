@@ -34,7 +34,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
     const todosLosLibros = [
       ...state.tbr,
       ...state.historial,
-      ...(state.libroActual ? [state.libroActual] : [])
+      ...state.librosActuales
     ];
     
     const librosDeLaSaga = todosLosLibros

@@ -51,6 +51,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
   const [editingBook, setEditingBook] = useState<number | null>(null);
   const [selectedBooks, setSelectedBooks] = useState<Set<number>>(new Set());
   const [scanMode, setScanMode] = useState<'continuous' | 'single'>('continuous');
+  const [previousScanMode, setPreviousScanMode] = useState<'continuous' | 'single'>('continuous');
   const [showBooksList, setShowBooksList] = useState(false);
   const [currentCamera, setCurrentCamera] = useState(0);
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
@@ -271,7 +272,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
       
       scanningTimeoutRef.current = setTimeout(() => {
         // Resume scanning after delay
-      }, 2000); // 2 second delay for duplicates too
+      }, 3000); // 3 second delay for duplicates
       
       return;
     }
@@ -341,7 +342,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
     // Add delay to prevent multiple scans of the same code
     scanningTimeoutRef.current = setTimeout(() => {
       // Resume scanning after delay
-    }, 2000); // 2 second delay
+    }, 3000); // 3 second delay
 
     // Stop scanning if in single mode
     if (scanMode === 'single') {
@@ -448,6 +449,26 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
       handleCloseModal();
     }
   }, [isOpen]);
+
+  // Detect mode changes and restart scanner
+  useEffect(() => {
+    if (isOpen && isInitialized && scanMode !== previousScanMode) {
+      // Stop current scanning
+      if (isScanning) {
+        stopScanning();
+      }
+      
+      // Update previous mode
+      setPreviousScanMode(scanMode);
+      
+      // Restart scanning with new mode after a short delay
+      setTimeout(() => {
+        if (isOpen) {
+          startScanning();
+        }
+      }, 500);
+    }
+  }, [scanMode, isOpen, isInitialized, isScanning]);
 
   if (!isOpen) return null;
 

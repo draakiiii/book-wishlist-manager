@@ -428,6 +428,21 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
             muted
           />
           
+          {/* Camera Controls */}
+          <div className="absolute top-4 right-4 flex flex-col space-y-2">
+            {/* Flashlight Button */}
+            <button
+              onClick={toggleFlashlight}
+              className={`p-2 rounded-lg transition-colors duration-200 ${
+                flashlightEnabled 
+                  ? 'bg-yellow-500 text-white' 
+                  : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
+            >
+              <Zap className="h-4 w-4" />
+            </button>
+          </div>
+
           {/* Zoom Controls */}
           <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-sm rounded-lg p-2">
             <div className="flex flex-col space-y-2">

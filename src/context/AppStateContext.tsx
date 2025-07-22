@@ -21,7 +21,7 @@ const initialState: AppState = {
   },
   progreso: 0,
   compraDesbloqueada: false,
-  libroActual: null,
+  librosActuales: [],
   tbr: [],
   historial: [],
   wishlist: [],
@@ -70,7 +70,7 @@ function actualizarContadoresSagas(state: AppState): AppState {
   const todosLosLibros = [
     ...state.tbr,
     ...state.historial,
-    ...(state.libroActual ? [state.libroActual] : [])
+    ...state.librosActuales
   ];
 
   const sagasActualizadas = state.sagas.map(saga => {
@@ -83,7 +83,7 @@ function actualizarContadoresSagas(state: AppState): AppState {
     // 3. No hay libros de la saga en TBR o actual
     const librosEnTbrOActual = [
       ...state.tbr,
-      ...(state.libroActual ? [state.libroActual] : [])
+      ...state.librosActuales
     ].filter(libro => libro.sagaId === saga.id);
     
     const isComplete = librosDeLaSaga.length > 0 && 
@@ -105,14 +105,14 @@ function verificarSagaCompleta(sagaId: number, state: AppState): boolean {
   const todosLosLibros = [
     ...state.tbr,
     ...state.historial,
-    ...(state.libroActual ? [state.libroActual] : [])
+    ...state.librosActuales
   ];
   
   const librosDeLaSaga = todosLosLibros.filter(libro => libro.sagaId === sagaId);
   const librosLeidosDeLaSaga = state.historial.filter(libro => libro.sagaId === sagaId);
   const librosEnTbrOActual = [
     ...state.tbr,
-    ...(state.libroActual ? [state.libroActual] : [])
+    ...state.librosActuales
   ].filter(libro => libro.sagaId === sagaId);
   
   return librosDeLaSaga.length > 0 && 
@@ -215,13 +215,14 @@ function appReducer(state: AppState, action: Action): AppState {
       const libro = state.tbr[libroIndex];
       const nuevaTbr = state.tbr.filter((_, index) => index !== libroIndex);
       
-      return { ...state, libroActual: libro, tbr: nuevaTbr };
+      return { ...state, librosActuales: [...state.librosActuales, libro], tbr: nuevaTbr };
     }
 
     case 'FINISH_BOOK': {
-      if (!state.libroActual || state.libroActual.id !== action.payload) return state;
+      const libroIndex = state.librosActuales.findIndex(l => l.id === action.payload);
+      if (libroIndex === -1) return state;
       
-      const libroTerminado = state.libroActual;
+      const libroTerminado = state.librosActuales[libroIndex];
       const sagaPreviaCompleta = libroTerminado.sagaId 
         ? verificarSagaCompleta(libroTerminado.sagaId, state)
         : false;
@@ -231,7 +232,7 @@ function appReducer(state: AppState, action: Action): AppState {
       
       const nuevoEstado = {
         ...state,
-        libroActual: null,
+        librosActuales: state.librosActuales.filter((_, index) => index !== libroIndex),
         historial: [libroTerminado, ...state.historial],
         progreso: state.progreso + puntosGanados
       };
@@ -266,12 +267,15 @@ function appReducer(state: AppState, action: Action): AppState {
     }
 
     case 'ABANDON_BOOK': {
-      if (!state.libroActual || state.libroActual.id !== action.payload) return state;
+      const libroIndex = state.librosActuales.findIndex(l => l.id === action.payload);
+      if (libroIndex === -1) return state;
+      
+      const libroAbandonado = state.librosActuales[libroIndex];
       
       return {
         ...state,
-        libroActual: null,
-        tbr: [state.libroActual, ...state.tbr]
+        librosActuales: state.librosActuales.filter((_, index) => index !== libroIndex),
+        tbr: [libroAbandonado, ...state.tbr]
       };
     }
 
@@ -390,7 +394,7 @@ function appReducer(state: AppState, action: Action): AppState {
       const todosLosLibros = [
         ...state.tbr,
         ...state.historial,
-        ...(state.libroActual ? [state.libroActual] : [])
+        ...state.librosActuales
       ];
 
       // Crear un mapa de nombres de saga a IDs
@@ -439,17 +443,20 @@ function appReducer(state: AppState, action: Action): AppState {
         return libro;
       });
 
-      const libroActualActualizado = state.libroActual && state.libroActual.sagaName && sagaNameToId.has(state.libroActual.sagaName)
-        ? { ...state.libroActual, sagaId: sagaNameToId.get(state.libroActual.sagaName) }
-        : state.libroActual;
+      const librosActualesActualizados = state.librosActuales.map(libro => {
+        if (libro.sagaName && sagaNameToId.has(libro.sagaName)) {
+          return { ...libro, sagaId: sagaNameToId.get(libro.sagaName) };
+        }
+        return libro;
+      });
 
-      const nuevoEstado = {
-        ...state,
-        tbr: tbrActualizada,
-        historial: historialActualizado,
-        libroActual: libroActualActualizado,
-        sagas: [...state.sagas, ...nuevasSagas]
-      };
+              const nuevoEstado = {
+          ...state,
+          tbr: tbrActualizada,
+          historial: historialActualizado,
+          librosActuales: librosActualesActualizados,
+          sagas: [...state.sagas, ...nuevasSagas]
+        };
 
       return actualizarContadoresSagas(nuevoEstado);
     }
@@ -520,10 +527,17 @@ function appReducer(state: AppState, action: Action): AppState {
       const { id, updates, listType } = action.payload;
       
       if (listType === 'actual') {
-        if (!state.libroActual || state.libroActual.id !== id) return state;
+        const libroIndex = state.librosActuales.findIndex(l => l.id === id);
+        if (libroIndex === -1) return state;
+        
+        const libroActualizado = { ...state.librosActuales[libroIndex], ...updates };
+        const librosActualesActualizados = state.librosActuales.map((libro, index) => 
+          index === libroIndex ? libroActualizado : libro
+        );
+        
         return {
           ...state,
-          libroActual: { ...state.libroActual, ...updates }
+          librosActuales: librosActualesActualizados
         };
       }
       
@@ -559,7 +573,7 @@ function appReducer(state: AppState, action: Action): AppState {
         if (libros.tbr) newState.tbr = libros.tbr;
         if (libros.historial) newState.historial = libros.historial;
         if (libros.wishlist) newState.wishlist = libros.wishlist;
-        if (libros.actual) newState.libroActual = libros.actual;
+        if (libros.actual) newState.librosActuales = Array.isArray(libros.actual) ? libros.actual : [libros.actual];
       }
       
       if (sagas) {

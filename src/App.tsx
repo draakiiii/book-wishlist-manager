@@ -350,9 +350,9 @@ const AppContent: React.FC = () => {
                 </div>
               </div>
               <div className="p-4 sm:p-6">
-                {state.libroActual ? (
-                  <BookList 
-                    books={[state.libroActual]}
+                        {state.librosActuales.length > 0 ? (
+          <BookList
+            books={state.librosActuales}
                     type="actual"
                     emptyMessage=""
                   />

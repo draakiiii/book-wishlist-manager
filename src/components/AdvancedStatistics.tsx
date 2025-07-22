@@ -25,7 +25,7 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
     const allBooks = [
       ...state.tbr,
       ...state.historial,
-      ...(state.libroActual ? [state.libroActual] : [])
+      ...state.librosActuales
     ];
 
     // Calculate basic stats

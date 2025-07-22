@@ -37,14 +37,14 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onClose, isOp
 
   // Performance optimization: memoize all books
   const allBooks = useMemo(() => {
-    const books: Array<Libro & { listType: 'tbr' | 'historial' | 'wishlist' | 'actual' }> = [
-      ...state.tbr.map(book => ({ ...book, listType: 'tbr' as const })),
-      ...state.historial.map(book => ({ ...book, listType: 'historial' as const })),
-      ...state.wishlist.map(book => ({ ...book, listType: 'wishlist' as const })),
-      ...(state.libroActual ? [{ ...state.libroActual, listType: 'actual' as const }] : [])
-    ];
+      const books: Array<Libro & { listType: 'tbr' | 'historial' | 'wishlist' | 'actual' }> = [
+    ...state.tbr.map(book => ({ ...book, listType: 'tbr' as const })),
+    ...state.historial.map(book => ({ ...book, listType: 'historial' as const })),
+    ...state.wishlist.map(book => ({ ...book, listType: 'wishlist' as const })),
+    ...state.librosActuales.map(book => ({ ...book, listType: 'actual' as const }))
+  ];
     return books;
-  }, [state.tbr, state.historial, state.wishlist, state.libroActual]);
+  }, [state.tbr, state.historial, state.wishlist, state.librosActuales]);
 
   // Performance optimization: memoize search results
   const searchResults = useMemo(() => {
