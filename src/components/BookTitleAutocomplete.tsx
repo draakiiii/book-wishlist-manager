@@ -33,6 +33,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   const [lastTypedValue, setLastTypedValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Sync internal state with prop value
   useEffect(() => {
@@ -98,6 +99,22 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Prevent page scroll when dropdown is open on mobile
+  useEffect(() => {
+    if (isOpen) {
+      // Add class to prevent body scroll
+      document.body.classList.add('dropdown-open');
+    } else {
+      // Remove class to restore body scroll
+      document.body.classList.remove('dropdown-open');
+    }
+
+    return () => {
+      // Cleanup: remove class
+      document.body.classList.remove('dropdown-open');
+    };
+  }, [isOpen]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return;
@@ -205,7 +222,14 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
           transition={{ duration: 0.15 }}
           className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-80 overflow-hidden"
         >
-          <div className="max-h-80 overflow-y-auto autocomplete-dropdown">
+          <div 
+            ref={scrollContainerRef}
+            className="max-h-80 overflow-y-auto autocomplete-dropdown"
+            style={{ 
+              overscrollBehavior: 'contain',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
             {suggestions.length > 0 && (
               <div className="py-1">
                 {suggestions.map((book, index) => (
@@ -213,7 +237,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
                     key={index}
                     whileHover={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}
                     onClick={() => handleBookSelect(book)}
-                    className="w-full px-3 py-3 text-left hover:bg-warning-50 dark:hover:bg-warning-900/20 transition-colors duration-150 border-b border-slate-100 dark:border-slate-700 last:border-b-0"
+                    className="w-full px-3 py-3 text-left hover:bg-warning-50 dark:hover:bg-warning-900/20 transition-colors duration-150 border-b border-slate-100 dark:border-slate-700 last:border-b-0 touch-manipulation"
                   >
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0 p-1.5 bg-warning-100 dark:bg-warning-900/30 rounded-lg">

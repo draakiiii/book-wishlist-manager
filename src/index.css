@@ -184,4 +184,36 @@
   .dark .autocomplete-dropdown::-webkit-scrollbar-thumb:hover {
     background-color: rgb(100 116 139);
   }
+
+  /* Mejoras específicas para móviles en el autocomplete */
+  .autocomplete-dropdown {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    /* Prevenir que el scroll se propague al body */
+    isolation: isolate;
+  }
+
+  /* Mejorar la respuesta táctil en los botones del dropdown */
+  .autocomplete-dropdown button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    /* Asegurar que los clics funcionen correctamente */
+    pointer-events: auto;
+  }
+
+  /* Asegurar que el scroll funcione correctamente en iOS */
+  @supports (-webkit-touch-callout: none) {
+    .autocomplete-dropdown {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+  }
+
+  /* Prevenir scroll del body cuando el dropdown está abierto */
+  body.dropdown-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
 }
