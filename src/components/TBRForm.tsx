@@ -48,6 +48,7 @@ const TBRForm: React.FC = () => {
 
   const handleSearchResult = async (result: string) => {
     setShowISBNInput(false);
+    setShowBarcodeScanner(false); // Close barcode scanner modal
     setIsLoadingBook(true);
     setScanStatus('scanning');
     setScanMessage('Validando ISBN...');

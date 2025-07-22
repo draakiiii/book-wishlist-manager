@@ -17,12 +17,13 @@ La aplicación ahora incluye un escáner de códigos de barras que permite escan
 ### 2. Escanear un Libro
 1. Haz clic en el botón **"Escanear Código"**
 2. Permite el acceso a la cámara cuando el navegador lo solicite
-3. Apunta la cámara al código de barras del libro
-4. El código debe estar dentro del marco rojo que aparece en pantalla
-5. Mantén el código estable hasta que se detecte
-6. El sistema validará automáticamente si es un ISBN válido
-7. Si es válido, se buscará la información del libro automáticamente
-8. Los datos del libro se rellenarán en el formulario
+3. El sistema seleccionará automáticamente la mejor cámara disponible
+4. Apunta la cámara al código de barras del libro
+5. El código debe estar dentro del marco rojo que aparece en pantalla
+6. Mantén el código estable hasta que se detecte
+7. El sistema validará automáticamente si es un ISBN válido
+8. Si es válido, se buscará la información del libro automáticamente
+9. El escáner se cerrará automáticamente y los datos del libro se rellenarán en el formulario
 
 ### 3. Controles del Escáner
 
@@ -30,6 +31,11 @@ La aplicación ahora incluye un escáner de códigos de barras que permite escan
 - **"Cambiar Cámara"**: Alterna entre cámaras disponibles (frontal/trasera)
 - **"Iniciar/Detener"**: Controla el estado del escáner
 - **"X"**: Cierra el escáner y regresa al formulario
+
+#### Selección Automática de Cámara:
+- El sistema selecciona automáticamente la cámara trasera principal
+- Si no hay cámara trasera, selecciona la frontal
+- Puedes cambiar manualmente si la cámara seleccionada no enfoca bien
 
 #### Estados del Escáner:
 - **Escaneando**: Buscando códigos de barras
@@ -64,6 +70,7 @@ El escáner incluye validación automática de ISBN:
 - Mantén el código de barras estable
 - El código debe estar completamente dentro del marco rojo
 - Mantén una distancia de 10-30 cm del código
+- Si no enfoca bien, usa el botón "Cambiar Cámara"
 
 ### Calidad del Código
 - El código debe estar en buen estado (no dañado)
@@ -85,8 +92,9 @@ El escáner incluye validación automática de ISBN:
 ### El escáner no detecta códigos
 - Verifica la iluminación
 - Asegúrate de que el código esté dentro del marco
-- Intenta cambiar de cámara
+- Intenta cambiar de cámara usando el botón "Cambiar Cámara"
 - Verifica que el código no esté dañado
+- Algunas cámaras enfocan mejor que otras para códigos de barras
 
 ### "Código detectado pero no es un ISBN válido"
 - Verifica que estés escaneando un código ISBN real

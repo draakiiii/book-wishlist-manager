@@ -83,12 +83,47 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
         return;
       }
 
-      // Start scanning with current camera
+      // Find the best camera (prefer back camera with highest resolution)
+      const bestCameraIndex = findBestCamera(videoDevices);
+      setCurrentCamera(bestCameraIndex);
+      addFeedback('info', `Cámara seleccionada: ${videoDevices[bestCameraIndex]?.label || 'Cámara sin nombre'}`);
+
+      // Start scanning with best camera
       await startScanning();
     } catch (error) {
       console.error('Error initializing scanner:', error);
       addFeedback('error', 'Error al inicializar el escáner');
     }
+  };
+
+  const findBestCamera = (cameras: MediaDeviceInfo[]): number => {
+    // Priority order: back camera > front camera > any camera
+    const backCameras = cameras.filter(camera => 
+      camera.label.toLowerCase().includes('back') || 
+      camera.label.toLowerCase().includes('trasera') ||
+      camera.label.toLowerCase().includes('posterior')
+    );
+    
+    const frontCameras = cameras.filter(camera => 
+      camera.label.toLowerCase().includes('front') || 
+      camera.label.toLowerCase().includes('frontal') ||
+      camera.label.toLowerCase().includes('selfie')
+    );
+
+    // Return back camera if available
+    if (backCameras.length > 0) {
+      const backCameraIndex = cameras.findIndex(camera => camera.deviceId === backCameras[0].deviceId);
+      return backCameraIndex;
+    }
+
+    // Return front camera if available
+    if (frontCameras.length > 0) {
+      const frontCameraIndex = cameras.findIndex(camera => camera.deviceId === frontCameras[0].deviceId);
+      return frontCameraIndex;
+    }
+
+    // Return first camera as fallback
+    return 0;
   };
 
   const startScanning = async () => {
@@ -117,21 +152,22 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
             setLastScannedCode(scannedCode);
             addFeedback('success', `Código detectado: ${scannedCode}`);
             
-            // Validate ISBN
-            if (validateISBN(scannedCode)) {
-              setIsProcessing(true);
-              addFeedback('info', 'ISBN válido detectado. Procesando...');
-              
-              // Stop scanning
-              stopScanning();
-              
-              // Process the ISBN
-              setTimeout(() => {
-                onScanSuccess(scannedCode);
-              }, 1000);
-            } else {
-              addFeedback('warning', 'Código detectado pero no es un ISBN válido');
-            }
+                         // Validate ISBN
+             if (validateISBN(scannedCode)) {
+               setIsProcessing(true);
+               addFeedback('success', 'ISBN válido detectado. Procesando...');
+               
+               // Stop scanning
+               stopScanning();
+               
+               // Process the ISBN and close modal
+               setTimeout(() => {
+                 onScanSuccess(scannedCode);
+                 onClose(); // Close the scanner modal
+               }, 1500);
+             } else {
+               addFeedback('warning', 'Código detectado pero no es un ISBN válido');
+             }
           }
           
           if (error && error.name !== 'NotFoundException') {
@@ -164,6 +200,9 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     stopScanning();
     const nextCamera = (currentCamera + 1) % availableCameras.length;
     setCurrentCamera(nextCamera);
+    
+    const cameraName = availableCameras[nextCamera]?.label || 'Cámara sin nombre';
+    addFeedback('info', `Cambiando a: ${cameraName}`);
     
     // Restart scanning with new camera
     setTimeout(() => {
@@ -349,13 +388,25 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
               <li>• Mantén el código de barras estable</li>
               <li>• El código debe estar dentro del marco rojo</li>
               <li>• Funciona con códigos ISBN de 10 o 13 dígitos</li>
+              <li>• Si no enfoca bien, cambia de cámara</li>
+              <li>• Mantén una distancia de 10-30 cm del código</li>
             </ul>
           </div>
 
           {/* Camera Info */}
           {availableCameras.length > 0 && (
             <div className="text-center text-xs text-slate-500 dark:text-slate-400">
-              Cámara {currentCamera + 1} de {availableCameras.length}: {availableCameras[currentCamera]?.label || 'Cámara sin nombre'}
+              <div className="mb-1">
+                Cámara {currentCamera + 1} de {availableCameras.length}
+              </div>
+              <div className="text-xs">
+                {availableCameras[currentCamera]?.label || 'Cámara sin nombre'}
+              </div>
+              {availableCameras.length > 1 && (
+                <div className="mt-1 text-xs text-slate-400">
+                  Usa "Cambiar Cámara" si no enfoca bien
+                </div>
+              )}
             </div>
           )}
         </div>
