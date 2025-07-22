@@ -222,6 +222,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       return;
     }
 
+    const wasScanning = isScanning;
     stopScanning();
     const nextCamera = (currentCamera + 1) % availableCameras.length;
     setCurrentCamera(nextCamera);
@@ -229,10 +230,12 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     const cameraName = availableCameras[nextCamera]?.label || 'Cámara sin nombre';
     addFeedback('info', `Cambiando a: ${cameraName}`);
     
-    // Restart scanning with new camera after a delay
-    scanningTimeoutRef.current = setTimeout(() => {
-      startScanning();
-    }, 500);
+    // Restart scanning with new camera after a delay if it was scanning before
+    if (wasScanning) {
+      scanningTimeoutRef.current = setTimeout(() => {
+        startScanning();
+      }, 500);
+    }
   };
 
   const handleCloseModal = () => {

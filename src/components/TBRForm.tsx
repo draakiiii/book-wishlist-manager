@@ -21,6 +21,7 @@ const TBRForm: React.FC = () => {
   const [isLoadingBook, setIsLoadingBook] = useState(false);
   const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'found' | 'error'>('idle');
   const [scanMessage, setScanMessage] = useState('');
+  const [isBookFromScan, setIsBookFromScan] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +53,7 @@ const TBRForm: React.FC = () => {
     setIsLoadingBook(true);
     setScanStatus('scanning');
     setScanMessage('Validando ISBN...');
+    setIsBookFromScan(true); // Mark that this book came from scanning
     
     try {
       // Validate ISBN format
@@ -59,6 +61,7 @@ const TBRForm: React.FC = () => {
         setScanStatus('error');
         setScanMessage('Código de barras no válido. Debe ser un ISBN de 10 o 13 dígitos.');
         setIsLoadingBook(false);
+        setIsBookFromScan(false);
         return;
       }
       
@@ -93,12 +96,14 @@ const TBRForm: React.FC = () => {
         setScanStatus('error');
         setScanMessage('No se encontró información del libro. Puedes agregarlo manualmente.');
         setIsExpanded(true);
+        setIsBookFromScan(false);
       }
     } catch (error) {
       console.error('Error fetching book data:', error);
       setScanStatus('error');
       setScanMessage('Error al buscar información del libro. Puedes agregarlo manualmente.');
       setIsExpanded(true);
+      setIsBookFromScan(false);
     } finally {
       setIsLoadingBook(false);
     }
@@ -109,6 +114,7 @@ const TBRForm: React.FC = () => {
     setAutor(bookData.autor || '');
     setPaginas(bookData.paginas?.toString() || '');
     setIsExpanded(true);
+    setIsBookFromScan(false); // Book came from autocomplete, not scanning
     setScanStatus('found');
     setScanMessage(`¡Libro seleccionado: ${bookData.titulo}`);
     
@@ -250,6 +256,7 @@ const TBRForm: React.FC = () => {
                   onChange={setTitulo}
                   onBookSelect={handleBookSelect}
                   placeholder="Ej: El Hobbit"
+                  disabled={isBookFromScan}
                 />
               </div>
               
@@ -318,6 +325,7 @@ const TBRForm: React.FC = () => {
                   setSagaName('');
                   setScanStatus('idle');
                   setScanMessage('');
+                  setIsBookFromScan(false);
                 }}
                 className="w-full sm:w-auto px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors duration-200 text-sm"
               >

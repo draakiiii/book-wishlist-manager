@@ -10,6 +10,7 @@ interface BookTitleAutocompleteProps {
   onBookSelect?: (bookData: BookData) => void;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
@@ -17,7 +18,8 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   onChange,
   onBookSelect,
   placeholder = "Ej: El Hobbit",
-  className = ""
+  className = "",
+  disabled = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
@@ -45,7 +47,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   // Search for books when debounced value changes
   useEffect(() => {
     const searchBooks = async () => {
-      if (debouncedValue.trim().length < 2) {
+      if (disabled || debouncedValue.trim().length < 2) {
         setSuggestions([]);
         setIsOpen(false);
         return;
@@ -66,7 +68,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     };
 
     searchBooks();
-  }, [debouncedValue]);
+  }, [debouncedValue, disabled]);
 
   // Handle click outside
   useEffect(() => {
@@ -86,6 +88,8 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
+    
     const newValue = e.target.value;
     setInputValue(newValue);
     onChange(newValue);
@@ -102,6 +106,8 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   };
 
   const handleInputFocus = () => {
+    if (disabled) return;
+    
     if (suggestions.length > 0) {
       setIsOpen(true);
     }
@@ -134,8 +140,11 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onKeyDown={handleInputKeyDown}
-          className="w-full px-3 py-2 pr-10 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-warning-500 focus:border-transparent transition-colors duration-200 text-sm"
-          placeholder={placeholder}
+          disabled={disabled}
+          className={`w-full px-3 py-2 pr-10 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-warning-500 focus:border-transparent transition-colors duration-200 text-sm ${
+            disabled ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          placeholder={disabled ? 'Libro detectado por escáner' : placeholder}
         />
         <div className="absolute inset-y-0 right-0 flex items-center pr-3">
           {isLoading ? (
