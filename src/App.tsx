@@ -46,6 +46,13 @@ const AppContent: React.FC = () => {
   const [scanHistoryModalOpen, setScanHistoryModalOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
+  // Inicializar searchResults con todos los libros cuando se abre el modal
+  useEffect(() => {
+    if (searchModalOpen) {
+      setSearchResults(state.libros);
+    }
+  }, [searchModalOpen, state.libros]);
+
   useEffect(() => {
     // Aplicar el modo oscuro al body
     document.body.classList.toggle('dark', state.darkMode);
@@ -81,6 +88,16 @@ const AppContent: React.FC = () => {
 
   const handleRemoveNotification = (id: number) => {
     dispatch({ type: 'REMOVE_SAGA_NOTIFICATION', payload: { id } });
+  };
+
+  const handleOpenConfig = () => {
+    // En móvil, abrir el sidebar de configuración
+    // En desktop, abrir el modal de configuración
+    if (window.innerWidth < 768) {
+      setConfigSidebarOpen(true);
+    } else {
+      setConfigModalOpen(true);
+    }
   };
 
 
@@ -171,6 +188,7 @@ const AppContent: React.FC = () => {
                 onClick={() => setConfigSidebarOpen(true)}
                 className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 lg:hidden"
                 title="Configuración"
+                data-mobile-config="true"
               >
                 <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
               </button>
@@ -180,6 +198,7 @@ const AppContent: React.FC = () => {
                 onClick={() => setConfigModalOpen(true)}
                 className="hidden lg:flex p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
                 title="Configuración"
+                data-desktop-config="true"
               >
                 <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
               </button>

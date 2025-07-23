@@ -21,6 +21,9 @@ import {
 import BookDescriptionModal from './BookDescriptionModal';
 import RatingModal from './RatingModal';
 import LoanModal from './LoanModal';
+import { useDialog } from '../hooks/useDialog';
+import Dialog from './Dialog';
+import InputModal from './InputModal';
 
 interface BookCardProps {
   book: Libro;
@@ -31,10 +34,18 @@ interface BookCardProps {
 
 const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => {
   const { state, dispatch } = useAppState();
+  const { dialog, showError, showConfirm, hideDialog } = useDialog();
   const [showActions, setShowActions] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [showLoanModal, setShowLoanModal] = useState(false);
+  const [showInputModal, setShowInputModal] = useState(false);
+  const [inputModalConfig, setInputModalConfig] = useState<{
+    title: string;
+    message: string;
+    placeholder: string;
+    onConfirm: (value: string) => void;
+  } | null>(null);
 
   // Función para calcular el número del libro en la saga
   const getBookNumberInSaga = (book: Libro): number | null => {
@@ -68,11 +79,18 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   };
 
   const handleAbandonBook = () => {
-    const motivo = prompt('¿Por qué abandonaste el libro?');
-    dispatch({ 
-      type: 'ABANDON_BOOK', 
-      payload: { id: book.id, motivo: motivo || undefined } 
+    setInputModalConfig({
+      title: 'Abandonar libro',
+      message: '¿Por qué abandonaste el libro?',
+      placeholder: 'Motivo del abandono...',
+      onConfirm: (motivo: string) => {
+        dispatch({ 
+          type: 'ABANDON_BOOK', 
+          payload: { id: book.id, motivo: motivo || undefined } 
+        });
+      }
     });
+    setShowInputModal(true);
   };
 
   const handleChangeState = (newState: Libro['estado']) => {
@@ -83,14 +101,49 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   };
 
   const handleBuyBook = () => {
-    const precio = prompt('¿Cuánto costó el libro?');
-    dispatch({ 
-      type: 'BUY_BOOK', 
-      payload: { 
-        id: book.id, 
-        precio: precio ? parseFloat(precio) : undefined 
-      } 
-    });
+    // Verificar si el sistema de puntos está habilitado
+    if (state.config.sistemaPuntosHabilitado) {
+      const puntosNecesarios = state.config.puntosParaComprar || 25;
+      
+      if (state.puntosActuales < puntosNecesarios) {
+        showError(
+          'Puntos insuficientes',
+          `Necesitas ${puntosNecesarios} puntos para comprar este libro. Tienes ${state.puntosActuales} puntos.`
+        );
+        return;
+      }
+      
+      showConfirm(
+        'Comprar libro con puntos',
+        `¿Quieres comprar "${book.titulo}" con ${puntosNecesarios} puntos?\n\nPuntos actuales: ${state.puntosActuales}\nPuntos después de la compra: ${state.puntosActuales - puntosNecesarios}`,
+        () => {
+          dispatch({ 
+            type: 'COMPRAR_LIBRO_CON_PUNTOS', 
+            payload: { libroId: book.id } 
+          });
+        },
+        undefined,
+        'Comprar',
+        'Cancelar'
+      );
+    } else {
+      // Sistema tradicional con precio
+      setInputModalConfig({
+        title: 'Comprar libro',
+        message: '¿Cuánto costó el libro?',
+        placeholder: '0.00',
+        onConfirm: (precio: string) => {
+          dispatch({ 
+            type: 'BUY_BOOK', 
+            payload: { 
+              id: book.id, 
+              precio: precio ? parseFloat(precio) : undefined 
+            } 
+          });
+        }
+      });
+      setShowInputModal(true);
+    }
   };
 
   const handleLoanBook = () => {
@@ -325,7 +378,12 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
               className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-secondary-500 hover:bg-secondary-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
             >
               <ShoppingCart className="h-3 w-3" />
-              <span>Comprar</span>
+              <span>
+                {state.config.sistemaPuntosHabilitado 
+                  ? `Comprar (${state.config.puntosParaComprar || 25} pts)`
+                  : 'Comprar'
+                }
+              </span>
             </motion.button>
           )}
 
@@ -438,6 +496,32 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
       onConfirm={handleLoanConfirm}
       bookTitle={book.titulo}
     />
+
+    {/* Dialog Component */}
+    <Dialog
+      isOpen={dialog.isOpen}
+      onClose={hideDialog}
+      title={dialog.title}
+      message={dialog.message}
+      type={dialog.type}
+      confirmText={dialog.confirmText}
+      cancelText={dialog.cancelText}
+      onConfirm={dialog.onConfirm}
+      onCancel={dialog.onCancel}
+      showCancel={dialog.showCancel}
+    />
+
+    {/* Input Modal */}
+    {inputModalConfig && (
+      <InputModal
+        isOpen={showInputModal}
+        onClose={() => setShowInputModal(false)}
+        title={inputModalConfig.title}
+        message={inputModalConfig.message}
+        placeholder={inputModalConfig.placeholder}
+        onConfirm={inputModalConfig.onConfirm}
+      />
+    )}
     </>
   );
 };

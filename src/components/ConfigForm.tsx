@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Settings, Save, RotateCcw, Camera, CheckCircle, AlertCircle, Loader2, Target, Bell } from 'lucide-react';
+import { Settings, Save, RotateCcw, Camera, CheckCircle, AlertCircle, Loader2, Target, Bell, Trophy } from 'lucide-react';
+import { useDialog } from '../hooks/useDialog';
+import Dialog from './Dialog';
 
 const ConfigForm: React.FC = () => {
   const { state, dispatch } = useAppState();
+  const { dialog, showSuccess, showError, hideDialog } = useDialog();
   const [config, setConfig] = useState(state.config);
   const [isEditing, setIsEditing] = useState(false);
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
@@ -26,7 +29,7 @@ const ConfigForm: React.FC = () => {
   const handleCleanDuplicateSagas = () => {
     if (window.confirm('¿Estás seguro de que quieres limpiar las sagas duplicadas? Esto eliminará las sagas vacías y duplicadas.')) {
       dispatch({ type: 'CLEAN_DUPLICATE_SAGAS' });
-      alert('Sagas duplicadas limpiadas correctamente.');
+      showSuccess('Sagas limpiadas', 'Sagas duplicadas limpiadas correctamente.');
     }
   };
 
@@ -67,9 +70,9 @@ const ConfigForm: React.FC = () => {
       setCameraVerificationStatus('success');
       
       if (videoDevices.length === 0) {
-        alert('No se encontraron cámaras disponibles en tu dispositivo.');
+        showError('No hay cámaras', 'No se encontraron cámaras disponibles en tu dispositivo.');
       } else {
-        alert(`Se encontraron ${videoDevices.length} cámara(s) disponible(s).`);
+        showSuccess('Cámaras encontradas', `Se encontraron ${videoDevices.length} cámara(s) disponible(s).`);
       }
     } catch (error) {
       console.error('Error verifying cameras:', error);
@@ -77,14 +80,14 @@ const ConfigForm: React.FC = () => {
       
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
-          alert('Permiso de cámara denegado. Por favor, permite el acceso a la cámara en tu navegador.');
+          showError('Permiso denegado', 'Permiso de cámara denegado. Por favor, permite el acceso a la cámara en tu navegador.');
         } else if (error.name === 'NotFoundError') {
-          alert('No se encontraron cámaras disponibles en tu dispositivo.');
+          showError('No hay cámaras', 'No se encontraron cámaras disponibles en tu dispositivo.');
         } else {
-          alert(`Error al verificar cámaras: ${error.message}`);
+          showError('Error al verificar cámaras', `Error al verificar cámaras: ${error.message}`);
         }
       } else {
-        alert('Error inesperado al verificar cámaras.');
+        showError('Error inesperado', 'Error inesperado al verificar cámaras.');
       }
     } finally {
       setIsVerifyingCameras(false);
@@ -351,6 +354,103 @@ const ConfigForm: React.FC = () => {
           </div>
         </div>
 
+        {/* Sistema de Puntos */}
+        <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center space-x-2 mb-4">
+            <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+              <Trophy className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <h3 className="text-sm font-medium text-slate-900 dark:text-white">
+              Sistema de Puntos
+            </h3>
+          </div>
+          
+          <div className="space-y-4">
+            {/* Habilitar sistema de puntos */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Habilitar sistema de puntos
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Gana puntos por leer libros y compra libros de tu wishlist
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.sistemaPuntosHabilitado || false}
+                  onChange={(e) => handleBooleanChange('sistemaPuntosHabilitado', e.target.checked)}
+                  disabled={!isEditing}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 dark:peer-focus:ring-yellow-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-yellow-600 disabled:opacity-50"></div>
+              </label>
+            </div>
+            
+            {/* Configuración de puntos */}
+            {config.sistemaPuntosHabilitado && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Puntos por libro completado
+                  </label>
+                  <input
+                    type="number"
+                    value={config.puntosPorLibro || 10}
+                    onChange={(e) => handleInputChange('puntosPorLibro', parseInt(e.target.value) || 0)}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
+                    min="0"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Puntos por saga completada
+                  </label>
+                  <input
+                    type="number"
+                    value={config.puntosPorSaga || 50}
+                    onChange={(e) => handleInputChange('puntosPorSaga', parseInt(e.target.value) || 0)}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
+                    min="0"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Puntos por página leída
+                  </label>
+                  <input
+                    type="number"
+                    value={config.puntosPorPagina || 1}
+                    onChange={(e) => handleInputChange('puntosPorPagina', parseInt(e.target.value) || 0)}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
+                    min="0"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Puntos para comprar un libro
+                  </label>
+                  <input
+                    type="number"
+                    value={config.puntosParaComprar || 25}
+                    onChange={(e) => handleInputChange('puntosParaComprar', parseInt(e.target.value) || 0)}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
+                    min="0"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Data Management */}
         <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center space-x-2 mb-4">
@@ -387,6 +487,20 @@ const ConfigForm: React.FC = () => {
           </div>
         </div>
       </form>
+
+      {/* Dialog Component */}
+      <Dialog
+        isOpen={dialog.isOpen}
+        onClose={hideDialog}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        confirmText={dialog.confirmText}
+        cancelText={dialog.cancelText}
+        onConfirm={dialog.onConfirm}
+        onCancel={dialog.onCancel}
+        showCancel={dialog.showCancel}
+      />
     </div>
   );
 };

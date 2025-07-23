@@ -8,7 +8,11 @@ import BarcodeScannerModal from './BarcodeScannerModal';
 import { BookData, Libro } from '../types';
 import { fetchBookData, validateISBN } from '../services/googleBooksAPI';
 
-const WishlistForm: React.FC = () => {
+interface WishlistFormProps {
+  onOpenConfig?: () => void;
+}
+
+const WishlistForm: React.FC<WishlistFormProps> = ({ onOpenConfig }) => {
   const { state, dispatch } = useAppState();
   const [titulo, setTitulo] = useState('');
   const [autor, setAutor] = useState('');
@@ -276,6 +280,7 @@ const WishlistForm: React.FC = () => {
         <BarcodeScannerModal
           onClose={() => setShowBarcodeScanner(false)}
           onScanSuccess={handleSearchResult}
+          onOpenConfig={onOpenConfig}
         />
       )}
     </div>

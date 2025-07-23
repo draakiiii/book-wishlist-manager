@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { X, Camera, CameraOff, RotateCcw, AlertCircle, CheckCircle, Loader2, Zap } from 'lucide-react';
+import { X, Camera, CameraOff, RotateCcw, AlertCircle, CheckCircle, Loader2, Zap, Settings } from 'lucide-react';
 import { BrowserMultiFormatReader, Result } from '@zxing/library';
 import { useAppState } from '../context/AppStateContext';
 import { fetchBookData } from '../services/googleBooksAPI';
+import { useDialog } from '../hooks/useDialog';
+import Dialog from './Dialog';
 
 interface BarcodeScannerModalProps {
   onClose: () => void;
   onScanSuccess: (isbn: string) => void;
+  onOpenConfig?: () => void;
 }
 
 interface ScanFeedback {
@@ -16,8 +19,9 @@ interface ScanFeedback {
   timestamp: number;
 }
 
-const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onScanSuccess }) => {
+const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onScanSuccess, onOpenConfig }) => {
   const { state, dispatch } = useAppState();
+  const { dialog, showError, showConfirm, hideDialog } = useDialog();
   const [isScanning, setIsScanning] = useState(false);
   const [currentCamera, setCurrentCamera] = useState(0);
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
@@ -149,10 +153,64 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       setAvailableCameras(cameras);
 
       if (cameras.length === 0) {
-        addFeedback('error', 'No se encontraron cámaras disponibles');
+        showError(
+          'No hay cámaras disponibles',
+          'No se encontraron cámaras en tu dispositivo. Verifica que tu dispositivo tenga una cámara y que esté funcionando correctamente.'
+        );
         return;
       }
 
+      // Verificar si las cámaras han sido verificadas en configuración
+      const hasVerifiedCameras = cameras.some(camera => camera.label && camera.label !== '');
+      
+      if (!hasVerifiedCameras) {
+        showConfirm(
+          'Verificar cámaras',
+          'Para usar el escáner, primero debes verificar las cámaras disponibles en la configuración. ¿Quieres ir a la configuración ahora?',
+          () => {
+            // Cerrar el modal del escáner y abrir la configuración
+            onClose();
+            // Abrir configuración automáticamente
+            setTimeout(() => {
+              // Buscar y hacer clic en el botón de configuración apropiado
+              const isMobile = window.innerWidth < 768;
+              const configButton = document.querySelector(
+                isMobile ? '[data-mobile-config]' : '[data-desktop-config]'
+              ) as HTMLElement;
+              
+              if (configButton) {
+                configButton.click();
+              } else {
+                // Fallback: buscar cualquier botón de configuración
+                const fallbackButton = document.querySelector('[data-config-button]') as HTMLElement;
+                if (fallbackButton) {
+                  fallbackButton.click();
+                }
+              }
+            }, 100);
+          },
+          () => {
+            // Continuar sin verificar (usar la primera cámara disponible)
+            continueInitialization(cameras);
+          },
+          'Ir a Configuración',
+          'Continuar sin verificar'
+        );
+        return;
+      }
+
+      continueInitialization(cameras);
+    } catch (error) {
+      console.error('Error initializing scanner:', error);
+      showError(
+        'Error al inicializar el escáner',
+        'No se pudo acceder a la cámara. Verifica los permisos de cámara en tu navegador.'
+      );
+    }
+  };
+
+  const continueInitialization = async (cameras: MediaDeviceInfo[]) => {
+    try {
       const bestCameraIndex = findBestCamera(cameras);
       setCurrentCamera(bestCameraIndex);
 
@@ -168,8 +226,11 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       setIsInitialized(true);
       addFeedback('success', 'Escáner inicializado correctamente', 2000);
     } catch (error) {
-      console.error('Error initializing scanner:', error);
-      addFeedback('error', 'Error al inicializar el escáner');
+      console.error('Error continuing initialization:', error);
+      showError(
+        'Error al acceder a la cámara',
+        'No se pudo obtener acceso a la cámara. Verifica que hayas dado permisos de cámara al navegador.'
+      );
     }
   };
 
@@ -596,6 +657,20 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
           )}
         </div>
       </motion.div>
+
+      {/* Dialog Component */}
+      <Dialog
+        isOpen={dialog.isOpen}
+        onClose={hideDialog}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        confirmText={dialog.confirmText}
+        cancelText={dialog.cancelText}
+        onConfirm={dialog.onConfirm}
+        onCancel={dialog.onCancel}
+        showCancel={dialog.showCancel}
+      />
     </motion.div>
   );
 };

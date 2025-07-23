@@ -140,6 +140,13 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onClose, isOp
     onSearch(searchResults);
   }, [searchResults, onSearch]);
 
+  // Initialize with all books when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      onSearch(allBooks);
+    }
+  }, [isOpen, allBooks, onSearch]);
+
   // Add to search history when search is performed
   useEffect(() => {
     if (debouncedSearchTerm && state.config.searchHistoryEnabled) {
