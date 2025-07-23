@@ -83,14 +83,36 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   };
 
   const handleBuyBook = () => {
-    const precio = prompt('¿Cuánto costó el libro?');
-    dispatch({ 
-      type: 'BUY_BOOK', 
-      payload: { 
-        id: book.id, 
-        precio: precio ? parseFloat(precio) : undefined 
-      } 
-    });
+    // Verificar si el sistema de puntos está habilitado
+    if (state.config.sistemaPuntosHabilitado) {
+      const puntosNecesarios = state.config.puntosParaComprar || 25;
+      
+      if (state.puntosActuales < puntosNecesarios) {
+        alert(`Necesitas ${puntosNecesarios} puntos para comprar este libro. Tienes ${state.puntosActuales} puntos.`);
+        return;
+      }
+      
+      const confirmar = window.confirm(
+        `¿Quieres comprar "${book.titulo}" con ${puntosNecesarios} puntos?\n\nPuntos actuales: ${state.puntosActuales}\nPuntos después de la compra: ${state.puntosActuales - puntosNecesarios}`
+      );
+      
+      if (confirmar) {
+        dispatch({ 
+          type: 'COMPRAR_LIBRO_CON_PUNTOS', 
+          payload: { libroId: book.id } 
+        });
+      }
+    } else {
+      // Sistema tradicional con precio
+      const precio = prompt('¿Cuánto costó el libro?');
+      dispatch({ 
+        type: 'BUY_BOOK', 
+        payload: { 
+          id: book.id, 
+          precio: precio ? parseFloat(precio) : undefined 
+        } 
+      });
+    }
   };
 
   const handleLoanBook = () => {
@@ -325,7 +347,12 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
               className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-secondary-500 hover:bg-secondary-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
             >
               <ShoppingCart className="h-3 w-3" />
-              <span>Comprar</span>
+              <span>
+                {state.config.sistemaPuntosHabilitado 
+                  ? `Comprar (${state.config.puntosParaComprar || 25} pts)`
+                  : 'Comprar'
+                }
+              </span>
             </motion.button>
           )}
 

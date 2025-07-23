@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Settings, Save, RotateCcw, Camera, CheckCircle, AlertCircle, Loader2, Target, Bell } from 'lucide-react';
+import { Settings, Save, RotateCcw, Camera, CheckCircle, AlertCircle, Loader2, Target, Bell, Trophy } from 'lucide-react';
 
 const ConfigForm: React.FC = () => {
   const { state, dispatch } = useAppState();
@@ -346,6 +346,103 @@ const ConfigForm: React.FC = () => {
             {availableCameras.length > 0 && (
               <div className="text-xs text-slate-600 dark:text-slate-400">
                 Cámaras disponibles: {availableCameras.length}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Sistema de Puntos */}
+        <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center space-x-2 mb-4">
+            <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+              <Trophy className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <h3 className="text-sm font-medium text-slate-900 dark:text-white">
+              Sistema de Puntos
+            </h3>
+          </div>
+          
+          <div className="space-y-4">
+            {/* Habilitar sistema de puntos */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Habilitar sistema de puntos
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Gana puntos por leer libros y compra libros de tu wishlist
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.sistemaPuntosHabilitado || false}
+                  onChange={(e) => handleBooleanChange('sistemaPuntosHabilitado', e.target.checked)}
+                  disabled={!isEditing}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 dark:peer-focus:ring-yellow-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-yellow-600 disabled:opacity-50"></div>
+              </label>
+            </div>
+            
+            {/* Configuración de puntos */}
+            {config.sistemaPuntosHabilitado && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Puntos por libro completado
+                  </label>
+                  <input
+                    type="number"
+                    value={config.puntosPorLibro || 10}
+                    onChange={(e) => handleInputChange('puntosPorLibro', parseInt(e.target.value) || 0)}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
+                    min="0"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Puntos por saga completada
+                  </label>
+                  <input
+                    type="number"
+                    value={config.puntosPorSaga || 50}
+                    onChange={(e) => handleInputChange('puntosPorSaga', parseInt(e.target.value) || 0)}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
+                    min="0"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Puntos por página leída
+                  </label>
+                  <input
+                    type="number"
+                    value={config.puntosPorPagina || 1}
+                    onChange={(e) => handleInputChange('puntosPorPagina', parseInt(e.target.value) || 0)}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
+                    min="0"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Puntos para comprar un libro
+                  </label>
+                  <input
+                    type="number"
+                    value={config.puntosParaComprar || 25}
+                    onChange={(e) => handleInputChange('puntosParaComprar', parseInt(e.target.value) || 0)}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
+                    min="0"
+                  />
+                </div>
               </div>
             )}
           </div>
