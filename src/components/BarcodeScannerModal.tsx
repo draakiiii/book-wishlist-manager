@@ -202,7 +202,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       await codeReaderRef.current.decodeFromVideoDevice(
         availableCameras[currentCamera]?.deviceId || null,
         videoRef.current,
-        (result: Result | null, error: any) => {
+        async (result: Result | null, error: any) => {
           if (result) {
             const scannedCode = result.getText();
             
