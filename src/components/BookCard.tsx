@@ -21,6 +21,9 @@ import {
 import BookDescriptionModal from './BookDescriptionModal';
 import RatingModal from './RatingModal';
 import LoanModal from './LoanModal';
+import { useDialog } from '../hooks/useDialog';
+import Dialog from './Dialog';
+import InputModal from './InputModal';
 
 interface BookCardProps {
   book: Libro;
@@ -31,10 +34,18 @@ interface BookCardProps {
 
 const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => {
   const { state, dispatch } = useAppState();
+  const { dialog, showError, showConfirm, hideDialog } = useDialog();
   const [showActions, setShowActions] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [showLoanModal, setShowLoanModal] = useState(false);
+  const [showInputModal, setShowInputModal] = useState(false);
+  const [inputModalConfig, setInputModalConfig] = useState<{
+    title: string;
+    message: string;
+    placeholder: string;
+    onConfirm: (value: string) => void;
+  } | null>(null);
 
   // Función para calcular el número del libro en la saga
   const getBookNumberInSaga = (book: Libro): number | null => {
@@ -68,11 +79,18 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   };
 
   const handleAbandonBook = () => {
-    const motivo = prompt('¿Por qué abandonaste el libro?');
-    dispatch({ 
-      type: 'ABANDON_BOOK', 
-      payload: { id: book.id, motivo: motivo || undefined } 
+    setInputModalConfig({
+      title: 'Abandonar libro',
+      message: '¿Por qué abandonaste el libro?',
+      placeholder: 'Motivo del abandono...',
+      onConfirm: (motivo: string) => {
+        dispatch({ 
+          type: 'ABANDON_BOOK', 
+          payload: { id: book.id, motivo: motivo || undefined } 
+        });
+      }
     });
+    setShowInputModal(true);
   };
 
   const handleChangeState = (newState: Libro['estado']) => {
@@ -88,30 +106,43 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
       const puntosNecesarios = state.config.puntosParaComprar || 25;
       
       if (state.puntosActuales < puntosNecesarios) {
-        alert(`Necesitas ${puntosNecesarios} puntos para comprar este libro. Tienes ${state.puntosActuales} puntos.`);
+        showError(
+          'Puntos insuficientes',
+          `Necesitas ${puntosNecesarios} puntos para comprar este libro. Tienes ${state.puntosActuales} puntos.`
+        );
         return;
       }
       
-      const confirmar = window.confirm(
-        `¿Quieres comprar "${book.titulo}" con ${puntosNecesarios} puntos?\n\nPuntos actuales: ${state.puntosActuales}\nPuntos después de la compra: ${state.puntosActuales - puntosNecesarios}`
+      showConfirm(
+        'Comprar libro con puntos',
+        `¿Quieres comprar "${book.titulo}" con ${puntosNecesarios} puntos?\n\nPuntos actuales: ${state.puntosActuales}\nPuntos después de la compra: ${state.puntosActuales - puntosNecesarios}`,
+        () => {
+          dispatch({ 
+            type: 'COMPRAR_LIBRO_CON_PUNTOS', 
+            payload: { libroId: book.id } 
+          });
+        },
+        undefined,
+        'Comprar',
+        'Cancelar'
       );
-      
-      if (confirmar) {
-        dispatch({ 
-          type: 'COMPRAR_LIBRO_CON_PUNTOS', 
-          payload: { libroId: book.id } 
-        });
-      }
     } else {
       // Sistema tradicional con precio
-      const precio = prompt('¿Cuánto costó el libro?');
-      dispatch({ 
-        type: 'BUY_BOOK', 
-        payload: { 
-          id: book.id, 
-          precio: precio ? parseFloat(precio) : undefined 
-        } 
+      setInputModalConfig({
+        title: 'Comprar libro',
+        message: '¿Cuánto costó el libro?',
+        placeholder: '0.00',
+        onConfirm: (precio: string) => {
+          dispatch({ 
+            type: 'BUY_BOOK', 
+            payload: { 
+              id: book.id, 
+              precio: precio ? parseFloat(precio) : undefined 
+            } 
+          });
+        }
       });
+      setShowInputModal(true);
     }
   };
 
@@ -465,6 +496,32 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
       onConfirm={handleLoanConfirm}
       bookTitle={book.titulo}
     />
+
+    {/* Dialog Component */}
+    <Dialog
+      isOpen={dialog.isOpen}
+      onClose={hideDialog}
+      title={dialog.title}
+      message={dialog.message}
+      type={dialog.type}
+      confirmText={dialog.confirmText}
+      cancelText={dialog.cancelText}
+      onConfirm={dialog.onConfirm}
+      onCancel={dialog.onCancel}
+      showCancel={dialog.showCancel}
+    />
+
+    {/* Input Modal */}
+    {inputModalConfig && (
+      <InputModal
+        isOpen={showInputModal}
+        onClose={() => setShowInputModal(false)}
+        title={inputModalConfig.title}
+        message={inputModalConfig.message}
+        placeholder={inputModalConfig.placeholder}
+        onConfirm={inputModalConfig.onConfirm}
+      />
+    )}
     </>
   );
 };

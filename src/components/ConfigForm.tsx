@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
 import { Settings, Save, RotateCcw, Camera, CheckCircle, AlertCircle, Loader2, Target, Bell, Trophy } from 'lucide-react';
+import { useDialog } from '../hooks/useDialog';
+import Dialog from './Dialog';
 
 const ConfigForm: React.FC = () => {
   const { state, dispatch } = useAppState();
+  const { dialog, showSuccess, showError, hideDialog } = useDialog();
   const [config, setConfig] = useState(state.config);
   const [isEditing, setIsEditing] = useState(false);
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
@@ -26,7 +29,7 @@ const ConfigForm: React.FC = () => {
   const handleCleanDuplicateSagas = () => {
     if (window.confirm('¿Estás seguro de que quieres limpiar las sagas duplicadas? Esto eliminará las sagas vacías y duplicadas.')) {
       dispatch({ type: 'CLEAN_DUPLICATE_SAGAS' });
-      alert('Sagas duplicadas limpiadas correctamente.');
+      showSuccess('Sagas limpiadas', 'Sagas duplicadas limpiadas correctamente.');
     }
   };
 
@@ -67,9 +70,9 @@ const ConfigForm: React.FC = () => {
       setCameraVerificationStatus('success');
       
       if (videoDevices.length === 0) {
-        alert('No se encontraron cámaras disponibles en tu dispositivo.');
+        showError('No hay cámaras', 'No se encontraron cámaras disponibles en tu dispositivo.');
       } else {
-        alert(`Se encontraron ${videoDevices.length} cámara(s) disponible(s).`);
+        showSuccess('Cámaras encontradas', `Se encontraron ${videoDevices.length} cámara(s) disponible(s).`);
       }
     } catch (error) {
       console.error('Error verifying cameras:', error);
@@ -77,14 +80,14 @@ const ConfigForm: React.FC = () => {
       
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
-          alert('Permiso de cámara denegado. Por favor, permite el acceso a la cámara en tu navegador.');
+          showError('Permiso denegado', 'Permiso de cámara denegado. Por favor, permite el acceso a la cámara en tu navegador.');
         } else if (error.name === 'NotFoundError') {
-          alert('No se encontraron cámaras disponibles en tu dispositivo.');
+          showError('No hay cámaras', 'No se encontraron cámaras disponibles en tu dispositivo.');
         } else {
-          alert(`Error al verificar cámaras: ${error.message}`);
+          showError('Error al verificar cámaras', `Error al verificar cámaras: ${error.message}`);
         }
       } else {
-        alert('Error inesperado al verificar cámaras.');
+        showError('Error inesperado', 'Error inesperado al verificar cámaras.');
       }
     } finally {
       setIsVerifyingCameras(false);
@@ -484,6 +487,20 @@ const ConfigForm: React.FC = () => {
           </div>
         </div>
       </form>
+
+      {/* Dialog Component */}
+      <Dialog
+        isOpen={dialog.isOpen}
+        onClose={hideDialog}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        confirmText={dialog.confirmText}
+        cancelText={dialog.cancelText}
+        onConfirm={dialog.onConfirm}
+        onCancel={dialog.onCancel}
+        showCancel={dialog.showCancel}
+      />
     </div>
   );
 };
