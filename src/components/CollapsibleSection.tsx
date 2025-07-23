@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -89,37 +89,33 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
         </button>
       </div>
       
-      <AnimatePresence>
-        {isExpanded ? (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ 
-              duration: 0.4, 
-              ease: [0.4, 0.0, 0.2, 1],
-              opacity: { duration: 0.2 }
-            }}
-            className="overflow-hidden"
-          >
-            <div className="p-4 sm:p-6">
-              {children}
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="px-4 sm:px-6 py-2 text-center"
-          >
-            <p className="text-sm text-slate-500 dark:text-slate-400 italic">
-              Haz clic en el título para expandir esta sección
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {isExpanded ? (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          transition={{ 
+            duration: 0.4, 
+            ease: [0.4, 0.0, 0.2, 1],
+            opacity: { duration: 0.2 }
+          }}
+          className="overflow-hidden"
+        >
+          <div className="p-4 sm:p-6">
+            {children}
+          </div>
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+          className="px-4 sm:px-6 py-2 text-center"
+        >
+          <p className="text-sm text-slate-500 dark:text-slate-400 italic">
+            Haz clic en el título para expandir esta sección
+          </p>
+        </motion.div>
+      )}
     </motion.section>
   );
 };
