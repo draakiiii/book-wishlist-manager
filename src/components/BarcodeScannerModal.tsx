@@ -174,7 +174,15 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
   };
 
   const findBestCamera = (cameras: MediaDeviceInfo[]): number => {
-    // Use configured camera preference if available
+    // Use configured default camera if available
+    if (state.config.defaultCameraId) {
+      const configuredCameraIndex = cameras.findIndex(camera => camera.deviceId === state.config.defaultCameraId);
+      if (configuredCameraIndex !== -1) {
+        return configuredCameraIndex;
+      }
+    }
+    
+    // Use configured camera preference if available (legacy support)
     if (state.config.cameraPreference !== undefined && state.config.cameraPreference < cameras.length) {
       return state.config.cameraPreference;
     }

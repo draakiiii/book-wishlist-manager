@@ -38,6 +38,10 @@ const ConfigForm: React.FC = () => {
     setConfig(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleStringChange = (field: keyof typeof config, value: string) => {
+    setConfig(prev => ({ ...prev, [field]: value }));
+  };
+
   // Verify cameras and request permissions
   const handleVerifyCameras = async () => {
     setIsVerifyingCameras(true);
@@ -289,6 +293,30 @@ const ConfigForm: React.FC = () => {
           </div>
           
           <div className="space-y-4">
+            {/* Camera Selection */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Cámara por defecto
+              </label>
+              <select
+                value={config.defaultCameraId || ''}
+                onChange={(e) => handleStringChange('defaultCameraId', e.target.value)}
+                disabled={!isEditing || availableCameras.length === 0}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50"
+              >
+                <option value="">Seleccionar cámara...</option>
+                {availableCameras.map((camera) => (
+                  <option key={camera.deviceId} value={camera.deviceId}>
+                    {camera.label || `Cámara ${camera.deviceId.slice(0, 8)}...`}
+                  </option>
+                ))}
+              </select>
+              {availableCameras.length === 0 && (
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  No hay cámaras disponibles. Haz clic en "Verificar cámaras" para detectarlas.
+                </p>
+              )}
+            </div>
             
             <motion.button
               whileHover={{ scale: 1.02 }}

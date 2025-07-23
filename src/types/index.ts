@@ -131,6 +131,7 @@ export interface Configuracion {
   cameraPreference?: number;
   flashlightEnabled?: boolean;
   zoomLevel?: number;
+  defaultCameraId?: string;
   
   // Configuración de notificaciones
   notificacionesSaga?: boolean;
