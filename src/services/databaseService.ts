@@ -36,7 +36,7 @@ export class DatabaseService {
   }
 
   // Función para limpiar valores undefined del estado
-  private static cleanStateForFirebase(state: AppState): any {
+  private static cleanStateForFirebase(state: any): any {
     const cleanObject = (obj: any): any => {
       if (obj === null || obj === undefined) {
         return null;
