@@ -156,7 +156,7 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
                 <BookTitleAutocomplete
                   value={titulo}
                   onChange={setTitulo}
-                  onSelect={handleBookSelect}
+                  onBookSelect={handleBookSelect}
                   placeholder="Título del libro"
                 />
               </div>
@@ -195,7 +195,7 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
                 </label>
                 <select
                   value={formato}
-                  onChange={(e) => setFormato(e.target.value)}
+                  onChange={(e) => setFormato(e.target.value as 'fisico' | 'digital' | 'audiolibro')}
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="fisico">Físico</option>

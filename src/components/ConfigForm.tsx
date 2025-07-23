@@ -18,8 +18,8 @@ const ConfigForm: React.FC = () => {
   };
 
   const handleReset = () => {
-    if (window.confirm('¿Estás seguro de que quieres resetear tu progreso? Esto eliminará todos tus puntos acumulados.')) {
-      dispatch({ type: 'RESET_PROGRESS' });
+    if (window.confirm('¿Estás seguro de que quieres resetear tu progreso? Esto eliminará todos tus datos de lectura.')) {
+      dispatch({ type: 'IMPORT_DATA', payload: { libros: [], sagas: [] } });
     }
   };
 

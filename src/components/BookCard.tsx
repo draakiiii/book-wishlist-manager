@@ -58,7 +58,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
       payload: { 
         id: book.id,
         calificacion: calificacion ? parseInt(calificacion) : undefined,
-        notas
+        notas: notas || undefined
       } 
     });
   };
@@ -67,7 +67,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
     const motivo = prompt('¿Por qué abandonaste el libro?');
     dispatch({ 
       type: 'ABANDON_BOOK', 
-      payload: { id: book.id, motivo } 
+      payload: { id: book.id, motivo: motivo || undefined } 
     });
   };
 

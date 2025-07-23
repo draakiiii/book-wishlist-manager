@@ -45,8 +45,6 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
         version: '8.0',
         timestamp: Date.now(),
         config: state.config,
-        progreso: state.progreso,
-        compraDesbloqueada: state.compraDesbloqueada,
         libros: state.libros, // New unified book list
         sagas: state.sagas,
         scanHistory: state.scanHistory,
@@ -205,9 +203,7 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
 
   const clearAllData = useCallback(() => {
     if (window.confirm('¿Estás seguro de que quieres eliminar todos los datos? Esta acción no se puede deshacer.')) {
-      // Reset to initial state
-      dispatch({ type: 'RESET_PROGRESS' });
-      // Clear all books
+      // Clear all books and reset to initial state
       dispatch({ type: 'IMPORT_DATA', payload: { libros: [], sagas: [] } });
       setImportSuccess('Todos los datos han sido eliminados');
     }

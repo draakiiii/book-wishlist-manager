@@ -114,7 +114,7 @@ const AppContent: React.FC = () => {
   const librosAbandonados = state.libros.filter(libro => libro.estado === 'abandonado');
   const librosWishlist = state.libros.filter(libro => libro.estado === 'wishlist');
   const librosComprados = state.libros.filter(libro => libro.estado === 'comprado');
-  const librosPrestados = state.libros.filter(libro => libro.prestado);
+  const librosPrestados = state.libros.filter(libro => libro.estado === 'prestado');
 
   return (
     <div className="theme-transition min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">

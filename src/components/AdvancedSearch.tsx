@@ -256,7 +256,8 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onClose, isOp
                 { value: 'leido', label: 'Leídos', icon: CheckCircle, color: 'bg-green-500' },
                 { value: 'abandonado', label: 'Abandonados', icon: BookX, color: 'bg-red-500' },
                 { value: 'wishlist', label: 'Wishlist', icon: Heart, color: 'bg-pink-500' },
-                { value: 'comprado', label: 'Comprados', icon: ShoppingCart, color: 'bg-green-600' }
+                { value: 'comprado', label: 'Comprados', icon: ShoppingCart, color: 'bg-green-600' },
+                { value: 'prestado', label: 'Prestados', icon: Share2, color: 'bg-purple-500' }
               ].map(({ value, label, icon: Icon, color }) => (
                 <button
                   key={value}

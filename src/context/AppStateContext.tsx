@@ -91,7 +91,7 @@ function migrateFromOldVersion(oldState: any): AppState {
       libros.push({
         ...libro,
         estado: 'leyendo',
-        fechaInicioLectura: libro.fechaAgregado || Date.now(),
+        fechaInicio: libro.fechaAgregado || Date.now(),
         historialEstados: [
           {
             estado: 'tbr',
@@ -112,8 +112,8 @@ function migrateFromOldVersion(oldState: any): AppState {
       libros.push({
         ...libro,
         estado: 'leido',
-        fechaInicioLectura: libro.fechaAgregado || Date.now(),
-        fechaFinLectura: libro.fechaTerminado || Date.now(),
+        fechaInicio: libro.fechaAgregado || Date.now(),
+        fechaFin: libro.fechaTerminado || Date.now(),
         historialEstados: [
           {
             estado: 'tbr',
@@ -328,7 +328,10 @@ function appReducer(state: AppState, action: Action): AppState {
       const { id, fecha = Date.now() } = action.payload;
       const librosActualizados = state.libros.map(libro => {
         if (libro.id === id) {
-          return agregarEstadoAlHistorial(libro, 'leyendo', 'Iniciado lectura');
+          return {
+            ...agregarEstadoAlHistorial(libro, 'leyendo', 'Iniciado lectura'),
+            fechaInicio: fecha
+          };
         }
         return libro;
       });
@@ -349,10 +352,10 @@ function appReducer(state: AppState, action: Action): AppState {
         ? verificarSagaCompleta(libro.sagaId, state)
         : false;
       
-      const libroActualizado = {
+      const libroActualizado: Libro = {
         ...libro,
         estado: 'leido',
-        fechaFinLectura: fecha,
+        fechaFin: fecha,
         calificacion: calificacion || libro.calificacion,
         notas: notas || libro.notas,
         historialEstados: [...libro.historialEstados, {
@@ -409,17 +412,18 @@ function appReducer(state: AppState, action: Action): AppState {
       const { id, precio, fecha = Date.now() } = action.payload;
       const librosActualizados = state.libros.map(libro => {
         if (libro.id === id) {
-          return {
+          const libroActualizado: Libro = {
             ...libro,
             estado: 'comprado',
             precio: precio || libro.precio,
-            fechaComprado: fecha,
+            fechaCompra: fecha,
             historialEstados: [...libro.historialEstados, {
               estado: 'comprado',
               fecha,
               notas: precio ? `Comprado por $${precio}` : 'Comprado'
             }]
           };
+          return libroActualizado;
         }
         return libro;
       });
@@ -434,12 +438,19 @@ function appReducer(state: AppState, action: Action): AppState {
       const { id, prestadoA, fecha = Date.now() } = action.payload;
       const librosActualizados = state.libros.map(libro => {
         if (libro.id === id) {
-          return {
+          const libroActualizado: Libro = {
             ...libro,
+            estado: 'prestado',
             prestado: true,
             prestadoA,
-            fechaPrestamo: fecha
+            fechaPrestamo: fecha,
+            historialEstados: [...libro.historialEstados, {
+              estado: 'prestado',
+              fecha,
+              notas: `Prestado a ${prestadoA}`
+            }]
           };
+          return libroActualizado;
         }
         return libro;
       });
@@ -454,11 +465,22 @@ function appReducer(state: AppState, action: Action): AppState {
       const { id, fecha = Date.now() } = action.payload;
       const librosActualizados = state.libros.map(libro => {
         if (libro.id === id) {
+          // Find the previous state before 'prestado'
+          const previousState = libro.historialEstados
+            .filter(h => h.estado !== 'prestado')
+            .sort((a, b) => b.fecha - a.fecha)[0];
+          
           return {
             ...libro,
+            estado: previousState?.estado || 'tbr',
             prestado: false,
             prestadoA: undefined,
-            fechaPrestamo: undefined
+            fechaPrestamo: undefined,
+            historialEstados: [...libro.historialEstados, {
+              estado: previousState?.estado || 'tbr',
+              fecha,
+              notas: 'Libro devuelto'
+            }]
           };
         }
         return libro;

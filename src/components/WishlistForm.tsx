@@ -3,6 +3,8 @@ import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
 import { Heart, Plus, ShoppingCart, Search, Loader2, CheckCircle, AlertCircle, Camera, Barcode } from 'lucide-react';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
+import ISBNInputModal from './ISBNInputModal';
+import BarcodeScannerModal from './BarcodeScannerModal';
 import { BookData, Libro } from '../types';
 import { fetchBookData, validateISBN } from '../services/googleBooksAPI';
 
@@ -198,12 +200,12 @@ const WishlistForm: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <BookTitleAutocomplete
-                value={titulo}
-                onChange={setTitulo}
-                onSelect={handleBookSelect}
-                placeholder="Título del libro"
-              />
+                              <BookTitleAutocomplete
+                  value={titulo}
+                  onChange={setTitulo}
+                  onBookSelect={handleBookSelect}
+                  placeholder="Título del libro"
+                />
             </div>
             
             <div>
@@ -261,17 +263,19 @@ const WishlistForm: React.FC = () => {
       </div>
 
       {/* Modals */}
-      <ISBNInputModal
-        isOpen={showISBNInput}
-        onClose={() => setShowISBNInput(false)}
-        onSearch={handleSearchResult}
-      />
+      {showISBNInput && (
+        <ISBNInputModal
+          onClose={() => setShowISBNInput(false)}
+          onSearch={handleSearchResult}
+        />
+      )}
 
-      <BarcodeScannerModal
-        isOpen={showBarcodeScanner}
-        onClose={() => setShowBarcodeScanner(false)}
-        onScan={handleSearchResult}
-      />
+      {showBarcodeScanner && (
+        <BarcodeScannerModal
+          onClose={() => setShowBarcodeScanner(false)}
+          onScanSuccess={handleSearchResult}
+        />
+      )}
     </div>
   );
 };

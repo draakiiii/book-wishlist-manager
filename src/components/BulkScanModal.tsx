@@ -401,12 +401,17 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
         paginas: parseInt(book.paginas) || undefined,
         sagaName: book.sagaName || undefined,
         isbn: book.isbn,
-        fechaAgregado: Date.now()
+        fechaAgregado: Date.now(),
+        estado: 'tbr',
+        historialEstados: [{
+          estado: 'tbr',
+          fecha: Date.now()
+        }]
       }));
 
     if (booksToAdd.length > 0) {
       booksToAdd.forEach(book => {
-        dispatch({ type: 'ADD_TO_TBR', payload: book });
+        dispatch({ type: 'ADD_BOOK', payload: book });
       });
       addFeedback('success', `${booksToAdd.length} libros agregados a la TBR`, 3000);
       onBooksAdded(booksToAdd);

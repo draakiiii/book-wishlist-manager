@@ -219,12 +219,12 @@ const TBRForm: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <BookTitleAutocomplete
-                value={titulo}
-                onChange={setTitulo}
-                onSelect={handleBookSelect}
-                placeholder="Título del libro"
-              />
+                              <BookTitleAutocomplete
+                  value={titulo}
+                  onChange={setTitulo}
+                  onBookSelect={handleBookSelect}
+                  placeholder="Título del libro"
+                />
             </div>
             
             <div>
@@ -292,23 +292,28 @@ const TBRForm: React.FC = () => {
       </div>
 
       {/* Modals */}
-      <ISBNInputModal
-        isOpen={showISBNInput}
-        onClose={() => setShowISBNInput(false)}
-        onSearch={handleSearchResult}
-      />
+      {showISBNInput && (
+        <ISBNInputModal
+          onClose={() => setShowISBNInput(false)}
+          onSearch={handleSearchResult}
+        />
+      )}
 
-      <BarcodeScannerModal
-        isOpen={showBarcodeScanner}
-        onClose={() => setShowBarcodeScanner(false)}
-        onScan={handleSearchResult}
-      />
+      {showBarcodeScanner && (
+        <BarcodeScannerModal
+          onClose={() => setShowBarcodeScanner(false)}
+          onScanSuccess={handleSearchResult}
+        />
+      )}
 
-      <BulkScanModal
-        isOpen={showBulkScan}
-        onClose={() => setShowBulkScan(false)}
-        onScan={handleSearchResult}
-      />
+              <BulkScanModal
+          isOpen={showBulkScan}
+          onClose={() => setShowBulkScan(false)}
+          onBooksAdded={(books) => {
+            // Handle books added from bulk scan
+            console.log('Books added from bulk scan:', books);
+          }}
+        />
     </div>
   );
 };

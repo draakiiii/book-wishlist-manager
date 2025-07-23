@@ -5,11 +5,12 @@ export interface Libro {
   paginas?: number;
   sagaId?: number;
   sagaName?: string;
+  ordenLectura?: number;
   fechaAgregado?: number;
-  fechaInicioLectura?: number;
-  fechaFinLectura?: number;
+  fechaInicio?: number;
+  fechaFin?: number;
   fechaAbandonado?: number;
-  fechaComprado?: number;
+  fechaCompra?: number;
   calificacion?: number;
   notas?: string;
   isbn?: string;
@@ -21,7 +22,7 @@ export interface Libro {
   descripcion?: string;
   categorias?: string[];
   numCalificaciones?: number;
-  estado: 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado';
+  estado: 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado' | 'prestado';
   historialEstados: EstadoLibro[];
   tiempoLectura?: number; // en minutos
   paginasLeidas?: number;
@@ -33,7 +34,7 @@ export interface Libro {
 }
 
 export interface EstadoLibro {
-  estado: 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado';
+  estado: 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado' | 'prestado';
   fecha: number;
   notas?: string;
 }
@@ -83,9 +84,10 @@ export interface SearchFilters {
   paginasMax?: number;
   precioMin?: number;
   precioMax?: number;
-  estado?: 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado' | 'todos';
+  estado?: 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado' | 'prestado' | 'todos';
   formato?: 'fisico' | 'digital' | 'audiolibro' | 'todos';
   prestado?: boolean;
+  completado?: boolean;
 }
 
 export interface Statistics {
@@ -207,7 +209,7 @@ export type Action =
   // Acciones de compatibilidad (para migración)
   | { type: 'MIGRATE_FROM_OLD_VERSION'; payload: any };
 
-export type BookListType = 'todos' | 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado';
+export type BookListType = 'todos' | 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado' | 'prestado';
 
 export interface BookData {
   titulo: string;
