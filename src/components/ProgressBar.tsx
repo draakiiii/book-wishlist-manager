@@ -9,7 +9,23 @@ const ProgressBar: React.FC = () => {
   
   // Calcular estadísticas de lectura
   const librosLeidos = libros.filter(libro => libro.estado === 'leido');
-  const paginasLeidas = librosLeidos.reduce((total, libro) => total + (libro.paginas || 0), 0);
+  
+  // Calcular páginas leídas - incluir páginas leídas de todos los libros
+  const paginasLeidas = libros.reduce((total, libro) => {
+    // Si el libro está leído, contar todas las páginas
+    if (libro.estado === 'leido') {
+      return total + (libro.paginas || 0);
+    }
+    // Si el libro está siendo leído, contar las páginas leídas
+    else if (libro.estado === 'leyendo' && libro.paginasLeidas) {
+      return total + libro.paginasLeidas;
+    }
+    // Si el libro está abandonado, contar las páginas leídas
+    else if (libro.estado === 'abandonado' && libro.paginasLeidas) {
+      return total + libro.paginasLeidas;
+    }
+    return total;
+  }, 0);
   
   // Calcular valor total de la colección
   const valorTotalColeccion = libros.reduce((total, libro) => total + (libro.precio || 0), 0);
@@ -25,7 +41,14 @@ const ProgressBar: React.FC = () => {
     librosComprados: libros.filter(l => l.estado === 'comprado').length,
     valorTotalColeccion,
     valorLibrosComprados,
-    librosConPrecioDetalle: librosConPrecio.map(l => ({ titulo: l.titulo, precio: l.precio, estado: l.estado }))
+    paginasLeidas,
+    librosConPrecioDetalle: librosConPrecio.map(l => ({ titulo: l.titulo, precio: l.precio, estado: l.estado })),
+    librosConPaginas: libros.filter(l => l.paginasLeidas || (l.estado === 'leido' && l.paginas)).map(l => ({ 
+      titulo: l.titulo, 
+      estado: l.estado, 
+      paginas: l.paginas, 
+      paginasLeidas: l.paginasLeidas 
+    }))
   });
   
   // Objetivos anuales
