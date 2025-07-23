@@ -1,10 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, BookOpen, CheckCircle, Clock, BookMarked, BookX } from 'lucide-react';
+import { Trophy, BookOpen, CheckCircle, Clock, BookMarked, BookX, Plus, X } from 'lucide-react';
 import { useAppState } from '../context/FirebaseAppStateContext';
 
 const SagaList: React.FC = () => {
-  const { state } = useAppState();
+  const { state, dispatch } = useAppState();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newSagaName, setNewSagaName] = useState('');
+  const [newSagaDescription, setNewSagaDescription] = useState('');
+  const [newSagaGenre, setNewSagaGenre] = useState('');
+  const [newSagaAuthor, setNewSagaAuthor] = useState('');
 
   const getSagaProgress = (sagaId: number) => {
     const librosDeLaSaga = state.libros.filter(libro => libro.sagaId === sagaId);
@@ -53,7 +58,36 @@ const SagaList: React.FC = () => {
     }
   };
 
-  if (state.sagas.length === 0) {
+  const handleCreateSaga = () => {
+    if (!newSagaName.trim()) return;
+    
+    dispatch({
+      type: 'ADD_SAGA',
+      payload: {
+        name: newSagaName.trim(),
+        descripcion: newSagaDescription.trim() || undefined,
+        genero: newSagaGenre.trim() || undefined,
+        autor: newSagaAuthor.trim() || undefined
+      }
+    });
+    
+    // Limpiar formulario
+    setNewSagaName('');
+    setNewSagaDescription('');
+    setNewSagaGenre('');
+    setNewSagaAuthor('');
+    setShowCreateForm(false);
+  };
+
+  const handleCancelCreate = () => {
+    setNewSagaName('');
+    setNewSagaDescription('');
+    setNewSagaGenre('');
+    setNewSagaAuthor('');
+    setShowCreateForm(false);
+  };
+
+  if (state.sagas.length === 0 && !showCreateForm) {
     return (
       <div className="text-center py-8">
         <Trophy className="h-12 w-12 text-slate-400 mx-auto mb-4" />
@@ -63,12 +97,132 @@ const SagaList: React.FC = () => {
         <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">
           Agrega libros con nombres de saga para crearlas automáticamente.
         </p>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setShowCreateForm(true)}
+          className="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 mx-auto"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Crear Primera Saga</span>
+        </motion.button>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      {/* Botón para crear nueva saga */}
+      {!showCreateForm && (
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setShowCreateForm(true)}
+          className="w-full p-4 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg hover:border-slate-400 dark:hover:border-slate-500 transition-colors duration-200 flex items-center justify-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="font-medium">Crear Nueva Saga</span>
+        </motion.button>
+      )}
+
+      {/* Formulario para crear saga */}
+      {showCreateForm && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Crear Nueva Saga
+            </h3>
+            <button
+              onClick={handleCancelCreate}
+              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5 text-slate-500" />
+            </button>
+          </div>
+          
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Nombre de la saga *
+              </label>
+              <input
+                type="text"
+                value={newSagaName}
+                onChange={(e) => setNewSagaName(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ej: El Señor de los Anillos"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Descripción
+              </label>
+              <textarea
+                value={newSagaDescription}
+                onChange={(e) => setNewSagaDescription(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Descripción opcional de la saga..."
+                rows={2}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Género
+                </label>
+                <input
+                  type="text"
+                  value={newSagaGenre}
+                  onChange={(e) => setNewSagaGenre(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ej: Fantasía"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Autor
+                </label>
+                <input
+                  type="text"
+                  value={newSagaAuthor}
+                  onChange={(e) => setNewSagaAuthor(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ej: J.R.R. Tolkien"
+                />
+              </div>
+            </div>
+            
+            <div className="flex space-x-3 pt-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleCreateSaga}
+                disabled={!newSagaName.trim()}
+                className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg font-medium transition-colors duration-200 disabled:cursor-not-allowed"
+              >
+                Crear Saga
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleCancelCreate}
+                className="flex-1 px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors duration-200"
+              >
+                Cancelar
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {state.sagas.map((saga) => {
         const progress = getSagaProgress(saga.id);
         const books = getSagaBooks(saga.id);

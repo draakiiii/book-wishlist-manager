@@ -289,6 +289,137 @@ function appReducer(state: AppState, action: Action): AppState {
       };
       break;
 
+    case 'START_READING':
+      newState = {
+        ...state,
+        libros: state.libros.map(libro =>
+          libro.id === action.payload.id
+            ? {
+                ...libro,
+                estado: 'leyendo',
+                fechaInicio: action.payload.fecha || Date.now(),
+                historialEstados: [...libro.historialEstados, {
+                  estado: 'leyendo',
+                  fecha: Date.now(),
+                  notas: 'Comenzó a leer'
+                }]
+              }
+            : libro
+        )
+      };
+      break;
+
+    case 'FINISH_READING':
+      newState = {
+        ...state,
+        libros: state.libros.map(libro =>
+          libro.id === action.payload.id
+            ? {
+                ...libro,
+                estado: 'leido',
+                fechaFin: action.payload.fecha || Date.now(),
+                calificacion: action.payload.calificacion,
+                notas: action.payload.notas,
+                historialEstados: [...libro.historialEstados, {
+                  estado: 'leido',
+                  fecha: Date.now(),
+                  notas: action.payload.notas || 'Libro completado'
+                }]
+              }
+            : libro
+        )
+      };
+      // Ganar puntos si el sistema está habilitado
+      if (state.config.sistemaPuntosHabilitado && action.payload.calificacion) {
+        const puntosPorLibro = state.config.puntosPorLibro || 10;
+        newState.puntosActuales += puntosPorLibro;
+        newState.puntosGanados += puntosPorLibro;
+      }
+      break;
+
+    case 'ABANDON_BOOK':
+      newState = {
+        ...state,
+        libros: state.libros.map(libro =>
+          libro.id === action.payload.id
+            ? {
+                ...libro,
+                estado: 'abandonado',
+                fechaAbandonado: action.payload.fecha || Date.now(),
+                historialEstados: [...libro.historialEstados, {
+                  estado: 'abandonado',
+                  fecha: Date.now(),
+                  notas: action.payload.motivo || 'Libro abandonado'
+                }]
+              }
+            : libro
+        )
+      };
+      break;
+
+    case 'BUY_BOOK':
+      newState = {
+        ...state,
+        libros: state.libros.map(libro =>
+          libro.id === action.payload.id
+            ? {
+                ...libro,
+                estado: 'comprado',
+                fechaCompra: action.payload.fecha || Date.now(),
+                precio: action.payload.precio,
+                historialEstados: [...libro.historialEstados, {
+                  estado: 'comprado',
+                  fecha: Date.now(),
+                  notas: action.payload.precio ? `Comprado por $${action.payload.precio}` : 'Libro comprado'
+                }]
+              }
+            : libro
+        )
+      };
+      break;
+
+    case 'LOAN_BOOK':
+      newState = {
+        ...state,
+        libros: state.libros.map(libro =>
+          libro.id === action.payload.id
+            ? {
+                ...libro,
+                prestado: true,
+                prestadoA: action.payload.prestadoA,
+                fechaPrestamo: action.payload.fecha || Date.now(),
+                historialEstados: [...libro.historialEstados, {
+                  estado: 'prestado',
+                  fecha: Date.now(),
+                  notas: `Prestado a ${action.payload.prestadoA}`
+                }]
+              }
+            : libro
+        )
+      };
+      break;
+
+    case 'RETURN_BOOK':
+      newState = {
+        ...state,
+        libros: state.libros.map(libro =>
+          libro.id === action.payload.id
+            ? {
+                ...libro,
+                prestado: false,
+                prestadoA: undefined,
+                fechaPrestamo: undefined,
+                historialEstados: [...libro.historialEstados, {
+                  estado: libro.estado,
+                  fecha: Date.now(),
+                  notas: 'Libro devuelto'
+                }]
+              }
+            : libro
+        )
+      };
+      break;
+
     case 'ADD_SAGA':
       const newSaga: Saga = {
         id: Date.now(),
