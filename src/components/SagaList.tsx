@@ -1,20 +1,16 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, BookOpen, CheckCircle, Clock } from 'lucide-react';
+import { Trophy, BookOpen, CheckCircle, Clock, BookMarked, BookX } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 
 const SagaList: React.FC = () => {
   const { state } = useAppState();
 
   const getSagaProgress = (sagaId: number) => {
-    const todosLosLibros = [
-      ...state.tbr,
-      ...state.historial,
-      ...state.librosActuales
-    ];
-    
-    const librosDeLaSaga = todosLosLibros.filter(libro => libro.sagaId === sagaId);
-    const librosLeidosDeLaSaga = state.historial.filter(libro => libro.sagaId === sagaId);
+    const librosDeLaSaga = state.libros.filter(libro => libro.sagaId === sagaId);
+    const librosLeidosDeLaSaga = state.libros.filter(libro => 
+      libro.sagaId === sagaId && libro.estado === 'leido'
+    );
     
     return {
       total: librosDeLaSaga.length,
@@ -24,13 +20,37 @@ const SagaList: React.FC = () => {
   };
 
   const getSagaBooks = (sagaId: number) => {
-    const todosLosLibros = [
-      ...state.tbr,
-      ...state.historial,
-      ...state.librosActuales
-    ];
-    
-    return todosLosLibros.filter(libro => libro.sagaId === sagaId);
+    return state.libros.filter(libro => libro.sagaId === sagaId);
+  };
+
+  const getBookStatusIcon = (estado: string) => {
+    switch (estado) {
+      case 'leido':
+        return <CheckCircle className="h-3 w-3 flex-shrink-0 text-green-600" />;
+      case 'leyendo':
+        return <Clock className="h-3 w-3 flex-shrink-0 text-blue-600" />;
+      case 'abandonado':
+        return <BookX className="h-3 w-3 flex-shrink-0 text-red-600" />;
+      case 'tbr':
+        return <BookMarked className="h-3 w-3 flex-shrink-0 text-slate-600" />;
+      default:
+        return <BookOpen className="h-3 w-3 flex-shrink-0 text-slate-600" />;
+    }
+  };
+
+  const getBookStatusClass = (estado: string) => {
+    switch (estado) {
+      case 'leido':
+        return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200';
+      case 'leyendo':
+        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200';
+      case 'abandonado':
+        return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200';
+      case 'tbr':
+        return 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
+      default:
+        return 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
+    }
   };
 
   if (state.sagas.length === 0) {
@@ -126,30 +146,20 @@ const SagaList: React.FC = () => {
                 </h4>
                 <div className="grid grid-cols-1 gap-2">
                   {books.map((book) => {
-                    const isRead = state.historial.some(l => l.id === book.id);
-                    const isCurrent = state.librosActuales.some(l => l.id === book.id);
-                    
                     return (
                       <div
                         key={book.id}
-                        className={`flex items-center space-x-2 p-2 rounded text-sm ${
-                          isRead 
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' 
-                            : isCurrent
-                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
-                            : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                        }`}
+                        className={`flex items-center space-x-2 p-2 rounded text-sm ${getBookStatusClass(book.estado)}`}
                       >
-                        {isRead ? (
-                          <CheckCircle className="h-3 w-3 flex-shrink-0" />
-                        ) : isCurrent ? (
-                          <Clock className="h-3 w-3 flex-shrink-0" />
-                        ) : (
-                          <BookOpen className="h-3 w-3 flex-shrink-0" />
-                        )}
+                        {getBookStatusIcon(book.estado)}
                         <span className="truncate">{book.titulo}</span>
                         {book.autor && (
                           <span className="text-xs opacity-75">- {book.autor}</span>
+                        )}
+                        {book.ordenLectura && (
+                          <span className="text-xs bg-slate-200 dark:bg-slate-600 px-1 rounded">
+                            #{book.ordenLectura}
+                          </span>
                         )}
                       </div>
                     );

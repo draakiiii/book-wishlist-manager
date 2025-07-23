@@ -46,7 +46,7 @@ const SagaCompletionNotification: React.FC<SagaCompletionNotificationProps> = ({
                 Has terminado la saga "{sagaName}"
               </p>
               <p className="text-green-200 text-sm mt-2">
-                +{state.config.puntosPorSaga} puntos por completar la saga
+                ¡Felicidades por completar esta saga!
               </p>
             </div>
             <button

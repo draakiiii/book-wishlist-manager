@@ -15,7 +15,11 @@ import {
   Globe,
   Building,
   CheckCircle,
-  RotateCcw
+  RotateCcw,
+  BookMarked,
+  BookX,
+  ShoppingCart,
+  Share2
 } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 import { SearchFilters, Libro } from '../types';
@@ -35,16 +39,13 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onClose, isOp
   const [showHistory, setShowHistory] = useState(false);
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
 
-  // Performance optimization: memoize all books
+  // Performance optimization: memoize all books with their states
   const allBooks = useMemo(() => {
-      const books: Array<Libro & { listType: 'tbr' | 'historial' | 'wishlist' | 'actual' }> = [
-    ...state.tbr.map(book => ({ ...book, listType: 'tbr' as const })),
-    ...state.historial.map(book => ({ ...book, listType: 'historial' as const })),
-    ...state.wishlist.map(book => ({ ...book, listType: 'wishlist' as const })),
-    ...state.librosActuales.map(book => ({ ...book, listType: 'actual' as const }))
-  ];
-    return books;
-  }, [state.tbr, state.historial, state.wishlist, state.librosActuales]);
+    return state.libros.map(book => ({
+      ...book,
+      listType: book.estado as 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado' | 'prestado'
+    }));
+  }, [state.libros]);
 
   // Performance optimization: memoize search results
   const searchResults = useMemo(() => {
@@ -119,12 +120,12 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onClose, isOp
         return false;
       }
 
-      if (filters.estado && filters.estado !== 'todos' && book.listType !== filters.estado) {
+      if (filters.estado && filters.estado !== 'todos' && book.estado !== filters.estado) {
         return false;
       }
 
       if (filters.completado !== undefined) {
-        const isCompleted = book.listType === 'historial';
+        const isCompleted = book.estado === 'leido';
         if (filters.completado !== isCompleted) {
           return false;
         }
@@ -208,418 +209,223 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onClose, isOp
           </button>
         </div>
 
-        <div className="flex flex-col h-full">
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
           {/* Search Bar */}
-          <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+          <div className="mb-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
               <input
                 type="text"
+                placeholder="Buscar por título, autor, ISBN, editorial..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar por título, autor, ISBN, editorial..."
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm('')}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-slate-200 dark:hover:bg-slate-600 rounded"
                 >
-                  <X className="h-3 w-3 text-slate-400" />
+                  <X className="h-4 w-4 text-slate-400" />
                 </button>
               )}
             </div>
+          </div>
 
-            {/* Search History */}
-            {showHistory && state.searchHistory.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-2 bg-slate-50 dark:bg-slate-700 rounded-lg p-2"
+          {/* Quick Filters */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center space-x-2">
+                <Filter className="h-5 w-5 text-primary-500" />
+                <span>Filtros Rápidos</span>
+              </h4>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Historial de búsquedas
-                  </span>
-                  <button
-                    onClick={() => dispatch({ type: 'CLEAR_SEARCH_HISTORY' })}
-                    className="text-xs text-red-500 hover:text-red-700"
-                  >
-                    Limpiar
-                  </button>
-                </div>
-                <div className="space-y-1">
-                  {state.searchHistory.slice(0, 5).map((term, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSearchFromHistory(term)}
-                      className="w-full text-left px-2 py-1 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600 rounded flex items-center space-x-2"
-                    >
-                      <Clock className="h-3 w-3" />
-                      <span>{term}</span>
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
+                {showFilters ? 'Ocultar' : 'Mostrar'} filtros avanzados
+              </button>
+            </div>
 
-            {/* Controls */}
-            <div className="flex items-center justify-between mt-3">
-              <div className="flex space-x-2">
+            {/* Estado Filter */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 mb-4">
+              {[
+                { value: 'todos', label: 'Todos', icon: BookOpen, color: 'bg-slate-500' },
+                { value: 'tbr', label: 'TBR', icon: BookMarked, color: 'bg-blue-500' },
+                { value: 'leyendo', label: 'Leyendo', icon: Clock, color: 'bg-orange-500' },
+                { value: 'leido', label: 'Leídos', icon: CheckCircle, color: 'bg-green-500' },
+                { value: 'abandonado', label: 'Abandonados', icon: BookX, color: 'bg-red-500' },
+                { value: 'wishlist', label: 'Wishlist', icon: Heart, color: 'bg-pink-500' },
+                { value: 'comprado', label: 'Comprados', icon: ShoppingCart, color: 'bg-green-600' },
+                { value: 'prestado', label: 'Prestados', icon: Share2, color: 'bg-purple-500' }
+              ].map(({ value, label, icon: Icon, color }) => (
                 <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1 ${
-                    showFilters 
-                      ? 'bg-primary-500 text-white' 
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                  key={value}
+                  onClick={() => updateFilter('estado', filters.estado === value ? 'todos' : value)}
+                  className={`flex items-center space-x-2 p-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                    filters.estado === value
+                      ? `${color} text-white`
+                      : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                   }`}
                 >
-                  <Filter className="h-3 w-3" />
-                  <span>Filtros</span>
+                  <Icon className="h-4 w-4" />
+                  <span>{label}</span>
                 </button>
-                <button
-                  onClick={() => setShowHistory(!showHistory)}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1 ${
-                    showHistory 
-                      ? 'bg-primary-500 text-white' 
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                  }`}
-                >
-                  <Clock className="h-3 w-3" />
-                  <span>Historial</span>
-                </button>
-              </div>
+              ))}
+            </div>
+
+            {/* Results Count */}
+            <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400">
+              <span>{searchResults.length} resultados encontrados</span>
               <button
                 onClick={clearFilters}
-                className="px-3 py-1 rounded-lg text-sm font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors duration-200 flex items-center space-x-1"
+                className="flex items-center space-x-1 text-primary-600 dark:text-primary-400 hover:underline"
               >
                 <RotateCcw className="h-3 w-3" />
-                <span>Limpiar</span>
+                <span>Limpiar filtros</span>
               </button>
             </div>
           </div>
 
-                           {/* Filters Panel */}
-                 {showFilters && (
-                   <motion.div
-                     initial={{ height: 0, opacity: 0 }}
-                     animate={{ height: 'auto', opacity: 1 }}
-                     className="border-b border-slate-200 dark:border-slate-700 overflow-hidden"
-                   >
-                <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* Estado */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Estado
-                    </label>
-                    <select
-                      value={filters.estado || 'todos'}
-                      onChange={(e) => updateFilter('estado', e.target.value === 'todos' ? undefined : e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                    >
-                      <option value="todos">Todos</option>
-                      <option value="tbr">TBR</option>
-                      <option value="historial">Historial</option>
-                      <option value="wishlist">Wishlist</option>
-                      <option value="actual">Actual</option>
-                    </select>
-                  </div>
-
-                  {/* Autor */}
-                  {filterOptions.autores.length > 0 && (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        Autor
-                      </label>
-                      <select
-                        value={filters.autor || ''}
-                        onChange={(e) => updateFilter('autor', e.target.value || undefined)}
-                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                      >
-                        <option value="">Todos los autores</option>
-                        {filterOptions.autores.map(autor => (
-                          <option key={autor} value={autor}>{autor}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Saga */}
-                  {filterOptions.sagas.length > 0 && (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        Saga
-                      </label>
-                      <select
-                        value={filters.saga || ''}
-                        onChange={(e) => updateFilter('saga', e.target.value || undefined)}
-                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                      >
-                        <option value="">Todas las sagas</option>
-                        {filterOptions.sagas.map(saga => (
-                          <option key={saga} value={saga}>{saga}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Género */}
-                  {filterOptions.generos.length > 0 && (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        Género
-                      </label>
-                      <select
-                        value={filters.genero || ''}
-                        onChange={(e) => updateFilter('genero', e.target.value || undefined)}
-                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                      >
-                        <option value="">Todos los géneros</option>
-                        {filterOptions.generos.map(genero => (
-                          <option key={genero} value={genero}>{genero}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Idioma */}
-                  {filterOptions.idiomas.length > 0 && (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        Idioma
-                      </label>
-                      <select
-                        value={filters.idioma || ''}
-                        onChange={(e) => updateFilter('idioma', e.target.value || undefined)}
-                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                      >
-                        <option value="">Todos los idiomas</option>
-                        {filterOptions.idiomas.map(idioma => (
-                          <option key={idioma} value={idioma}>{idioma}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Editorial */}
-                  {filterOptions.editoriales.length > 0 && (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        Editorial
-                      </label>
-                      <select
-                        value={filters.editorial || ''}
-                        onChange={(e) => updateFilter('editorial', e.target.value || undefined)}
-                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                      >
-                        <option value="">Todas las editoriales</option>
-                        {filterOptions.editoriales.map(editorial => (
-                          <option key={editorial} value={editorial}>{editorial}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Calificación */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Calificación
-                    </label>
-                    <div className="flex space-x-2">
-                      <input
-                        type="number"
-                        min="1"
-                        max="5"
-                        placeholder="Min"
-                        value={filters.calificacionMin || ''}
-                        onChange={(e) => updateFilter('calificacionMin', e.target.value ? Number(e.target.value) : undefined)}
-                        className="w-1/2 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                      />
-                      <input
-                        type="number"
-                        min="1"
-                        max="5"
-                        placeholder="Max"
-                        value={filters.calificacionMax || ''}
-                        onChange={(e) => updateFilter('calificacionMax', e.target.value ? Number(e.target.value) : undefined)}
-                        className="w-1/2 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Páginas */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Páginas
-                    </label>
-                    <div className="flex space-x-2">
-                      <input
-                        type="number"
-                        min="1"
-                        placeholder="Min"
-                        value={filters.paginasMin || ''}
-                        onChange={(e) => updateFilter('paginasMin', e.target.value ? Number(e.target.value) : undefined)}
-                        className="w-1/2 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                      />
-                      <input
-                        type="number"
-                        min="1"
-                        placeholder="Max"
-                        value={filters.paginasMax || ''}
-                        onChange={(e) => updateFilter('paginasMax', e.target.value ? Number(e.target.value) : undefined)}
-                        className="w-1/2 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Precio */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Precio
-                    </label>
-                    <div className="flex space-x-2">
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="Min"
-                        value={filters.precioMin || ''}
-                        onChange={(e) => updateFilter('precioMin', e.target.value ? Number(e.target.value) : undefined)}
-                        className="w-1/2 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                      />
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="Max"
-                        value={filters.precioMax || ''}
-                        onChange={(e) => updateFilter('precioMax', e.target.value ? Number(e.target.value) : undefined)}
-                        className="w-1/2 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Completado */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Estado de lectura
-                    </label>
-                    <select
-                      value={filters.completado === undefined ? 'todos' : filters.completado ? 'completado' : 'pendiente'}
-                      onChange={(e) => updateFilter('completado', e.target.value === 'todos' ? undefined : e.target.value === 'completado')}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                    >
-                      <option value="todos">Todos</option>
-                      <option value="completado">Completados</option>
-                      <option value="pendiente">Pendientes</option>
-                    </select>
-                  </div>
-                                       </div>
-                     </motion.div>
-                   )}
-
-          {/* Results Summary */}
-          <div className="p-4 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600 dark:text-slate-400">
-                {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''} encontrado{searchResults.length !== 1 ? 's' : ''}
-              </span>
-              <div className="flex items-center space-x-4 text-xs text-slate-500 dark:text-slate-400">
-                <span className="flex items-center space-x-1">
-                  <BookOpen className="h-3 w-3" />
-                  <span>TBR: {searchResults.filter(b => b.listType === 'tbr').length}</span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <CheckCircle className="h-3 w-3" />
-                  <span>Historial: {searchResults.filter(b => b.listType === 'historial').length}</span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <Heart className="h-3 w-3" />
-                  <span>Wishlist: {searchResults.filter(b => b.listType === 'wishlist').length}</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Search Results */}
-          <div className="flex-1 overflow-y-auto">
-            {searchResults.length === 0 ? (
-              <div className="p-8 text-center">
-                <Search className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                <p className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  No se encontraron resultados
-                </p>
-                <p className="text-sm text-slate-500 dark:text-slate-500">
-                  Intenta ajustar los filtros de búsqueda o usar términos diferentes
-                </p>
-              </div>
-            ) : (
-              <div className="p-4 space-y-3">
-                {searchResults.slice(0, 20).map((book) => (
-                  <div
-                    key={`${book.listType}-${book.id}`}
-                    className="p-3 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors duration-200"
+          {/* Advanced Filters */}
+          {showFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg"
+            >
+              <h5 className="text-md font-semibold text-slate-900 dark:text-white mb-4">
+                Filtros Avanzados
+              </h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Author Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Autor
+                  </label>
+                  <select
+                    value={filters.autor || ''}
+                    onChange={(e) => updateFilter('autor', e.target.value || undefined)}
+                    className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="font-medium text-slate-900 dark:text-white">
-                            {book.titulo}
-                          </span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            book.listType === 'tbr' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                            book.listType === 'historial' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                            book.listType === 'wishlist' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                            'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                          }`}>
-                            {book.listType === 'tbr' ? 'TBR' :
-                             book.listType === 'historial' ? 'Historial' :
-                             book.listType === 'wishlist' ? 'Wishlist' : 'Actual'}
-                          </span>
-                        </div>
-                        {book.autor && (
-                          <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
-                            {book.autor}
-                          </p>
-                        )}
-                        <div className="flex items-center space-x-4 text-xs text-slate-500 dark:text-slate-500">
-                          {book.paginas && (
-                            <span>{book.paginas} páginas</span>
-                          )}
-                          {book.genero && (
-                            <span>{book.genero}</span>
-                          )}
-                          {book.editorial && (
-                            <span>{book.editorial}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {searchResults.length > 20 && (
-                  <div className="text-center py-4">
-                    <p className="text-sm text-slate-500 dark:text-slate-500">
-                      Mostrando los primeros 20 resultados de {searchResults.length}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+                    <option value="">Todos los autores</option>
+                    {filterOptions.autores.map(autor => (
+                      <option key={autor} value={autor}>{autor}</option>
+                    ))}
+                  </select>
+                </div>
 
-          {/* Help Section */}
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-t border-blue-200 dark:border-blue-800">
-            <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">
-              ¿Cómo funciona la búsqueda avanzada?
-            </h4>
-            <div className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-              <p>• <strong>Búsqueda de texto:</strong> Busca en título, autor, ISBN y editorial</p>
-              <p>• <strong>Filtros:</strong> Refina por estado, autor, saga, género, idioma, editorial, calificación, páginas, precio y estado de lectura</p>
-              <p>• <strong>Historial:</strong> Guarda tus últimas búsquedas para acceso rápido</p>
-              <p>• <strong>Resultados:</strong> Muestra libros de todas tus listas (TBR, Historial, Wishlist, Actual)</p>
-            </div>
-          </div>
+                {/* Saga Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Saga
+                  </label>
+                  <select
+                    value={filters.saga || ''}
+                    onChange={(e) => updateFilter('saga', e.target.value || undefined)}
+                    className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  >
+                    <option value="">Todas las sagas</option>
+                    {filterOptions.sagas.map(saga => (
+                      <option key={saga} value={saga}>{saga}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Genre Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Género
+                  </label>
+                  <select
+                    value={filters.genero || ''}
+                    onChange={(e) => updateFilter('genero', e.target.value || undefined)}
+                    className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  >
+                    <option value="">Todos los géneros</option>
+                    {filterOptions.generos.map(genero => (
+                      <option key={genero} value={genero}>{genero}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Language Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Idioma
+                  </label>
+                  <select
+                    value={filters.idioma || ''}
+                    onChange={(e) => updateFilter('idioma', e.target.value || undefined)}
+                    className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  >
+                    <option value="">Todos los idiomas</option>
+                    {filterOptions.idiomas.map(idioma => (
+                      <option key={idioma} value={idioma}>{idioma}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Editorial Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Editorial
+                  </label>
+                  <select
+                    value={filters.editorial || ''}
+                    onChange={(e) => updateFilter('editorial', e.target.value || undefined)}
+                    className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  >
+                    <option value="">Todas las editoriales</option>
+                    {filterOptions.editoriales.map(editorial => (
+                      <option key={editorial} value={editorial}>{editorial}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Completion Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Estado de Lectura
+                  </label>
+                  <select
+                    value={filters.completado === undefined ? '' : filters.completado ? 'true' : 'false'}
+                    onChange={(e) => updateFilter('completado', e.target.value === '' ? undefined : e.target.value === 'true')}
+                    className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  >
+                    <option value="">Todos</option>
+                    <option value="true">Completados</option>
+                    <option value="false">No completados</option>
+                  </select>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Search History */}
+          {showHistory && state.searchHistory.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg"
+            >
+              <h5 className="text-md font-semibold text-slate-900 dark:text-white mb-3">
+                Historial de Búsquedas
+              </h5>
+              <div className="space-y-2">
+                {state.searchHistory.slice(0, 5).map((term, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSearchFromHistory(term)}
+                    className="w-full text-left p-2 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-sm text-slate-700 dark:text-slate-300"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </div>
       </motion.div>
     </motion.div>
