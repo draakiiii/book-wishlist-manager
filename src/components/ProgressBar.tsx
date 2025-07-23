@@ -52,12 +52,12 @@ const ProgressBar: React.FC = () => {
   });
   
   // Objetivos anuales
-  const objetivoLibros = config.objetivoLecturaAnual || 12;
-  const objetivoPaginas = config.objetivoPaginasAnual || 4000;
+  const objetivoLibros = config.objetivoLecturaAnual || 0;
+  const objetivoPaginas = config.objetivoPaginasAnual || 0;
   
-  // Calcular progreso
-  const progresoLibros = Math.min((librosLeidos.length / objetivoLibros) * 100, 100);
-  const progresoPaginas = Math.min((paginasLeidas / objetivoPaginas) * 100, 100);
+  // Calcular progreso solo si hay objetivos
+  const progresoLibros = objetivoLibros > 0 ? Math.min((librosLeidos.length / objetivoLibros) * 100, 100) : 0;
+  const progresoPaginas = objetivoPaginas > 0 ? Math.min((paginasLeidas / objetivoPaginas) * 100, 100) : 0;
   
   // Formatear precio
   const formatearPrecio = (precio: number) => {
@@ -156,81 +156,87 @@ const ProgressBar: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Progress Bars */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.5 }}
-        className="space-y-4"
-      >
-        {/* Libros Progress */}
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
-              Progreso de libros ({librosLeidos.length}/{objetivoLibros})
-            </span>
-            <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
-              {Math.round(progresoLibros)}%
-            </span>
-          </div>
-          
-          <div className="relative h-3 sm:h-4 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${progresoLibros}%` }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="h-full rounded-full bg-gradient-to-r from-primary-500 to-secondary-500"
-            />
-            
-            {/* Shimmer effect */}
-            <motion.div
-              animate={{
-                x: ['-100%', '100%'],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear"
-              }}
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-            />
-          </div>
-        </div>
+      {/* Progress Bars - Solo mostrar si hay objetivos */}
+      {(objetivoLibros > 0 || objetivoPaginas > 0) && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5 }}
+          className="space-y-4"
+        >
+          {/* Libros Progress - Solo si hay objetivo de libros */}
+          {objetivoLibros > 0 && (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Progreso de libros ({librosLeidos.length}/{objetivoLibros})
+                </span>
+                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {Math.round(progresoLibros)}%
+                </span>
+              </div>
+              
+              <div className="relative h-3 sm:h-4 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progresoLibros}%` }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className="h-full rounded-full bg-gradient-to-r from-primary-500 to-secondary-500"
+                />
+                
+                {/* Shimmer effect */}
+                <motion.div
+                  animate={{
+                    x: ['-100%', '100%'],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                />
+              </div>
+            </div>
+          )}
 
-        {/* Pages Progress */}
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
-              Progreso de páginas ({paginasLeidas.toLocaleString()}/{objetivoPaginas.toLocaleString()})
-            </span>
-            <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
-              {Math.round(progresoPaginas)}%
-            </span>
-          </div>
-          
-          <div className="relative h-3 sm:h-4 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${progresoPaginas}%` }}
-              transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
-              className="h-full rounded-full bg-gradient-to-r from-green-500 to-green-600"
-            />
-            
-            {/* Shimmer effect */}
-            <motion.div
-              animate={{
-                x: ['-100%', '100%'],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear"
-              }}
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-            />
-          </div>
-        </div>
-      </motion.div>
+          {/* Pages Progress - Solo si hay objetivo de páginas */}
+          {objetivoPaginas > 0 && (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Progreso de páginas ({paginasLeidas.toLocaleString()}/{objetivoPaginas.toLocaleString()})
+                </span>
+                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {Math.round(progresoPaginas)}%
+                </span>
+              </div>
+              
+              <div className="relative h-3 sm:h-4 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progresoPaginas}%` }}
+                  transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
+                  className="h-full rounded-full bg-gradient-to-r from-green-500 to-green-600"
+                />
+                
+                {/* Shimmer effect */}
+                <motion.div
+                  animate={{
+                    x: ['-100%', '100%'],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                />
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* Reading Stats */}
       <motion.div

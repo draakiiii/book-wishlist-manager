@@ -399,6 +399,35 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ isOpen, onC
                   <p className="text-sm font-mono text-slate-900 dark:text-white">{book.isbn}</p>
                 </div>
               )}
+
+              {/* Historial del Libro */}
+              {book.historialEstados && book.historialEstados.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center space-x-2">
+                    <Clock className="h-4 w-4" />
+                    <span>Historial del Libro</span>
+                  </h4>
+                  <div className="space-y-2">
+                    {book.historialEstados
+                      .sort((a, b) => a.fecha - b.fecha)
+                      .map((estado, index) => (
+                        <div key={index} className="flex items-start space-x-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                          <div className="flex-shrink-0 w-2 h-2 bg-slate-400 rounded-full mt-2"></div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                {estado.notas || getEstadoInfo(estado.estado).label}
+                              </p>
+                              <span className="text-xs text-slate-500 dark:text-slate-400">
+                                {formatearFecha(estado.fecha)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </motion.div>

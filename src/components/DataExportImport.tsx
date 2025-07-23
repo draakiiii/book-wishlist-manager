@@ -50,7 +50,7 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
         scanHistory: state.scanHistory,
         searchHistory: state.searchHistory,
         lastBackup: state.lastBackup,
-        performanceMetrics: state.performanceMetrics
+
       };
 
       const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss', { locale: es });

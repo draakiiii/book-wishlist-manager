@@ -83,33 +83,7 @@ const AppContent: React.FC = () => {
     dispatch({ type: 'REMOVE_SAGA_NOTIFICATION', payload: { id } });
   };
 
-  // Performance monitoring
-  const measurePerformance = useCallback(() => {
-    const startTime = performance.now();
-    
-    return () => {
-      const endTime = performance.now();
-      const renderTime = endTime - startTime;
-      
-      // Get memory usage if available
-      const memoryUsage = (performance as any).memory?.usedJSHeapSize;
-      
-      dispatch({
-        type: 'SET_PERFORMANCE_METRICS',
-        payload: {
-          lastRenderTime: renderTime,
-          averageRenderTime: 0, // Will be calculated in reducer
-          memoryUsage
-        }
-      });
-    };
-  }, [dispatch]);
 
-  // Measure performance on each render
-  useEffect(() => {
-    const cleanup = measurePerformance();
-    return cleanup;
-  });
 
   // Filtrar libros por estado
   const librosTBR = state.libros.filter(libro => libro.estado === 'tbr');
@@ -117,7 +91,7 @@ const AppContent: React.FC = () => {
   const librosLeidos = state.libros.filter(libro => libro.estado === 'leido');
   const librosAbandonados = state.libros.filter(libro => libro.estado === 'abandonado');
   const librosWishlist = state.libros.filter(libro => libro.estado === 'wishlist');
-  const librosComprados = state.libros.filter(libro => libro.estado === 'comprado');
+
   const librosPrestados = state.libros.filter(libro => libro.estado === 'prestado');
 
   return (
@@ -312,19 +286,7 @@ const AppContent: React.FC = () => {
               />
             </CollapsibleSection>
 
-            {/* Purchased Books Section */}
-            <CollapsibleSection
-              title="Libros Comprados"
-              icon={<ShoppingCart className="h-5 w-5" />}
-              iconBgColor="bg-blue-100 dark:bg-blue-900/30"
-              iconColor="text-blue-600 dark:text-blue-400"
-            >
-              <BookList 
-                books={librosComprados}
-                type="comprado"
-                emptyMessage="No has comprado ningún libro."
-              />
-            </CollapsibleSection>
+
 
             {/* Lent Books Section */}
             <CollapsibleSection

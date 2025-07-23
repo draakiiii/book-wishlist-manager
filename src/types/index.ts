@@ -202,9 +202,8 @@ export type Action =
   | { type: 'CLEAR_SEARCH_HISTORY' }
   
   // Acciones de datos
-  | { type: 'IMPORT_DATA'; payload: { libros: Libro[]; sagas: Saga[]; config?: Configuracion; scanHistory?: ScanHistory[]; searchHistory?: string[]; lastBackup?: number; performanceMetrics?: { lastRenderTime: number; averageRenderTime: number; memoryUsage?: number } } }
+  | { type: 'IMPORT_DATA'; payload: { libros: Libro[]; sagas: Saga[]; config?: Configuracion; scanHistory?: ScanHistory[]; searchHistory?: string[]; lastBackup?: number } }
   | { type: 'EXPORT_DATA' }
-  | { type: 'SET_PERFORMANCE_METRICS'; payload: { lastRenderTime: number; averageRenderTime: number; memoryUsage?: number } }
   | { type: 'SET_LAST_BACKUP'; payload: number }
   
   // Acciones de compatibilidad (para migración)
@@ -238,10 +237,5 @@ export interface ExportData {
   scanHistory: ScanHistory[];
   searchHistory: string[];
   lastBackup?: number;
-  performanceMetrics?: {
-    lastRenderTime: number;
-    averageRenderTime: number;
-    memoryUsage?: number;
-  };
   statistics?: Statistics;
 } 

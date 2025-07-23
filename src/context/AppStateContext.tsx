@@ -30,10 +30,7 @@ const initialState: AppState = {
   darkMode: getInitialTheme(),
   scanHistory: [],
   searchHistory: [],
-  performanceMetrics: {
-    lastRenderTime: 0,
-    averageRenderTime: 0
-  }
+
 };
 
 function loadStateFromStorage(): AppState | null {
@@ -56,7 +53,7 @@ function loadStateFromStorage(): AppState | null {
         sagas: parsedState.sagas || [],
         scanHistory: parsedState.scanHistory || [],
         searchHistory: parsedState.searchHistory || [],
-        performanceMetrics: parsedState.performanceMetrics || { lastRenderTime: 0, averageRenderTime: 0 }
+
       };
       
       return completeState;
@@ -153,7 +150,7 @@ function migrateFromOldVersion(oldState: any): AppState {
     darkMode: oldState.darkMode || false,
     scanHistory: oldState.scanHistory || [],
     searchHistory: oldState.searchHistory || [],
-    performanceMetrics: oldState.performanceMetrics || { lastRenderTime: 0, averageRenderTime: 0 },
+    
     // Mantener compatibilidad
     progreso: oldState.progreso,
     compraDesbloqueada: oldState.compraDesbloqueada,
@@ -209,10 +206,32 @@ function limpiarSagasHuerfanas(state: AppState): AppState {
 }
 
 function agregarEstadoAlHistorial(libro: Libro, nuevoEstado: Libro['estado'], notas?: string): Libro {
+  // Crear mensaje descriptivo según el estado
+  const getMensajeEstado = (estado: Libro['estado'], notas?: string): string => {
+    switch (estado) {
+      case 'tbr':
+        return 'Añadido a la pila de lectura';
+      case 'leyendo':
+        return 'Empezado a leer';
+      case 'leido':
+        return notas ? `Terminado de leer - ${notas}` : 'Terminado de leer';
+      case 'abandonado':
+        return notas ? `Abandonado - ${notas}` : 'Abandonado';
+      case 'wishlist':
+        return 'Añadido a la lista de deseos';
+      case 'comprado':
+        return notas ? `Comprado por ${notas}€` : 'Comprado';
+      case 'prestado':
+        return notas ? `Prestado a ${notas}` : 'Prestado';
+      default:
+        return notas || 'Estado cambiado';
+    }
+  };
+
   const nuevoEstadoHistorial: EstadoLibro = {
     estado: nuevoEstado,
     fecha: Date.now(),
-    notas
+    notas: getMensajeEstado(nuevoEstado, notas)
   };
   
   return {
@@ -329,7 +348,7 @@ function appReducer(state: AppState, action: Action): AppState {
       const librosActualizados = state.libros.map(libro => {
         if (libro.id === id) {
           return {
-            ...agregarEstadoAlHistorial(libro, 'leyendo', 'Iniciado lectura'),
+            ...agregarEstadoAlHistorial(libro, 'leyendo'),
             fechaInicio: fecha
           };
         }
@@ -353,16 +372,10 @@ function appReducer(state: AppState, action: Action): AppState {
         : false;
       
       const libroActualizado: Libro = {
-        ...libro,
-        estado: 'leido',
+        ...agregarEstadoAlHistorial(libro, 'leido', notas),
         fechaFin: fecha,
         calificacion: calificacion || libro.calificacion,
-        notas: notas || libro.notas,
-        historialEstados: [...libro.historialEstados, {
-          estado: 'leido',
-          fecha,
-          notas: notas || 'Libro terminado'
-        }]
+        notas: notas || libro.notas
       };
       
       const librosActualizados = state.libros.map(l => 
@@ -397,7 +410,7 @@ function appReducer(state: AppState, action: Action): AppState {
       const { id, fecha = Date.now(), motivo } = action.payload;
       const librosActualizados = state.libros.map(libro => {
         if (libro.id === id) {
-          return agregarEstadoAlHistorial(libro, 'abandonado', motivo || 'Libro abandonado');
+          return agregarEstadoAlHistorial(libro, 'abandonado', motivo);
         }
         return libro;
       });
@@ -413,15 +426,9 @@ function appReducer(state: AppState, action: Action): AppState {
       const librosActualizados = state.libros.map(libro => {
         if (libro.id === id) {
           const libroActualizado: Libro = {
-            ...libro,
-            estado: 'comprado',
+            ...agregarEstadoAlHistorial(libro, 'comprado', precio?.toString()),
             precio: precio || libro.precio,
-            fechaCompra: fecha,
-            historialEstados: [...libro.historialEstados, {
-              estado: 'comprado',
-              fecha,
-              notas: precio ? `Comprado por $${precio}` : 'Comprado'
-            }]
+            fechaCompra: fecha
           };
           return libroActualizado;
         }
@@ -439,16 +446,10 @@ function appReducer(state: AppState, action: Action): AppState {
       const librosActualizados = state.libros.map(libro => {
         if (libro.id === id) {
           const libroActualizado: Libro = {
-            ...libro,
-            estado: 'prestado',
+            ...agregarEstadoAlHistorial(libro, 'prestado', prestadoA),
             prestado: true,
             prestadoA,
-            fechaPrestamo: fecha,
-            historialEstados: [...libro.historialEstados, {
-              estado: 'prestado',
-              fecha,
-              notas: `Prestado a ${prestadoA}`
-            }]
+            fechaPrestamo: fecha
           };
           return libroActualizado;
         }
@@ -470,17 +471,13 @@ function appReducer(state: AppState, action: Action): AppState {
             .filter(h => h.estado !== 'prestado')
             .sort((a, b) => b.fecha - a.fecha)[0];
           
+          const estadoAnterior = previousState?.estado || 'tbr';
+          
           return {
-            ...libro,
-            estado: previousState?.estado || 'tbr',
+            ...agregarEstadoAlHistorial(libro, estadoAnterior, 'Libro devuelto'),
             prestado: false,
             prestadoA: undefined,
-            fechaPrestamo: undefined,
-            historialEstados: [...libro.historialEstados, {
-              estado: previousState?.estado || 'tbr',
-              fecha,
-              notas: 'Libro devuelto'
-            }]
+            fechaPrestamo: undefined
           };
         }
         return libro;
@@ -658,7 +655,7 @@ function appReducer(state: AppState, action: Action): AppState {
     }
 
     case 'IMPORT_DATA': {
-      const { libros, sagas, config, scanHistory, searchHistory, lastBackup, performanceMetrics } = action.payload;
+      const { libros, sagas, config, scanHistory, searchHistory, lastBackup } = action.payload;
       
       let newState = { ...state };
       
@@ -686,10 +683,6 @@ function appReducer(state: AppState, action: Action): AppState {
         newState.lastBackup = lastBackup;
       }
       
-      if (performanceMetrics) {
-        newState.performanceMetrics = performanceMetrics;
-      }
-      
       return actualizarContadoresSagas(newState);
     }
 
@@ -697,20 +690,7 @@ function appReducer(state: AppState, action: Action): AppState {
       return state;
     }
 
-    case 'SET_PERFORMANCE_METRICS': {
-      const { lastRenderTime, averageRenderTime, memoryUsage } = action.payload;
-      const currentAvg = state.performanceMetrics?.averageRenderTime || 0;
-      const newAvg = currentAvg === 0 ? lastRenderTime : (currentAvg + lastRenderTime) / 2;
-      
-      return {
-        ...state,
-        performanceMetrics: {
-          lastRenderTime,
-          averageRenderTime: newAvg,
-          memoryUsage
-        }
-      };
-    }
+
 
     case 'SET_LAST_BACKUP': {
       return {
