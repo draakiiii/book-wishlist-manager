@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/AppStateContext';
-import { Libro } from '../types';
+import { Libro, BookListType } from '../types';
 import { motion } from 'framer-motion';
 import { 
   BookOpen, 
@@ -14,13 +14,16 @@ import {
   FileText,
   Star,
   Edit3,
-  Eye
+  Eye,
+  XCircle,
+  Users,
+  Clock
 } from 'lucide-react';
 import BookDescriptionModal from './BookDescriptionModal';
 
 interface BookCardProps {
   book: Libro;
-  type: 'tbr' | 'historial' | 'wishlist' | 'actual';
+  type: BookListType;
   onDelete?: (id: number) => void;
   onEdit?: (book: Libro) => void;
 }
@@ -34,13 +37,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   const getBookNumberInSaga = (book: Libro): number | null => {
     if (!book.sagaId) return null;
     
-    const todosLosLibros = [
-      ...state.tbr,
-      ...state.historial,
-      ...state.librosActuales
-    ];
-    
-    const librosDeLaSaga = todosLosLibros
+    const librosDeLaSaga = state.libros
       .filter(libro => libro.sagaId === book.sagaId)
       .sort((a, b) => a.id - b.id); // Ordenar por ID para mantener consistencia
     
@@ -48,46 +45,69 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
     return bookIndex !== -1 ? bookIndex + 1 : null;
   };
 
-  const handleStartBook = () => {
-    dispatch({ type: 'START_BOOK', payload: book.id });
+  const handleStartReading = () => {
+    dispatch({ type: 'START_READING', payload: { id: book.id } });
   };
 
-  const handleFinishBook = () => {
-    dispatch({ type: 'FINISH_BOOK', payload: book.id });
+  const handleFinishReading = () => {
+    const calificacion = prompt('¿Qué calificación le das al libro? (1-5)');
+    const notas = prompt('¿Algún comentario sobre el libro?');
+    
+    dispatch({ 
+      type: 'FINISH_READING', 
+      payload: { 
+        id: book.id,
+        calificacion: calificacion ? parseInt(calificacion) : undefined,
+        notas
+      } 
+    });
   };
 
   const handleAbandonBook = () => {
-    dispatch({ type: 'ABANDON_BOOK', payload: book.id });
-  };
-
-  const handleMoveBackFromHistory = () => {
-    dispatch({ type: 'MOVE_BACK_FROM_HISTORY', payload: book.id });
-  };
-
-  const handlePurchaseWishlistBook = () => {
-    let pages = book.paginas; // Usar las páginas que ya tiene el libro
-    
-    // Solo preguntar si el libro no tiene páginas
-    if (!pages) {
-      const pagesInput = prompt('¿Cuántas páginas tiene el libro?');
-      if (pagesInput && !isNaN(parseInt(pagesInput))) {
-        pages = parseInt(pagesInput);
-      } else {
-        return; // Si no se proporciona un número válido, cancelar la compra
-      }
-    }
-    
+    const motivo = prompt('¿Por qué abandonaste el libro?');
     dispatch({ 
-      type: 'PURCHASE_WISHLIST_BOOK', 
-      payload: { id: book.id, pages: pages! } 
+      type: 'ABANDON_BOOK', 
+      payload: { id: book.id, motivo } 
     });
+  };
+
+  const handleChangeState = (newState: Libro['estado']) => {
+    dispatch({ 
+      type: 'CHANGE_BOOK_STATE', 
+      payload: { id: book.id, newState } 
+    });
+  };
+
+  const handleBuyBook = () => {
+    const precio = prompt('¿Cuánto costó el libro?');
+    dispatch({ 
+      type: 'BUY_BOOK', 
+      payload: { 
+        id: book.id, 
+        precio: precio ? parseFloat(precio) : undefined 
+      } 
+    });
+  };
+
+  const handleLoanBook = () => {
+    const prestadoA = prompt('¿A quién se lo prestaste?');
+    if (prestadoA) {
+      dispatch({ 
+        type: 'LOAN_BOOK', 
+        payload: { id: book.id, prestadoA } 
+      });
+    }
+  };
+
+  const handleReturnBook = () => {
+    dispatch({ type: 'RETURN_BOOK', payload: { id: book.id } });
   };
 
   const handleDelete = () => {
     if (onDelete) {
       onDelete(book.id);
     } else {
-      dispatch({ type: 'DELETE_BOOK', payload: { id: book.id, listType: type } });
+      dispatch({ type: 'DELETE_BOOK', payload: book.id });
     }
   };
 
@@ -99,12 +119,18 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
     switch (type) {
       case 'tbr':
         return 'border-warning-300 dark:border-warning-600 bg-warning-50 dark:bg-warning-900/20';
-      case 'historial':
+      case 'leyendo':
+        return 'border-primary-300 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20';
+      case 'leido':
         return 'border-success-300 dark:border-success-600 bg-success-50 dark:bg-success-900/20';
+      case 'abandonado':
+        return 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20';
       case 'wishlist':
         return 'border-secondary-300 dark:border-secondary-600 bg-secondary-50 dark:bg-secondary-900/20';
-      case 'actual':
-        return 'border-primary-300 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20';
+      case 'comprado':
+        return 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20';
+      case 'prestado':
+        return 'border-purple-300 dark:border-purple-600 bg-purple-50 dark:bg-purple-900/20';
       default:
         return 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/20';
     }
@@ -114,14 +140,41 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
     switch (type) {
       case 'tbr':
         return <Calendar className="h-4 w-4 text-warning-600 dark:text-warning-400" />;
-      case 'historial':
+      case 'leyendo':
+        return <BookOpen className="h-4 w-4 text-primary-600 dark:text-primary-400" />;
+      case 'leido':
         return <CheckCircle className="h-4 w-4 text-success-600 dark:text-success-400" />;
+      case 'abandonado':
+        return <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />;
       case 'wishlist':
         return <Star className="h-4 w-4 text-secondary-600 dark:text-secondary-400" />;
-      case 'actual':
-        return <BookOpen className="h-4 w-4 text-primary-600 dark:text-primary-400" />;
+      case 'comprado':
+        return <ShoppingCart className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
+      case 'prestado':
+        return <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />;
       default:
         return <BookOpen className="h-4 w-4 text-slate-600 dark:text-slate-400" />;
+    }
+  };
+
+  const getTypeLabel = () => {
+    switch (type) {
+      case 'tbr':
+        return 'TBR';
+      case 'leyendo':
+        return 'Leyendo';
+      case 'leido':
+        return 'Leído';
+      case 'abandonado':
+        return 'Abandonado';
+      case 'wishlist':
+        return 'Deseos';
+      case 'comprado':
+        return 'Comprado';
+      case 'prestado':
+        return 'Prestado';
+      default:
+        return type;
     }
   };
 
@@ -138,7 +191,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
       {/* Type Badge */}
       <div className="absolute top-2 right-2 flex items-center space-x-1 px-2 py-1 bg-white/80 dark:bg-slate-800/80 rounded-full text-xs font-medium">
         {getTypeIcon()}
-        <span className="capitalize hidden sm:inline">{type}</span>
+        <span className="capitalize hidden sm:inline">{getTypeLabel()}</span>
       </div>
 
       {/* Book Info */}
@@ -178,6 +231,24 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
               </span>
             </div>
           )}
+
+          {book.calificacion && (
+            <div className="flex items-center space-x-2">
+              <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 flex-shrink-0" />
+              <span className="text-slate-700 dark:text-slate-300">
+                {book.calificacion}/5
+              </span>
+            </div>
+          )}
+
+          {book.prestado && book.prestadoA && (
+            <div className="flex items-center space-x-2">
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500 flex-shrink-0" />
+              <span className="text-slate-700 dark:text-slate-300 truncate">
+                Prestado a {book.prestadoA}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -189,11 +260,12 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
           }}
           className="flex flex-wrap gap-1 sm:gap-2 pt-2"
         >
+          {/* TBR Actions */}
           {type === 'tbr' && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={handleStartBook}
+              onClick={handleStartReading}
               className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
             >
               <Play className="h-3 w-3" />
@@ -201,12 +273,13 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
             </motion.button>
           )}
 
-          {type === 'actual' && (
+          {/* Currently Reading Actions */}
+          {type === 'leyendo' && (
             <>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={handleFinishBook}
+                onClick={handleFinishReading}
                 className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-success-500 hover:bg-success-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
               >
                 <CheckCircle className="h-3 w-3" />
@@ -219,17 +292,18 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
                 onClick={handleAbandonBook}
                 className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-warning-500 hover:bg-warning-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
               >
-                <RotateCcw className="h-3 w-3" />
+                <XCircle className="h-3 w-3" />
                 <span>Abandonar</span>
               </motion.button>
             </>
           )}
 
-          {type === 'historial' && (
+          {/* Read Books Actions */}
+          {type === 'leido' && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={handleMoveBackFromHistory}
+              onClick={() => handleChangeState('tbr')}
               className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-slate-500 hover:bg-slate-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
             >
               <RotateCcw className="h-3 w-3" />
@@ -237,11 +311,12 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
             </motion.button>
           )}
 
-          {type === 'wishlist' && state.compraDesbloqueada && (
+          {/* Wishlist Actions */}
+          {type === 'wishlist' && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={handlePurchaseWishlistBook}
+              onClick={handleBuyBook}
               className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-secondary-500 hover:bg-secondary-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
             >
               <ShoppingCart className="h-3 w-3" />
@@ -249,8 +324,47 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
             </motion.button>
           )}
 
-          {/* Edit button for TBR and Wishlist */}
-          {(type === 'tbr' || type === 'wishlist') && onEdit && (
+          {/* Purchased Books Actions */}
+          {type === 'comprado' && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleChangeState('tbr')}
+              className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
+            >
+              <Play className="h-3 w-3" />
+              <span>Empezar</span>
+            </motion.button>
+          )}
+
+          {/* Lent Books Actions */}
+          {type === 'prestado' && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleReturnBook}
+              className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
+            >
+              <CheckCircle className="h-3 w-3" />
+              <span>Devolver</span>
+            </motion.button>
+          )}
+
+          {/* Loan action for owned books */}
+          {(type === 'tbr' || type === 'leido' || type === 'comprado') && !book.prestado && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLoanBook}
+              className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
+            >
+              <Users className="h-3 w-3" />
+              <span>Prestar</span>
+            </motion.button>
+          )}
+
+          {/* Edit button for all books */}
+          {onEdit && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

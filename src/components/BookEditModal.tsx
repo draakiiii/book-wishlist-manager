@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Save, BookOpen, Heart } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
-import { Libro } from '../types';
+import { Libro, BookListType } from '../types';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import SagaAutocomplete from './SagaAutocomplete';
 
@@ -10,7 +10,7 @@ interface BookEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   book: Libro;
-  listType: 'tbr' | 'wishlist';
+  listType: BookListType;
 }
 
 const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, listType }) => {
@@ -26,6 +26,8 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
   const [precio, setPrecio] = useState(book.precio?.toString() || '');
   const [calificacion, setCalificacion] = useState(book.calificacion?.toString() || '');
   const [notas, setNotas] = useState(book.notas || '');
+  const [formato, setFormato] = useState(book.formato || 'fisico');
+  const [ubicacion, setUbicacion] = useState(book.ubicacion || '');
   const [showFloatingSave, setShowFloatingSave] = useState(false);
 
   useEffect(() => {
@@ -41,6 +43,8 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
       setPrecio(book.precio?.toString() || '');
       setCalificacion(book.calificacion?.toString() || '');
       setNotas(book.notas || '');
+      setFormato(book.formato || 'fisico');
+      setUbicacion(book.ubicacion || '');
       
       // Check if form is long enough to need floating save button
       setTimeout(() => {
@@ -70,15 +74,16 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
       genero: genero || undefined,
       precio: precio ? parseFloat(precio) : undefined,
       calificacion: calificacion ? parseInt(calificacion) : undefined,
-      notas: notas || undefined
+      notas: notas || undefined,
+      formato: formato as 'fisico' | 'digital' | 'audiolibro',
+      ubicacion: ubicacion || undefined
     };
 
     dispatch({
       type: 'UPDATE_BOOK',
       payload: {
         id: book.id,
-        updates: updatedBook,
-        listType
+        updates: updatedBook
       }
     });
 
@@ -102,113 +107,128 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
+        initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden"
+        exit={{ scale: 0.95, opacity: 0 }}
+        className="relative w-full max-w-2xl max-h-[90vh] bg-white dark:bg-slate-800 rounded-xl shadow-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex items-center space-x-2">
-            {listType === 'tbr' ? (
-              <BookOpen className="h-5 w-5 text-warning-500" />
-            ) : (
-              <Heart className="h-5 w-5 text-red-500" />
-            )}
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Editar Libro
-            </h3>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              listType === 'tbr' 
-                ? 'bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400'
-                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-            }`}>
-              {listType === 'tbr' ? 'TBR' : 'Wishlist'}
-            </span>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+              <BookOpen className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+            </div>
+            <div>
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-white">
+                Editar Libro
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {book.titulo}
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
           >
-            <X className="h-5 w-5 text-slate-500" />
+            <X className="h-5 w-5 text-slate-600 dark:text-slate-400" />
           </button>
         </div>
 
         {/* Form */}
-        <form 
-          onSubmit={handleSubmit} 
-          className="p-4 space-y-4 max-h-[calc(90vh-80px)] overflow-y-auto"
-          onScroll={(e) => {
-            const target = e.target as HTMLFormElement;
-            const scrollTop = target.scrollTop;
-            const scrollHeight = target.scrollHeight;
-            const clientHeight = target.clientHeight;
-            
-            // Show floating save button when scrolled down more than 50% of the form
-            if (scrollTop > (scrollHeight - clientHeight) * 0.5) {
-              setShowFloatingSave(true);
-            } else {
-              setShowFloatingSave(false);
-            }
-          }}
-        >
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto max-h-[calc(90vh-120px)]">
           {/* Basic Information */}
           <div className="space-y-4">
-            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2">
+            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2">
               Información Básica
-            </h4>
+            </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Título */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Título *
                 </label>
                 <BookTitleAutocomplete
                   value={titulo}
                   onChange={setTitulo}
-                  onBookSelect={handleBookSelect}
+                  onSelect={handleBookSelect}
                   placeholder="Título del libro"
                 />
               </div>
-
-              {/* Autor */}
+              
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Autor
                 </label>
                 <input
                   type="text"
                   value={autor}
                   onChange={(e) => setAutor(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Autor"
+                  placeholder="Nombre del autor"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
+            </div>
 
-              {/* Páginas */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Páginas
                 </label>
                 <input
                   type="number"
                   value={paginas}
                   onChange={(e) => setPaginas(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Número de páginas"
-                  min="1"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Formato
+                </label>
+                <select
+                  value={formato}
+                  onChange={(e) => setFormato(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="fisico">Físico</option>
+                  <option value="digital">Digital</option>
+                  <option value="audiolibro">Audiolibro</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Precio
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={precio}
+                  onChange={(e) => setPrecio(e.target.value)}
+                  placeholder="Precio"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          </div>
 
-              {/* Saga */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          {/* Additional Information */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2">
+              Información Adicional
+            </h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Saga
                 </label>
                 <SagaAutocomplete
@@ -217,157 +237,146 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
                   placeholder="Nombre de la saga"
                 />
               </div>
-            </div>
-          </div>
-
-          {/* Additional Information */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2">
-              Información Adicional
-            </h4>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* ISBN */}
+              
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   ISBN
                 </label>
                 <input
                   type="text"
                   value={isbn}
                   onChange={(e) => setIsbn(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="ISBN"
+                  placeholder="ISBN del libro"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
+            </div>
 
-              {/* Editorial */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Editorial
                 </label>
                 <input
                   type="text"
                   value={editorial}
                   onChange={(e) => setEditorial(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Editorial"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-
-              {/* Idioma */}
+              
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Idioma
                 </label>
                 <input
                   type="text"
                   value={idioma}
                   onChange={(e) => setIdioma(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Idioma"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-
-              {/* Género */}
+              
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Género
                 </label>
                 <input
                   type="text"
                   value={genero}
                   onChange={(e) => setGenero(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Género"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
-              </div>
-
-              {/* Precio */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Precio
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={precio}
-                  onChange={(e) => setPrecio(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Precio"
-                  min="0"
-                />
-              </div>
-
-              {/* Calificación */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Calificación
-                </label>
-                <select
-                  value={calificacion}
-                  onChange={(e) => setCalificacion(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                >
-                  <option value="">Sin calificar</option>
-                  <option value="1">⭐ 1</option>
-                  <option value="2">⭐⭐ 2</option>
-                  <option value="3">⭐⭐⭐ 3</option>
-                  <option value="4">⭐⭐⭐⭐ 4</option>
-                  <option value="5">⭐⭐⭐⭐⭐ 5</option>
-                </select>
               </div>
             </div>
 
-            {/* Notas */}
+            {formato === 'fisico' && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Ubicación
+                </label>
+                <input
+                  type="text"
+                  value={ubicacion}
+                  onChange={(e) => setUbicacion(e.target.value)}
+                  placeholder="Dónde está guardado el libro"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Rating and Notes */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2">
+              Valoración y Notas
+            </h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Calificación (1-5)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="5"
+                  value={calificacion}
+                  onChange={(e) => setCalificacion(e.target.value)}
+                  placeholder="Calificación"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Notas
               </label>
               <textarea
                 value={notas}
                 onChange={(e) => setNotas(e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-                placeholder="Notas adicionales sobre el libro..."
+                placeholder="Notas sobre el libro..."
+                rows={4}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
               />
             </div>
           </div>
         </form>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors duration-200"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              onClick={handleSubmit}
-              className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
-            >
-              <Save className="h-4 w-4" />
-              <span>Guardar Cambios</span>
-            </button>
-          </div>
+        <div className="flex items-center justify-end space-x-3 p-4 sm:p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
+          >
+            <Save className="h-4 w-4" />
+            <span>Guardar Cambios</span>
+          </button>
         </div>
 
-        {/* Floating Save Button for Mobile */}
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ 
-            opacity: showFloatingSave ? 1 : 0, 
-            scale: showFloatingSave ? 1 : 0.8 
-          }}
-          onClick={handleSubmit}
-          className="fixed bottom-6 right-6 md:hidden z-50 p-4 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-lg transition-colors duration-200"
-        >
-          <Save className="h-6 w-6" />
-        </motion.button>
+        {/* Floating Save Button */}
+        {showFloatingSave && (
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={handleSubmit}
+            className="fixed bottom-6 right-6 z-50 p-4 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-lg transition-colors duration-200"
+          >
+            <Save className="h-5 w-5" />
+          </motion.button>
+        )}
       </motion.div>
     </motion.div>
   );

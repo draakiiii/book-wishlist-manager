@@ -42,17 +42,12 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
 
     try {
       const exportData: ExportData = {
-        version: '7.0',
+        version: '8.0',
         timestamp: Date.now(),
         config: state.config,
         progreso: state.progreso,
         compraDesbloqueada: state.compraDesbloqueada,
-        libros: {
-          tbr: state.tbr,
-          historial: state.historial,
-          wishlist: state.wishlist,
-          actual: state.librosActuales.length === 1 ? state.librosActuales[0] : null
-        },
+        libros: state.libros, // New unified book list
         sagas: state.sagas,
         scanHistory: state.scanHistory,
         searchHistory: state.searchHistory,
@@ -66,23 +61,26 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
 
       switch (exportFormat) {
         case 'json':
-          fileName = `guardian-compras_backup_${timestamp}.json`;
+          fileName = `biblioteca-personal_backup_${timestamp}.json`;
           content = JSON.stringify(exportData, null, 2);
           break;
 
         case 'csv':
-          fileName = `guardian-compras_backup_${timestamp}.csv`;
-          const csvData = [
-            ...exportData.libros.tbr.map(book => ({ ...book, tipo: 'TBR' })),
-            ...exportData.libros.historial.map(book => ({ ...book, tipo: 'Historial' })),
-            ...exportData.libros.wishlist.map(book => ({ ...book, tipo: 'Wishlist' })),
-            ...(exportData.libros.actual ? [{ ...exportData.libros.actual, tipo: 'Actual' }] : [])
-          ];
+          fileName = `biblioteca-personal_backup_${timestamp}.csv`;
+          // Export all books with their states
+          const csvData = exportData.libros.map(book => ({
+            ...book,
+            estado: book.estado,
+            fechaInicio: book.fechaInicio ? format(new Date(book.fechaInicio), 'yyyy-MM-dd') : '',
+            fechaFin: book.fechaFin ? format(new Date(book.fechaFin), 'yyyy-MM-dd') : '',
+            fechaCompra: book.fechaCompra ? format(new Date(book.fechaCompra), 'yyyy-MM-dd') : '',
+            fechaPrestamo: book.fechaPrestamo ? format(new Date(book.fechaPrestamo), 'yyyy-MM-dd') : ''
+          }));
           content = Papa.unparse(csvData);
           break;
 
         case 'excel':
-          fileName = `guardian-compras_backup_${timestamp}.xlsx`;
+          fileName = `biblioteca-personal_backup_${timestamp}.xlsx`;
           // For Excel, we'll create a JSON file that can be imported into Excel
           content = JSON.stringify(exportData, null, 2);
           break;
@@ -140,23 +138,35 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
       }
 
       // Handle different data formats
-      let libros: any = {};
+      let libros: any[] = [];
       let sagas: any[] = [];
       let config: any = {};
 
-      if (parsedData.version) {
-        // New format with version
-        libros = parsedData.libros || {};
+      if (parsedData.version && parsedData.version >= '8.0') {
+        // New format with unified book list
+        libros = parsedData.libros || [];
+        sagas = parsedData.sagas || [];
+        config = parsedData.config || {};
+      } else if (parsedData.version && parsedData.version < '8.0') {
+        // Old format with separate lists - migrate to new format
+        const oldLibros = parsedData.libros || {};
+        libros = [
+          ...(oldLibros.tbr || []).map((book: any) => ({ ...book, estado: 'tbr' })),
+          ...(oldLibros.historial || []).map((book: any) => ({ ...book, estado: 'leido' })),
+          ...(oldLibros.wishlist || []).map((book: any) => ({ ...book, estado: 'wishlist' })),
+          ...(oldLibros.actual ? [{ ...oldLibros.actual, estado: 'leyendo' }] : [])
+        ];
         sagas = parsedData.sagas || [];
         config = parsedData.config || {};
       } else if (Array.isArray(parsedData)) {
-        // Old format - array of books
-        libros = {
-          tbr: parsedData.filter((book: any) => book.tipo === 'TBR' || !book.tipo),
-          historial: parsedData.filter((book: any) => book.tipo === 'Historial'),
-          wishlist: parsedData.filter((book: any) => book.tipo === 'Wishlist'),
-          actual: parsedData.find((book: any) => book.tipo === 'Actual') || null
-        };
+        // Very old format - array of books
+        libros = parsedData.map((book: any) => {
+          if (book.tipo === 'TBR' || !book.tipo) return { ...book, estado: 'tbr' };
+          if (book.tipo === 'Historial') return { ...book, estado: 'leido' };
+          if (book.tipo === 'Wishlist') return { ...book, estado: 'wishlist' };
+          if (book.tipo === 'Actual') return { ...book, estado: 'leyendo' };
+          return { ...book, estado: 'tbr' };
+        });
       } else {
         throw new Error('Formato de datos no reconocido');
       }
@@ -197,11 +207,22 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
     if (window.confirm('¿Estás seguro de que quieres eliminar todos los datos? Esta acción no se puede deshacer.')) {
       // Reset to initial state
       dispatch({ type: 'RESET_PROGRESS' });
-      // Clear all lists
-      dispatch({ type: 'IMPORT_DATA', payload: { libros: { tbr: [], historial: [], wishlist: [], actual: null }, sagas: [] } });
+      // Clear all books
+      dispatch({ type: 'IMPORT_DATA', payload: { libros: [], sagas: [] } });
       setImportSuccess('Todos los datos han sido eliminados');
     }
   }, [dispatch]);
+
+  // Calculate book counts by state
+  const bookCounts = {
+    tbr: state.libros.filter(book => book.estado === 'tbr').length,
+    leyendo: state.libros.filter(book => book.estado === 'leyendo').length,
+    leido: state.libros.filter(book => book.estado === 'leido').length,
+    abandonado: state.libros.filter(book => book.estado === 'abandonado').length,
+    wishlist: state.libros.filter(book => book.estado === 'wishlist').length,
+    comprado: state.libros.filter(book => book.estado === 'comprado').length,
+    prestado: state.libros.filter(book => book.estado === 'prestado').length
+  };
 
   if (!isOpen) return null;
 
@@ -339,16 +360,36 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
             </h5>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-slate-600 dark:text-slate-400">Libros TBR:</span>
-                <span className="ml-2 font-medium text-slate-900 dark:text-white">{state.tbr.length}</span>
+                <span className="text-slate-600 dark:text-slate-400">Total Libros:</span>
+                <span className="ml-2 font-medium text-slate-900 dark:text-white">{state.libros.length}</span>
               </div>
               <div>
-                <span className="text-slate-600 dark:text-slate-400">Historial:</span>
-                <span className="ml-2 font-medium text-slate-900 dark:text-white">{state.historial.length}</span>
+                <span className="text-slate-600 dark:text-slate-400">TBR:</span>
+                <span className="ml-2 font-medium text-slate-900 dark:text-white">{bookCounts.tbr}</span>
+              </div>
+              <div>
+                <span className="text-slate-600 dark:text-slate-400">Leyendo:</span>
+                <span className="ml-2 font-medium text-slate-900 dark:text-white">{bookCounts.leyendo}</span>
+              </div>
+              <div>
+                <span className="text-slate-600 dark:text-slate-400">Leídos:</span>
+                <span className="ml-2 font-medium text-slate-900 dark:text-white">{bookCounts.leido}</span>
+              </div>
+              <div>
+                <span className="text-slate-600 dark:text-slate-400">Abandonados:</span>
+                <span className="ml-2 font-medium text-slate-900 dark:text-white">{bookCounts.abandonado}</span>
               </div>
               <div>
                 <span className="text-slate-600 dark:text-slate-400">Wishlist:</span>
-                <span className="ml-2 font-medium text-slate-900 dark:text-white">{state.wishlist.length}</span>
+                <span className="ml-2 font-medium text-slate-900 dark:text-white">{bookCounts.wishlist}</span>
+              </div>
+              <div>
+                <span className="text-slate-600 dark:text-slate-400">Comprados:</span>
+                <span className="ml-2 font-medium text-slate-900 dark:text-white">{bookCounts.comprado}</span>
+              </div>
+              <div>
+                <span className="text-slate-600 dark:text-slate-400">Prestados:</span>
+                <span className="ml-2 font-medium text-slate-900 dark:text-white">{bookCounts.prestado}</span>
               </div>
               <div>
                 <span className="text-slate-600 dark:text-slate-400">Sagas:</span>

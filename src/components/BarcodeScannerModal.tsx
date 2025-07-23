@@ -213,13 +213,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
             addFeedback('success', `Código detectado: ${scannedCode}`, 2000);
             
             // Add to scan history
-            const allBooks = [
-              ...state.tbr,
-              ...state.historial,
-              ...state.wishlist,
-              ...state.librosActuales
-            ];
-            const existingBook = allBooks.find(book => book.isbn === scannedCode);
+            const existingBook = state.libros.find(book => book.isbn === scannedCode);
             
             if (state.config.scanHistoryEnabled) {
               // If book not found in local lists, try to fetch from API

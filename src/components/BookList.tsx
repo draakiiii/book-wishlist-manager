@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Libro } from '../types';
+import { Libro, BookListType } from '../types';
 import BookCard from './BookCard';
 import BookEditModal from './BookEditModal';
 import { motion } from 'framer-motion';
@@ -8,7 +8,7 @@ import { useAppState } from '../context/AppStateContext';
 
 interface BookListProps {
   books: Libro[];
-  type: 'tbr' | 'historial' | 'wishlist' | 'actual';
+  type: BookListType;
   emptyMessage: string;
 }
 
@@ -17,11 +17,32 @@ const BookList: React.FC<BookListProps> = ({ books, type, emptyMessage }) => {
   const [editingBook, setEditingBook] = useState<Libro | null>(null);
 
   const handleDelete = (id: number) => {
-    dispatch({ type: 'DELETE_BOOK', payload: { id, listType: type } });
+    dispatch({ type: 'DELETE_BOOK', payload: id });
   };
 
   const handleEdit = (book: Libro) => {
     setEditingBook(book);
+  };
+
+  const getEmptyMessage = () => {
+    switch (type) {
+      case 'tbr':
+        return 'Agrega libros a tu pila para empezar a leer';
+      case 'wishlist':
+        return 'Agrega libros a tu lista de deseos';
+      case 'leyendo':
+        return 'Los libros que estés leyendo aparecerán aquí';
+      case 'leido':
+        return 'Los libros que termines aparecerán aquí';
+      case 'abandonado':
+        return 'Los libros que abandones aparecerán aquí';
+      case 'comprado':
+        return 'Los libros que compres aparecerán aquí';
+      case 'prestado':
+        return 'Los libros que prestes aparecerán aquí';
+      default:
+        return 'Agrega libros a tu biblioteca';
+    }
   };
 
   if (books.length === 0) {
@@ -40,10 +61,7 @@ const BookList: React.FC<BookListProps> = ({ books, type, emptyMessage }) => {
               {emptyMessage}
             </p>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-500 mt-1">
-              {type === 'tbr' && 'Agrega libros a tu pila para empezar a leer'}
-              {type === 'wishlist' && 'Agrega libros a tu lista de deseos'}
-              {type === 'historial' && 'Los libros que termines aparecerán aquí'}
-              {type === 'actual' && 'Selecciona un libro de tu pila para empezar'}
+              {getEmptyMessage()}
             </p>
           </div>
         </div>
@@ -83,12 +101,12 @@ const BookList: React.FC<BookListProps> = ({ books, type, emptyMessage }) => {
       </div>
 
       {/* Edit Modal */}
-      {editingBook && (type === 'tbr' || type === 'wishlist') && (
+      {editingBook && (
         <BookEditModal
           isOpen={!!editingBook}
           onClose={() => setEditingBook(null)}
           book={editingBook}
-          listType={type as 'tbr' | 'wishlist'}
+          listType={type}
         />
       )}
     </div>

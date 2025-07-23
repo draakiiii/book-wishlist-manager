@@ -9,7 +9,11 @@ import {
   CheckCircle,
   Heart,
   X,
-  BarChart3
+  BarChart3,
+  BookMarked,
+  BookX,
+  ShoppingCart,
+  Share2
 } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 
@@ -22,29 +26,51 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
   const { state } = useAppState();
 
   const statistics = useMemo(() => {
-    const allBooks = [
-      ...state.tbr,
-      ...state.historial,
-      ...state.librosActuales
-    ];
-
-    // Calculate basic stats
-    const totalLibros = allBooks.length;
-    const librosLeidos = state.historial.length;
-    const librosTBR = state.tbr.length;
-    const librosWishlist = state.wishlist.length;
+    // Calculate stats based on book states
+    const totalLibros = state.libros.length;
+    const librosTBR = state.libros.filter(book => book.estado === 'tbr').length;
+    const librosLeyendo = state.libros.filter(book => book.estado === 'leyendo').length;
+    const librosLeidos = state.libros.filter(book => book.estado === 'leido').length;
+    const librosAbandonados = state.libros.filter(book => book.estado === 'abandonado').length;
+    const librosWishlist = state.libros.filter(book => book.estado === 'wishlist').length;
+    const librosComprados = state.libros.filter(book => book.estado === 'comprado').length;
+    const librosPrestados = state.libros.filter(book => book.estado === 'prestado').length;
+    
     const sagasCompletadas = state.sagas.filter(s => s.isComplete).length;
     const sagasActivas = state.sagas.filter(s => !s.isComplete).length;
-    const paginasLeidas = state.historial.reduce((sum, book) => sum + (book.paginas || 0), 0);
+    
+    // Calculate pages read from completed books
+    const paginasLeidas = state.libros
+      .filter(book => book.estado === 'leido')
+      .reduce((sum, book) => sum + (book.paginas || 0), 0);
+    
+    // Calculate average reading time
+    const librosConTiempo = state.libros.filter(book => 
+      book.estado === 'leido' && book.fechaInicio && book.fechaFin
+    );
+    
+    const tiempoPromedio = librosConTiempo.length > 0 
+      ? librosConTiempo.reduce((sum, book) => {
+          const inicio = new Date(book.fechaInicio!);
+          const fin = new Date(book.fechaFin!);
+          const dias = Math.ceil((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24));
+          return sum + dias;
+        }, 0) / librosConTiempo.length
+      : 0;
 
     return {
       totalLibros,
-      librosLeidos,
       librosTBR,
+      librosLeyendo,
+      librosLeidos,
+      librosAbandonados,
       librosWishlist,
+      librosComprados,
+      librosPrestados,
       sagasCompletadas,
       sagasActivas,
-      paginasLeidas
+      paginasLeidas,
+      tiempoPromedio: Math.round(tiempoPromedio)
     };
   }, [state]);
 
@@ -145,8 +171,8 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
             </motion.div>
           </div>
 
-          {/* Additional Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Book States */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -154,21 +180,37 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
               className="bg-white dark:bg-slate-700 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-600"
             >
               <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center space-x-2">
-                <Clock className="h-5 w-5 text-primary-500" />
+                <BookOpen className="h-5 w-5 text-primary-500" />
                 <span>Estado de Lectura</span>
               </h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Libros TBR</span>
+                  <div className="flex items-center space-x-2">
+                    <BookMarked className="h-4 w-4 text-blue-500" />
+                    <span className="text-slate-600 dark:text-slate-400">TBR</span>
+                  </div>
                   <span className="font-semibold text-slate-900 dark:text-white">{statistics.librosTBR}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Libros Leídos</span>
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-orange-500" />
+                    <span className="text-slate-600 dark:text-slate-400">Leyendo</span>
+                  </div>
+                  <span className="font-semibold text-slate-900 dark:text-white">{statistics.librosLeyendo}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-slate-600 dark:text-slate-400">Leídos</span>
+                  </div>
                   <span className="font-semibold text-slate-900 dark:text-white">{statistics.librosLeidos}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Wishlist</span>
-                  <span className="font-semibold text-slate-900 dark:text-white">{statistics.librosWishlist}</span>
+                  <div className="flex items-center space-x-2">
+                    <BookX className="h-4 w-4 text-red-500" />
+                    <span className="text-slate-600 dark:text-slate-400">Abandonados</span>
+                  </div>
+                  <span className="font-semibold text-slate-900 dark:text-white">{statistics.librosAbandonados}</span>
                 </div>
               </div>
             </motion.div>
@@ -181,31 +223,83 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
             >
               <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center space-x-2">
                 <Target className="h-5 w-5 text-primary-500" />
-                <span>Gestión de Sagas</span>
+                <span>Gestión de Libros</span>
               </h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Sagas Activas</span>
+                  <div className="flex items-center space-x-2">
+                    <Heart className="h-4 w-4 text-pink-500" />
+                    <span className="text-slate-600 dark:text-slate-400">Wishlist</span>
+                  </div>
+                  <span className="font-semibold text-slate-900 dark:text-white">{statistics.librosWishlist}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <ShoppingCart className="h-4 w-4 text-green-500" />
+                    <span className="text-slate-600 dark:text-slate-400">Comprados</span>
+                  </div>
+                  <span className="font-semibold text-slate-900 dark:text-white">{statistics.librosComprados}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Share2 className="h-4 w-4 text-blue-500" />
+                    <span className="text-slate-600 dark:text-slate-400">Prestados</span>
+                  </div>
+                  <span className="font-semibold text-slate-900 dark:text-white">{statistics.librosPrestados}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Award className="h-4 w-4 text-purple-500" />
+                    <span className="text-slate-600 dark:text-slate-400">Sagas Activas</span>
+                  </div>
                   <span className="font-semibold text-slate-900 dark:text-white">{statistics.sagasActivas}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Sagas Completadas</span>
-                  <span className="font-semibold text-slate-900 dark:text-white">{statistics.sagasCompletadas}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Total Sagas</span>
-                  <span className="font-semibold text-slate-900 dark:text-white">{statistics.sagasActivas + statistics.sagasCompletadas}</span>
                 </div>
               </div>
             </motion.div>
           </div>
+
+          {/* Reading Analytics */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="bg-white dark:bg-slate-700 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-600"
+          >
+            <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5 text-primary-500" />
+              <span>Análisis de Lectura</span>
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Tiempo Promedio</p>
+                <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {statistics.tiempoPromedio} días
+                </p>
+                <p className="text-xs text-slate-500">por libro</p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Páginas Promedio</p>
+                <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {statistics.librosLeidos > 0 ? Math.round(statistics.paginasLeidas / statistics.librosLeidos) : 0}
+                </p>
+                <p className="text-xs text-slate-500">por libro</p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Tasa de Finalización</p>
+                <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {statistics.totalLibros > 0 ? Math.round((statistics.librosLeidos / (statistics.librosLeidos + statistics.librosAbandonados)) * 100) : 0}%
+                </p>
+                <p className="text-xs text-slate-500">libros completados</p>
+              </div>
+            </div>
+          </motion.div>
 
           {/* Performance Metrics */}
           {state.performanceMetrics && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
+              transition={{ delay: 0.8 }}
               className="mt-6 bg-white dark:bg-slate-700 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-600"
             >
               <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center space-x-2">

@@ -2,17 +2,20 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { AppStateProvider, useAppState } from './context/AppStateContext';
 import { motion } from 'framer-motion';
 import { 
-  Shield, 
   BookOpen, 
   Heart, 
   Clock, 
   Trophy, 
   Settings,
-  Wallet,
   Search,
   BarChart3,
   Database,
-  History
+  History,
+  Book,
+  CheckCircle,
+  XCircle,
+  ShoppingCart,
+  Users
 } from 'lucide-react';
 import CollapsibleConfig from './components/CollapsibleConfig';
 import CollapsibleSection from './components/CollapsibleSection';
@@ -59,7 +62,7 @@ const AppContent: React.FC = () => {
     
     const handleSystemThemeChange = (e: MediaQueryListEvent) => {
       // Solo cambiar si el usuario no ha establecido una preferencia manual
-      const savedPreference = localStorage.getItem('guardianComprasDarkMode');
+      const savedPreference = localStorage.getItem('bibliotecaLibrosDarkMode');
       if (savedPreference === null) {
         dispatch({ type: 'SET_DARK_MODE', payload: e.matches });
       }
@@ -104,6 +107,15 @@ const AppContent: React.FC = () => {
     return cleanup;
   });
 
+  // Filtrar libros por estado
+  const librosTBR = state.libros.filter(libro => libro.estado === 'tbr');
+  const librosLeyendo = state.libros.filter(libro => libro.estado === 'leyendo');
+  const librosLeidos = state.libros.filter(libro => libro.estado === 'leido');
+  const librosAbandonados = state.libros.filter(libro => libro.estado === 'abandonado');
+  const librosWishlist = state.libros.filter(libro => libro.estado === 'wishlist');
+  const librosComprados = state.libros.filter(libro => libro.estado === 'comprado');
+  const librosPrestados = state.libros.filter(libro => libro.prestado);
+
   return (
     <div className="theme-transition min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
       {/* Notificaciones de saga completada */}
@@ -125,10 +137,10 @@ const AppContent: React.FC = () => {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg">
-                <Shield className="h-6 w-6 text-white" />
+                <BookOpen className="h-6 w-6 text-white" />
               </div>
               <h1 className="text-lg sm:text-xl font-display font-bold gradient-text">
-                Guardián de Compras
+                Mi Biblioteca
               </h1>
             </div>
             
@@ -176,8 +188,6 @@ const AppContent: React.FC = () => {
                 </motion.button>
               </div>
               
-
-              
               {/* Settings button */}
               <button
                 onClick={() => setConfigSidebarOpen(true)}
@@ -201,13 +211,11 @@ const AppContent: React.FC = () => {
             <div className="hidden lg:block">
               <CollapsibleConfig />
             </div>
-            
-
 
             {/* Progress Section */}
             <CollapsibleSection
-              title="Bóveda de Recompensas"
-              icon={<Wallet className="h-5 w-5" />}
+              title="Objetivos de Lectura"
+              icon={<Trophy className="h-5 w-5" />}
               iconBgColor="bg-success-100 dark:bg-success-900/30"
               iconColor="text-success-600 dark:text-success-400"
             >
@@ -224,7 +232,7 @@ const AppContent: React.FC = () => {
               <WishlistForm />
               <div className="mt-4 sm:mt-6">
                 <BookList 
-                  books={state.wishlist}
+                  books={librosWishlist}
                   type="wishlist"
                   emptyMessage="Tu lista de deseos está vacía."
                 />
@@ -241,24 +249,80 @@ const AppContent: React.FC = () => {
               <TBRForm />
               <div className="mt-4 sm:mt-6">
                 <BookList 
-                  books={state.tbr}
+                  books={librosTBR}
                   type="tbr"
                   emptyMessage="Tu pila está vacía."
                 />
               </div>
             </CollapsibleSection>
 
-            {/* History Section */}
+            {/* Currently Reading Section */}
             <CollapsibleSection
-              title="Historial de Lectura"
-              icon={<Trophy className="h-5 w-5" />}
-              iconBgColor="bg-amber-100 dark:bg-amber-900/30"
-              iconColor="text-amber-600 dark:text-amber-400"
+              title="Leyendo Actualmente"
+              icon={<BookOpen className="h-5 w-5" />}
+              iconBgColor="bg-primary-100 dark:bg-primary-900/30"
+              iconColor="text-primary-600 dark:text-primary-400"
             >
               <BookList 
-                books={state.historial}
-                type="historial"
-                emptyMessage="Aún no has terminado ninguno."
+                books={librosLeyendo}
+                type="leyendo"
+                emptyMessage="No estás leyendo ningún libro actualmente."
+              />
+            </CollapsibleSection>
+
+            {/* Completed Books Section */}
+            <CollapsibleSection
+              title="Libros Leídos"
+              icon={<CheckCircle className="h-5 w-5" />}
+              iconBgColor="bg-green-100 dark:bg-green-900/30"
+              iconColor="text-green-600 dark:text-green-400"
+            >
+              <BookList 
+                books={librosLeidos}
+                type="leido"
+                emptyMessage="Aún no has terminado ningún libro."
+              />
+            </CollapsibleSection>
+
+            {/* Abandoned Books Section */}
+            <CollapsibleSection
+              title="Libros Abandonados"
+              icon={<XCircle className="h-5 w-5" />}
+              iconBgColor="bg-red-100 dark:bg-red-900/30"
+              iconColor="text-red-600 dark:text-red-400"
+            >
+              <BookList 
+                books={librosAbandonados}
+                type="abandonado"
+                emptyMessage="No has abandonado ningún libro."
+              />
+            </CollapsibleSection>
+
+            {/* Purchased Books Section */}
+            <CollapsibleSection
+              title="Libros Comprados"
+              icon={<ShoppingCart className="h-5 w-5" />}
+              iconBgColor="bg-blue-100 dark:bg-blue-900/30"
+              iconColor="text-blue-600 dark:text-blue-400"
+            >
+              <BookList 
+                books={librosComprados}
+                type="comprado"
+                emptyMessage="No has comprado ningún libro."
+              />
+            </CollapsibleSection>
+
+            {/* Lent Books Section */}
+            <CollapsibleSection
+              title="Libros Prestados"
+              icon={<Users className="h-5 w-5" />}
+              iconBgColor="bg-purple-100 dark:bg-purple-900/30"
+              iconColor="text-purple-600 dark:text-purple-400"
+            >
+              <BookList 
+                books={librosPrestados}
+                type="prestado"
+                emptyMessage="No tienes libros prestados."
               />
             </CollapsibleSection>
 
@@ -273,29 +337,84 @@ const AppContent: React.FC = () => {
             </CollapsibleSection>
           </div>
 
-          {/* Right Column - Current Book */}
+          {/* Right Column - Quick Actions & Stats */}
           <div className="lg:col-span-1">
+            {/* Quick Stats */}
             <CollapsibleSection
-              title="Libro Actual"
-              icon={<BookOpen className="h-5 w-5" />}
-              iconBgColor="bg-primary-100 dark:bg-primary-900/30"
-              iconColor="text-primary-600 dark:text-primary-400"
+              title="Resumen de Biblioteca"
+              icon={<BarChart3 className="h-5 w-5" />}
+              iconBgColor="bg-indigo-100 dark:bg-indigo-900/30"
+              iconColor="text-indigo-600 dark:text-indigo-400"
               className="lg:sticky lg:top-24"
             >
-              {state.librosActuales.length > 0 ? (
-                <BookList
-                  books={state.librosActuales}
-                  type="actual"
-                  emptyMessage=""
-                />
-              ) : (
-                <div className="text-center py-6 sm:py-8">
-                  <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-slate-400 mx-auto mb-3 sm:mb-4" />
-                  <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-                    Elige un libro de tu pila para empezar.
-                  </p>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+                      {state.libros.length}
+                    </div>
+                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                      Total Libros
+                    </div>
+                  </div>
+                  <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {librosLeidos.length}
+                    </div>
+                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                      Leídos
+                    </div>
+                  </div>
+                  <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold text-warning-600 dark:text-warning-400">
+                      {librosTBR.length}
+                    </div>
+                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                      En TBR
+                    </div>
+                  </div>
+                  <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+                      {librosLeyendo.length}
+                    </div>
+                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                      Leyendo
+                    </div>
+                  </div>
                 </div>
-              )}
+                
+                <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3">
+                  <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Próximas Acciones
+                  </div>
+                  <div className="space-y-2 text-xs">
+                    {librosLeyendo.length > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span>Continuar leyendo</span>
+                        <span className="text-primary-600 dark:text-primary-400">
+                          {librosLeyendo.length} libro{librosLeyendo.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    )}
+                    {librosPrestados.length > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span>Libros prestados</span>
+                        <span className="text-purple-600 dark:text-purple-400">
+                          {librosPrestados.length}
+                        </span>
+                      </div>
+                    )}
+                    {state.sagas.filter(s => !s.isComplete && s.count > 0).length > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span>Sagas activas</span>
+                        <span className="text-purple-600 dark:text-purple-400">
+                          {state.sagas.filter(s => !s.isComplete && s.count > 0).length}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </CollapsibleSection>
           </div>
         </div>

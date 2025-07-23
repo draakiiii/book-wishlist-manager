@@ -1,30 +1,30 @@
 import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
-import { AppState, Action, Libro, ScanHistory, Statistics, Saga } from '../types';
+import { AppState, Action, Libro, ScanHistory, Statistics, Saga, EstadoLibro } from '../types';
 import { getInitialTheme, persistThemePreference } from '../utils/themeConfig';
 
-const STORAGE_KEY = 'guardianComprasState_v7_0';
+const STORAGE_KEY = 'bibliotecaLibrosState_v1_0';
 
 const initialState: AppState = {
   config: {
-    puntosPorLibro: 250,
-    puntosPorPagina: 1,
-    puntosPorSaga: 500,
-    objetivo: 1000,
-    flashlightEnabled: false,
-    zoomLevel: 1,
     autoSaveEnabled: true,
     autoSaveInterval: 30000,
     searchHistoryEnabled: true,
     scanHistoryEnabled: true,
     statisticsEnabled: true,
-    exportFormat: 'json'
+    exportFormat: 'json',
+    objetivoLecturaAnual: 12,
+    objetivoPaginasAnual: 4000,
+    recordatorioLectura: true,
+    recordatorioInterval: 86400000, // 24 horas
+    notificacionesSaga: true,
+    notificacionesObjetivo: true,
+    notificacionesPrestamo: true,
+    flashlightEnabled: false,
+    zoomLevel: 1,
+    datosAnonimos: false,
+    compartirEstadisticas: false
   },
-  progreso: 0,
-  compraDesbloqueada: false,
-  librosActuales: [],
-  tbr: [],
-  historial: [],
-  wishlist: [],
+  libros: [],
   sagas: [],
   sagaNotifications: [],
   darkMode: getInitialTheme(),
@@ -41,11 +41,16 @@ function loadStateFromStorage(): AppState | null {
     const savedState = localStorage.getItem(STORAGE_KEY);
     if (savedState) {
       const parsedState = JSON.parse(savedState);
+      
+      // Migrar desde versión anterior si es necesario
+      if (parsedState.progreso !== undefined) {
+        return migrateFromOldVersion(parsedState);
+      }
+      
       // Asegurar que todas las propiedades del estado inicial estén presentes
       const completeState = {
         ...initialState,
         ...parsedState,
-        // Asegurar que las propiedades que podrían no existir en versiones anteriores estén presentes
         sagaNotifications: parsedState.sagaNotifications || [],
         darkMode: parsedState.darkMode || false,
         sagas: parsedState.sagas || [],
@@ -53,10 +58,7 @@ function loadStateFromStorage(): AppState | null {
         searchHistory: parsedState.searchHistory || [],
         performanceMetrics: parsedState.performanceMetrics || { lastRenderTime: 0, averageRenderTime: 0 }
       };
-      // Verificar y corregir el estado de compraDesbloqueada
-      if (completeState.progreso >= completeState.config.objetivo) {
-        completeState.compraDesbloqueada = true;
-      }
+      
       return completeState;
     }
     return null;
@@ -66,171 +68,222 @@ function loadStateFromStorage(): AppState | null {
   }
 }
 
+function migrateFromOldVersion(oldState: any): AppState {
+  const libros: Libro[] = [];
+  
+  // Migrar libros de TBR
+  if (oldState.tbr) {
+    oldState.tbr.forEach((libro: any) => {
+      libros.push({
+        ...libro,
+        estado: 'tbr',
+        historialEstados: [{
+          estado: 'tbr',
+          fecha: libro.fechaAgregado || Date.now()
+        }]
+      });
+    });
+  }
+  
+  // Migrar libros actuales
+  if (oldState.librosActuales) {
+    oldState.librosActuales.forEach((libro: any) => {
+      libros.push({
+        ...libro,
+        estado: 'leyendo',
+        fechaInicioLectura: libro.fechaAgregado || Date.now(),
+        historialEstados: [
+          {
+            estado: 'tbr',
+            fecha: libro.fechaAgregado || Date.now()
+          },
+          {
+            estado: 'leyendo',
+            fecha: libro.fechaAgregado || Date.now()
+          }
+        ]
+      });
+    });
+  }
+  
+  // Migrar historial
+  if (oldState.historial) {
+    oldState.historial.forEach((libro: any) => {
+      libros.push({
+        ...libro,
+        estado: 'leido',
+        fechaInicioLectura: libro.fechaAgregado || Date.now(),
+        fechaFinLectura: libro.fechaTerminado || Date.now(),
+        historialEstados: [
+          {
+            estado: 'tbr',
+            fecha: libro.fechaAgregado || Date.now()
+          },
+          {
+            estado: 'leyendo',
+            fecha: libro.fechaAgregado || Date.now()
+          },
+          {
+            estado: 'leido',
+            fecha: libro.fechaTerminado || Date.now()
+          }
+        ]
+      });
+    });
+  }
+  
+  // Migrar wishlist
+  if (oldState.wishlist) {
+    oldState.wishlist.forEach((libro: any) => {
+      libros.push({
+        ...libro,
+        estado: 'wishlist',
+        historialEstados: [{
+          estado: 'wishlist',
+          fecha: libro.fechaAgregado || Date.now()
+        }]
+      });
+    });
+  }
+  
+  return {
+    ...initialState,
+    libros,
+    sagas: oldState.sagas || [],
+    darkMode: oldState.darkMode || false,
+    scanHistory: oldState.scanHistory || [],
+    searchHistory: oldState.searchHistory || [],
+    performanceMetrics: oldState.performanceMetrics || { lastRenderTime: 0, averageRenderTime: 0 },
+    // Mantener compatibilidad
+    progreso: oldState.progreso,
+    compraDesbloqueada: oldState.compraDesbloqueada,
+    librosActuales: oldState.librosActuales,
+    tbr: oldState.tbr,
+    historial: oldState.historial,
+    wishlist: oldState.wishlist
+  };
+}
+
 function actualizarContadoresSagas(state: AppState): AppState {
-  const todosLosLibros = [
-    ...state.tbr,
-    ...state.historial,
-    ...state.librosActuales
-  ];
-
-  // Primero limpiar sagas duplicadas
-  const estadoLimpio = limpiarSagasHuerfanas(state);
-
-  const sagasActualizadas = estadoLimpio.sagas.map(saga => {
-    const librosDeLaSaga = todosLosLibros.filter(libro => libro.sagaId === saga.id);
-    const librosLeidosDeLaSaga = state.historial.filter(libro => libro.sagaId === saga.id);
+  const sagasActualizadas = state.sagas.map(saga => {
+    const librosDeLaSaga = state.libros.filter(libro => libro.sagaId === saga.id);
+    const librosLeidosDeLaSaga = librosDeLaSaga.filter(libro => libro.estado === 'leido');
     
-    // Una saga está completa si:
-    // 1. Tiene al menos un libro
-    // 2. Todos los libros de la saga están en el historial (leídos)
-    // 3. No hay libros de la saga en TBR o actual
-    const librosEnTbrOActual = [
-      ...state.tbr,
-      ...state.librosActuales
-    ].filter(libro => libro.sagaId === saga.id);
-    
+    // Una saga está completa si todos los libros están leídos
     const isComplete = librosDeLaSaga.length > 0 && 
-                      librosLeidosDeLaSaga.length === librosDeLaSaga.length &&
-                      librosEnTbrOActual.length === 0;
+                      librosLeidosDeLaSaga.length === librosDeLaSaga.length;
     
     return {
       ...saga,
       count: librosDeLaSaga.length,
-      isComplete: isComplete
+      isComplete: isComplete,
+      libros: librosDeLaSaga.map(l => l.id)
     };
   });
-
-  return { ...estadoLimpio, sagas: sagasActualizadas };
+  
+  return {
+    ...state,
+    sagas: sagasActualizadas
+  };
 }
 
-// Función de utilidad para verificar si una saga está completa
 function verificarSagaCompleta(sagaId: number, state: AppState): boolean {
-  const todosLosLibros = [
-    ...state.tbr,
-    ...state.historial,
-    ...state.librosActuales
-  ];
+  const saga = state.sagas.find(s => s.id === sagaId);
+  if (!saga) return false;
   
-  const librosDeLaSaga = todosLosLibros.filter(libro => libro.sagaId === sagaId);
-  const librosLeidosDeLaSaga = state.historial.filter(libro => libro.sagaId === sagaId);
-  const librosEnTbrOActual = [
-    ...state.tbr,
-    ...state.librosActuales
-  ].filter(libro => libro.sagaId === sagaId);
+  const librosDeLaSaga = state.libros.filter(libro => libro.sagaId === sagaId);
+  const librosLeidos = librosDeLaSaga.filter(libro => libro.estado === 'leido');
   
-  return librosDeLaSaga.length > 0 && 
-         librosLeidosDeLaSaga.length === librosDeLaSaga.length &&
-         librosEnTbrOActual.length === 0;
+  return librosDeLaSaga.length > 0 && librosLeidos.length === librosDeLaSaga.length;
 }
 
 function limpiarSagasHuerfanas(state: AppState): AppState {
-  const todosLosLibros = [
-    ...state.tbr,
-    ...state.historial,
-    ...state.librosActuales
-  ];
-  
-  const idsDeSagasEnUso = new Set(
-    todosLosLibros.map(l => l.sagaId).filter(id => id !== undefined)
+  const sagasConLibros = state.sagas.filter(saga => 
+    state.libros.some(libro => libro.sagaId === saga.id)
   );
   
-  // Filtrar sagas que no están en uso
-  let sagasFiltradas = state.sagas.filter(saga => idsDeSagasEnUso.has(saga.id));
-  
-  // Eliminar sagas duplicadas (mismo nombre normalizado)
-  const sagasUnicas = new Map<string, Saga>();
-  
-  sagasFiltradas.forEach(saga => {
-    const nombreNormalizado = saga.name.trim().toLowerCase();
-    if (!sagasUnicas.has(nombreNormalizado)) {
-      sagasUnicas.set(nombreNormalizado, saga);
-    } else {
-      // Si ya existe una saga con ese nombre, mantener la que tiene más libros
-      const sagaExistente = sagasUnicas.get(nombreNormalizado)!;
-      const librosSagaExistente = todosLosLibros.filter(l => l.sagaId === sagaExistente.id).length;
-      const librosSagaNueva = todosLosLibros.filter(l => l.sagaId === saga.id).length;
-      
-      if (librosSagaNueva > librosSagaExistente) {
-        sagasUnicas.set(nombreNormalizado, saga);
-      }
-    }
-  });
-  
-  sagasFiltradas = Array.from(sagasUnicas.values());
-  
-  return { ...state, sagas: sagasFiltradas };
+  return {
+    ...state,
+    sagas: sagasConLibros
+  };
 }
 
-function verificarEstadoCompra(state: AppState): AppState {
-  // Verificar que compraDesbloqueada sea consistente con el progreso
-  const deberiaEstarDesbloqueada = state.progreso >= state.config.objetivo;
-  if (state.compraDesbloqueada !== deberiaEstarDesbloqueada) {
-    return { ...state, compraDesbloqueada: deberiaEstarDesbloqueada };
-  }
-  return state;
+function agregarEstadoAlHistorial(libro: Libro, nuevoEstado: Libro['estado'], notas?: string): Libro {
+  const nuevoEstadoHistorial: EstadoLibro = {
+    estado: nuevoEstado,
+    fecha: Date.now(),
+    notas
+  };
+  
+  return {
+    ...libro,
+    estado: nuevoEstado,
+    historialEstados: [...libro.historialEstados, nuevoEstadoHistorial]
+  };
 }
 
 function appReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'SET_CONFIG':
-      return verificarEstadoCompra({ ...state, config: action.payload });
+      return { ...state, config: action.payload };
 
     case 'SET_CAMERA_PREFERENCE':
       return { ...state, config: { ...state.config, cameraPreference: action.payload } };
 
-    case 'RESET_PROGRESS':
-      return { ...state, progreso: 0, compraDesbloqueada: false };
-
     case 'TOGGLE_DARK_MODE': {
       const newDarkMode = !state.darkMode;
-      // Persistir la preferencia del usuario
       persistThemePreference(newDarkMode);
       return { ...state, darkMode: newDarkMode };
     }
 
     case 'SET_DARK_MODE': {
       const newDarkMode = action.payload;
-      // Persistir la preferencia del usuario
       persistThemePreference(newDarkMode);
       return { ...state, darkMode: newDarkMode };
     }
 
-    case 'ADD_TO_TBR': {
-      const nuevoLibro = action.payload;
-      let nuevoEstado = { ...state, tbr: [...state.tbr, nuevoLibro] };
+    case 'ADD_BOOK': {
+      const nuevoLibro = {
+        ...action.payload,
+        id: Date.now(),
+        fechaAgregado: Date.now(),
+        historialEstados: [{
+          estado: action.payload.estado,
+          fecha: Date.now()
+        }]
+      };
       
-      // Si el libro tiene nombre de saga, buscar si ya existe una saga con ese nombre
+      let nuevoEstado = { 
+        ...state, 
+        libros: [...state.libros, nuevoLibro] 
+      };
+      
+      // Manejar saga si existe
       if (nuevoLibro.sagaName) {
-        // Normalizar el nombre de la saga para evitar duplicados
         const sagaNameNormalized = nuevoLibro.sagaName.trim().toLowerCase();
-        
-        // Buscar saga existente (case-insensitive y ignorando espacios extra)
         let sagaExistente = state.sagas.find(s => 
           s.name.trim().toLowerCase() === sagaNameNormalized
         );
         
         if (sagaExistente) {
-          // Si existe una saga con ese nombre, asignar su ID
           nuevoLibro.sagaId = sagaExistente.id;
-          nuevoEstado.tbr = nuevoEstado.tbr.map(libro => 
+          nuevoEstado.libros = nuevoEstado.libros.map(libro => 
             libro.id === nuevoLibro.id ? { ...libro, sagaId: sagaExistente!.id } : libro
           );
         } else {
-          // Si no existe, crear nueva saga
           const nuevaSaga = {
             id: Date.now(),
-            name: nuevoLibro.sagaName.trim(), // Usar el nombre normalizado
+            name: nuevoLibro.sagaName.trim(),
             count: 1,
-            isComplete: false
+            isComplete: false,
+            libros: [nuevoLibro.id]
           };
           nuevoEstado = {
             ...nuevoEstado,
             sagas: [...nuevoEstado.sagas, nuevaSaga]
           };
-          
-          // Asignar el ID de la saga al libro (será el primer libro de la saga)
           nuevoLibro.sagaId = nuevaSaga.id;
-          nuevoEstado.tbr = nuevoEstado.tbr.map(libro => 
+          nuevoEstado.libros = nuevoEstado.libros.map(libro => 
             libro.id === nuevoLibro.id ? { ...libro, sagaId: nuevaSaga.id } : libro
           );
         }
@@ -239,50 +292,92 @@ function appReducer(state: AppState, action: Action): AppState {
       return actualizarContadoresSagas(nuevoEstado);
     }
 
-    case 'START_BOOK': {
-      const libroIndex = state.tbr.findIndex(l => l.id === action.payload);
-      if (libroIndex === -1) return state;
+    case 'UPDATE_BOOK': {
+      const { id, updates } = action.payload;
+      const librosActualizados = state.libros.map(libro => 
+        libro.id === id ? { ...libro, ...updates } : libro
+      );
       
-      const libro = state.tbr[libroIndex];
-      const nuevaTbr = state.tbr.filter((_, index) => index !== libroIndex);
-      
-      return { ...state, librosActuales: [...state.librosActuales, libro], tbr: nuevaTbr };
+      return actualizarContadoresSagas({
+        ...state,
+        libros: librosActualizados
+      });
     }
 
-    case 'FINISH_BOOK': {
-      const libroIndex = state.librosActuales.findIndex(l => l.id === action.payload);
+    case 'DELETE_BOOK': {
+      const librosFiltrados = state.libros.filter(libro => libro.id !== action.payload);
+      return limpiarSagasHuerfanas({
+        ...state,
+        libros: librosFiltrados
+      });
+    }
+
+    case 'CHANGE_BOOK_STATE': {
+      const { id, newState, notas } = action.payload;
+      const librosActualizados = state.libros.map(libro => 
+        libro.id === id ? agregarEstadoAlHistorial(libro, newState, notas) : libro
+      );
+      
+      return actualizarContadoresSagas({
+        ...state,
+        libros: librosActualizados
+      });
+    }
+
+    case 'START_READING': {
+      const { id, fecha = Date.now() } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.id === id) {
+          return agregarEstadoAlHistorial(libro, 'leyendo', 'Iniciado lectura');
+        }
+        return libro;
+      });
+      
+      return actualizarContadoresSagas({
+        ...state,
+        libros: librosActualizados
+      });
+    }
+
+    case 'FINISH_READING': {
+      const { id, fecha = Date.now(), calificacion, notas } = action.payload;
+      const libroIndex = state.libros.findIndex(l => l.id === id);
       if (libroIndex === -1) return state;
       
-      const libroTerminado = state.librosActuales[libroIndex];
-      const sagaPreviaCompleta = libroTerminado.sagaId 
-        ? verificarSagaCompleta(libroTerminado.sagaId, state)
+      const libro = state.libros[libroIndex];
+      const sagaPreviaCompleta = libro.sagaId 
+        ? verificarSagaCompleta(libro.sagaId, state)
         : false;
       
-      let puntosGanados = state.config.puntosPorLibro + 
-        (libroTerminado.paginas || 0) * state.config.puntosPorPagina;
-      
-      const nuevoEstado = {
-        ...state,
-        librosActuales: state.librosActuales.filter((_, index) => index !== libroIndex),
-        historial: [libroTerminado, ...state.historial],
-        progreso: state.progreso + puntosGanados
+      const libroActualizado = {
+        ...libro,
+        estado: 'leido',
+        fechaFinLectura: fecha,
+        calificacion: calificacion || libro.calificacion,
+        notas: notas || libro.notas,
+        historialEstados: [...libro.historialEstados, {
+          estado: 'leido',
+          fecha,
+          notas: notas || 'Libro terminado'
+        }]
       };
       
-      const estadoConSagas = actualizarContadoresSagas(nuevoEstado);
-      const sagaInfo = libroTerminado.sagaId 
-        ? estadoConSagas.sagas.find(s => s.id === libroTerminado.sagaId)
-        : null;
+      const librosActualizados = state.libros.map(l => 
+        l.id === id ? libroActualizado : l
+      );
       
-      // Verificar si la saga se completó con este libro
-      const sagaAhoraCompleta = libroTerminado.sagaId 
-        ? verificarSagaCompleta(libroTerminado.sagaId, estadoConSagas)
+      const estadoConSagas = actualizarContadoresSagas({
+        ...state,
+        libros: librosActualizados
+      });
+      
+      // Verificar si la saga se completó
+      const sagaAhoraCompleta = libro.sagaId 
+        ? verificarSagaCompleta(libro.sagaId, estadoConSagas)
         : false;
       
       if (sagaAhoraCompleta && !sagaPreviaCompleta) {
-        estadoConSagas.progreso += state.config.puntosPorSaga;
-        
-        // Agregar notificación de saga completada
-        const sagaInfo = estadoConSagas.sagas.find(s => s.id === libroTerminado.sagaId);
+        const sagaInfo = estadoConSagas.sagas.find(s => s.id === libro.sagaId);
         if (sagaInfo) {
           estadoConSagas.sagaNotifications.push({
             id: Date.now(),
@@ -292,129 +387,87 @@ function appReducer(state: AppState, action: Action): AppState {
         }
       }
       
-      estadoConSagas.compraDesbloqueada = estadoConSagas.progreso >= estadoConSagas.config.objetivo;
-      
       return estadoConSagas;
     }
 
     case 'ABANDON_BOOK': {
-      const libroIndex = state.librosActuales.findIndex(l => l.id === action.payload);
-      if (libroIndex === -1) return state;
+      const { id, fecha = Date.now(), motivo } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.id === id) {
+          return agregarEstadoAlHistorial(libro, 'abandonado', motivo || 'Libro abandonado');
+        }
+        return libro;
+      });
       
-      const libroAbandonado = state.librosActuales[libroIndex];
-      
-      return {
+      return actualizarContadoresSagas({
         ...state,
-        librosActuales: state.librosActuales.filter((_, index) => index !== libroIndex),
-        tbr: [libroAbandonado, ...state.tbr]
-      };
+        libros: librosActualizados
+      });
     }
 
-    case 'ADD_TO_WISHLIST': {
-      // Permitir añadir libros aunque tengas 0 puntos
-      const nuevoLibro: Libro = {
-        id: Date.now(),
-        titulo: action.payload.titulo,
-        autor: action.payload.autor,
-        paginas: action.payload.paginas,
-        isbn: action.payload.isbn,
-        publicacion: action.payload.publicacion,
-        editorial: action.payload.editorial,
-        descripcion: action.payload.descripcion,
-        categorias: action.payload.categorias,
-        idioma: action.payload.idioma,
-        calificacion: action.payload.calificacion,
-        numCalificaciones: action.payload.numCalificaciones
-      };
-      
-      return {
-        ...state,
-        wishlist: [...state.wishlist, nuevoLibro]
-      };
-    }
-
-    case 'PURCHASE_WISHLIST_BOOK': {
-      const libroIndex = state.wishlist.findIndex(l => l.id === action.payload.id);
-      if (libroIndex === -1) return state;
-      
-      const libro = { ...state.wishlist[libroIndex], paginas: action.payload.pages };
-      const nuevaWishlist = state.wishlist.filter((_, index) => index !== libroIndex);
-      
-      const nuevoProgreso = Math.max(0, state.progreso - state.config.objetivo);
-      const nuevaCompraDesbloqueada = nuevoProgreso >= state.config.objetivo;
-      
-      const nuevoEstado = {
-        ...state,
-        wishlist: nuevaWishlist,
-        tbr: [...state.tbr, libro],
-        progreso: nuevoProgreso,
-        compraDesbloqueada: nuevaCompraDesbloqueada
-      };
-      
-      return actualizarContadoresSagas(nuevoEstado);
-    }
-
-    case 'DELETE_BOOK': {
-      const { id, listType } = action.payload;
-      
-      if (listType === 'wishlist') {
-        const libroEnWishlist = state.wishlist.find(l => l.id === id);
-        if (libroEnWishlist) {
-          const nuevaCompraDesbloqueada = state.progreso >= state.config.objetivo;
-          
+    case 'BUY_BOOK': {
+      const { id, precio, fecha = Date.now() } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.id === id) {
           return {
-            ...state,
-            wishlist: state.wishlist.filter(l => l.id !== id),
-            compraDesbloqueada: nuevaCompraDesbloqueada
+            ...libro,
+            estado: 'comprado',
+            precio: precio || libro.precio,
+            fechaComprado: fecha,
+            historialEstados: [...libro.historialEstados, {
+              estado: 'comprado',
+              fecha,
+              notas: precio ? `Comprado por $${precio}` : 'Comprado'
+            }]
           };
         }
-      }
+        return libro;
+      });
       
-      let nuevoEstado;
-      if (listType === 'actual') {
-        const nuevaLista = state.librosActuales.filter(l => l.id !== id);
-        nuevoEstado = { ...state, librosActuales: nuevaLista };
-      } else if (listType === 'tbr' || listType === 'historial' || listType === 'wishlist') {
-        const nuevaLista = state[listType].filter(l => l.id !== id);
-        nuevoEstado = { ...state, [listType]: nuevaLista };
-      }
-      if (!nuevoEstado) return state;
-      return limpiarSagasHuerfanas(nuevoEstado);
+      return actualizarContadoresSagas({
+        ...state,
+        libros: librosActualizados
+      });
     }
 
-    case 'MOVE_BACK_FROM_HISTORY': {
-      const libroIndex = state.historial.findIndex(l => l.id === action.payload);
-      if (libroIndex === -1) return state;
+    case 'LOAN_BOOK': {
+      const { id, prestadoA, fecha = Date.now() } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.id === id) {
+          return {
+            ...libro,
+            prestado: true,
+            prestadoA,
+            fechaPrestamo: fecha
+          };
+        }
+        return libro;
+      });
       
-      const libro = state.historial[libroIndex];
-      const sagaPreviaCompleta = libro.sagaId 
-        ? verificarSagaCompleta(libro.sagaId, state)
-        : false;
-      
-      let puntosARestar = state.config.puntosPorLibro + 
-        (libro.paginas || 0) * state.config.puntosPorPagina;
-      
-      const nuevoEstado = {
+      return {
         ...state,
-        historial: state.historial.filter((_, index) => index !== libroIndex),
-        tbr: [libro, ...state.tbr]
+        libros: librosActualizados
       };
+    }
+
+    case 'RETURN_BOOK': {
+      const { id, fecha = Date.now() } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.id === id) {
+          return {
+            ...libro,
+            prestado: false,
+            prestadoA: undefined,
+            fechaPrestamo: undefined
+          };
+        }
+        return libro;
+      });
       
-      const estadoConSagas = actualizarContadoresSagas(nuevoEstado);
-      
-      // Verificar si la saga ya no está completa después de mover el libro
-      const sagaAhoraCompleta = libro.sagaId 
-        ? verificarSagaCompleta(libro.sagaId, estadoConSagas)
-        : false;
-      
-      if (sagaPreviaCompleta && !sagaAhoraCompleta) {
-        puntosARestar += state.config.puntosPorSaga;
-      }
-      
-      estadoConSagas.progreso = Math.max(0, estadoConSagas.progreso - puntosARestar);
-      estadoConSagas.compraDesbloqueada = estadoConSagas.progreso >= estadoConSagas.config.objetivo;
-      
-      return estadoConSagas;
+      return {
+        ...state,
+        libros: librosActualizados
+      };
     }
 
     case 'ADD_SAGA': {
@@ -422,7 +475,11 @@ function appReducer(state: AppState, action: Action): AppState {
         id: Date.now(),
         name: action.payload.name,
         count: 0,
-        isComplete: false
+        isComplete: false,
+        libros: [],
+        descripcion: action.payload.descripcion,
+        genero: action.payload.genero,
+        autor: action.payload.autor
       };
       
       return {
@@ -431,76 +488,89 @@ function appReducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case 'UPDATE_SAGA': {
+      const { id, updates } = action.payload;
+      const sagasActualizadas = state.sagas.map(saga => 
+        saga.id === id ? { ...saga, ...updates } : saga
+      );
+      
+      return {
+        ...state,
+        sagas: sagasActualizadas
+      };
+    }
+
+    case 'DELETE_SAGA': {
+      const sagasFiltradas = state.sagas.filter(saga => saga.id !== action.payload);
+      const librosActualizados = state.libros.map(libro => 
+        libro.sagaId === action.payload ? { ...libro, sagaId: undefined, sagaName: undefined } : libro
+      );
+      
+      return {
+        ...state,
+        sagas: sagasFiltradas,
+        libros: librosActualizados
+      };
+    }
+
+    case 'ADD_BOOK_TO_SAGA': {
+      const { libroId, sagaId } = action.payload;
+      const saga = state.sagas.find(s => s.id === sagaId);
+      if (!saga) return state;
+      
+      const librosActualizados = state.libros.map(libro => 
+        libro.id === libroId ? { ...libro, sagaId } : libro
+      );
+      
+      const sagasActualizadas = state.sagas.map(s => 
+        s.id === sagaId ? { ...s, libros: [...s.libros, libroId] } : s
+      );
+      
+      return actualizarContadoresSagas({
+        ...state,
+        libros: librosActualizados,
+        sagas: sagasActualizadas
+      });
+    }
+
+    case 'REMOVE_BOOK_FROM_SAGA': {
+      const { libroId, sagaId } = action.payload;
+      const librosActualizados = state.libros.map(libro => 
+        libro.id === libroId ? { ...libro, sagaId: undefined, sagaName: undefined } : libro
+      );
+      
+      const sagasActualizadas = state.sagas.map(s => 
+        s.id === sagaId ? { ...s, libros: s.libros.filter(id => id !== libroId) } : s
+      );
+      
+      return actualizarContadoresSagas({
+        ...state,
+        libros: librosActualizados,
+        sagas: sagasActualizadas
+      });
+    }
+
     case 'FIX_SAGA_DATA': {
       // Corregir datos de sagas existentes
-      const todosLosLibros = [
-        ...state.tbr,
-        ...state.historial,
-        ...state.librosActuales
-      ];
-
-      // Crear un mapa de nombres de saga a IDs
       const sagaNameToId = new Map<string, number>();
       
-      // Primero, usar las sagas existentes
+      // Usar las sagas existentes
       state.sagas.forEach(saga => {
         sagaNameToId.set(saga.name, saga.id);
       });
 
-      // Luego, procesar libros que tienen sagaId manual pero no están en el mapa
-      todosLosLibros.forEach(libro => {
-        if (libro.sagaId && libro.sagaName && !sagaNameToId.has(libro.sagaName)) {
-          // Si el libro tiene un ID de saga manual, usarlo para crear la saga
-          sagaNameToId.set(libro.sagaName, libro.sagaId);
-        }
-      });
-
-      // Crear nuevas sagas para nombres que no existen
-      const nuevasSagas: typeof state.sagas = [];
-      todosLosLibros.forEach(libro => {
-        if (libro.sagaName && !sagaNameToId.has(libro.sagaName)) {
-          const nuevaSaga = {
-            id: Date.now() + Math.random(), // Asegurar ID único
-            name: libro.sagaName,
-            count: 0,
-            isComplete: false
-          };
-          nuevasSagas.push(nuevaSaga);
-          sagaNameToId.set(libro.sagaName, nuevaSaga.id);
-        }
-      });
-
-      // Actualizar los libros con los IDs correctos
-      const tbrActualizada = state.tbr.map(libro => {
-        if (libro.sagaName && sagaNameToId.has(libro.sagaName)) {
+      // Procesar libros que tienen sagaName pero no sagaId
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.sagaName && !libro.sagaId && sagaNameToId.has(libro.sagaName)) {
           return { ...libro, sagaId: sagaNameToId.get(libro.sagaName) };
         }
         return libro;
       });
 
-      const historialActualizado = state.historial.map(libro => {
-        if (libro.sagaName && sagaNameToId.has(libro.sagaName)) {
-          return { ...libro, sagaId: sagaNameToId.get(libro.sagaName) };
-        }
-        return libro;
+      return actualizarContadoresSagas({
+        ...state,
+        libros: librosActualizados
       });
-
-      const librosActualesActualizados = state.librosActuales.map(libro => {
-        if (libro.sagaName && sagaNameToId.has(libro.sagaName)) {
-          return { ...libro, sagaId: sagaNameToId.get(libro.sagaName) };
-        }
-        return libro;
-      });
-
-              const nuevoEstado = {
-          ...state,
-          tbr: tbrActualizada,
-          historial: historialActualizado,
-          librosActuales: librosActualesActualizados,
-          sagas: [...state.sagas, ...nuevasSagas]
-        };
-
-      return actualizarContadoresSagas(nuevoEstado);
     }
 
     case 'ADD_SAGA_NOTIFICATION': {
@@ -534,7 +604,7 @@ function appReducer(state: AppState, action: Action): AppState {
       
       return {
         ...state,
-        scanHistory: [newScanHistory, ...state.scanHistory.slice(0, 99)] // Keep last 100 scans
+        scanHistory: [newScanHistory, ...state.scanHistory.slice(0, 99)]
       };
     }
 
@@ -554,7 +624,7 @@ function appReducer(state: AppState, action: Action): AppState {
       const filteredHistory = state.searchHistory.filter(term => term !== searchTerm);
       return {
         ...state,
-        searchHistory: [searchTerm, ...filteredHistory.slice(0, 19)] // Keep last 20 searches
+        searchHistory: [searchTerm, ...filteredHistory.slice(0, 19)]
       };
     }
 
@@ -565,55 +635,13 @@ function appReducer(state: AppState, action: Action): AppState {
       };
     }
 
-    case 'UPDATE_BOOK': {
-      const { id, updates, listType } = action.payload;
-      
-      if (listType === 'actual') {
-        const libroIndex = state.librosActuales.findIndex(l => l.id === id);
-        if (libroIndex === -1) return state;
-        
-        const libroActualizado = { ...state.librosActuales[libroIndex], ...updates };
-        const librosActualesActualizados = state.librosActuales.map((libro, index) => 
-          index === libroIndex ? libroActualizado : libro
-        );
-        
-        return {
-          ...state,
-          librosActuales: librosActualesActualizados
-        };
-      } else if (listType === 'tbr' || listType === 'historial' || listType === 'wishlist') {
-        const list = state[listType];
-        const updatedList = list.map(book => book.id === id ? { ...book, ...updates } : book);
-        return {
-          ...state,
-          [listType]: updatedList
-        };
-      }
-      break;
-    }
-
-    case 'UPDATE_SAGA': {
-      const { id, updates } = action.payload;
-      const updatedSagas = state.sagas.map(saga => 
-        saga.id === id ? { ...saga, ...updates } : saga
-      );
-      
-      return {
-        ...state,
-        sagas: updatedSagas
-      };
-    }
-
     case 'IMPORT_DATA': {
-      const { libros, sagas, config, progreso, compraDesbloqueada, scanHistory, searchHistory, lastBackup, performanceMetrics } = action.payload;
+      const { libros, sagas, config, scanHistory, searchHistory, lastBackup, performanceMetrics } = action.payload;
       
       let newState = { ...state };
       
       if (libros) {
-        if (libros.tbr) newState.tbr = libros.tbr;
-        if (libros.historial) newState.historial = libros.historial;
-        if (libros.wishlist) newState.wishlist = libros.wishlist;
-        if (libros.actual) newState.librosActuales = Array.isArray(libros.actual) ? libros.actual : [libros.actual];
+        newState.libros = libros;
       }
       
       if (sagas) {
@@ -622,14 +650,6 @@ function appReducer(state: AppState, action: Action): AppState {
       
       if (config) {
         newState.config = { ...newState.config, ...config };
-      }
-      
-      if (progreso !== undefined) {
-        newState.progreso = progreso;
-      }
-      
-      if (compraDesbloqueada !== undefined) {
-        newState.compraDesbloqueada = compraDesbloqueada;
       }
       
       if (scanHistory) {
@@ -648,12 +668,10 @@ function appReducer(state: AppState, action: Action): AppState {
         newState.performanceMetrics = performanceMetrics;
       }
       
-      // Update saga counters after import
       return actualizarContadoresSagas(newState);
     }
 
     case 'EXPORT_DATA': {
-      // This action doesn't modify state, it's handled by the component
       return state;
     }
 
@@ -682,10 +700,12 @@ function appReducer(state: AppState, action: Action): AppState {
     case 'CLEAN_DUPLICATE_SAGAS':
       return limpiarSagasHuerfanas(state);
 
+    case 'MIGRATE_FROM_OLD_VERSION':
+      return migrateFromOldVersion(action.payload);
+
     default:
       return state;
   }
-  return state;
 }
 
 interface AppStateContextType {
@@ -714,13 +734,11 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
   children, 
   initialState: customInitialState 
 }) => {
-  // Cargar estado inicial desde localStorage
   const savedState = loadStateFromStorage();
-  const initialAppState = verificarEstadoCompra(savedState || customInitialState || initialState);
+  const initialAppState = savedState || customInitialState || initialState;
   
   const [state, dispatch] = useReducer(appReducer, initialAppState);
 
-  // Sincronizar con localStorage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
