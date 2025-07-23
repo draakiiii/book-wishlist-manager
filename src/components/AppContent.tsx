@@ -5,59 +5,29 @@ import {
   Heart, 
   Clock, 
   Trophy, 
-  Settings,
   Search,
   BarChart3,
   Database,
   History,
-  Book,
   CheckCircle,
   XCircle,
   ShoppingCart,
   Users,
-  X,
   Share2,
-  User,
-  LogOut
+  User
 } from 'lucide-react';
-import CollapsibleConfig from './CollapsibleConfig';
 import CollapsibleSection from './CollapsibleSection';
-import Sidebar from './Sidebar';
 import ProgressBar from './ProgressBar';
-import WishlistForm from './WishlistForm';
-import TBRForm from './TBRForm';
 import BookList from './BookList';
 import SagaList from './SagaList';
-import SagaCompletionNotification from './SagaCompletionNotification';
-import AdvancedSearch from './AdvancedSearch';
-import AdvancedStatistics from './AdvancedStatistics';
-import DataExportImport from './DataExportImport';
-import ScanHistory from './ScanHistory';
-import ConfigForm from './ConfigForm';
-import BulkScanModal from './BulkScanModal';
 import UserProfile from './auth/UserProfile';
 import { useAppState } from '../context/FirebaseAppStateContext';
 import { useAuth } from '../context/AuthContext';
 
 const AppContent: React.FC = () => {
   const { state, dispatch, loading, syncStatus } = useAppState();
-  const { currentUser, signOut } = useAuth();
-  const [configSidebarOpen, setConfigSidebarOpen] = React.useState(false);
-  const [configModalOpen, setConfigModalOpen] = useState(false);
-  const [searchModalOpen, setSearchModalOpen] = useState(false);
-  const [statisticsModalOpen, setStatisticsModalOpen] = useState(false);
-  const [exportImportModalOpen, setExportImportModalOpen] = useState(false);
-  const [scanHistoryModalOpen, setScanHistoryModalOpen] = useState(false);
-  const [bulkScanModalOpen, setBulkScanModalOpen] = useState(false);
+  const { currentUser } = useAuth();
   const [userProfileOpen, setUserProfileOpen] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-
-  // Inicializar searchResults con todos los libros cuando se abre el modal
-  useEffect(() => {
-    if (searchModalOpen) {
-      setSearchResults(state.libros);
-    }
-  }, [searchModalOpen, state.libros]);
 
   useEffect(() => {
     // Aplicar el modo oscuro al body
@@ -94,24 +64,6 @@ const AppContent: React.FC = () => {
 
   const handleRemoveNotification = (id: number) => {
     dispatch({ type: 'REMOVE_SAGA_NOTIFICATION', payload: { id } });
-  };
-
-  const handleOpenConfig = () => {
-    // En móvil, abrir el sidebar de configuración
-    // En desktop, abrir el modal de configuración
-    if (window.innerWidth < 768) {
-      setConfigSidebarOpen(true);
-    } else {
-      setConfigModalOpen(true);
-    }
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
   };
 
   // Show loading screen while data is being loaded
@@ -183,11 +135,22 @@ const AppContent: React.FC = () => {
         {state.sagaNotifications.length > 0 && (
           <div className="mb-6 space-y-2">
             {state.sagaNotifications.map((notification) => (
-              <SagaCompletionNotification
-                key={notification.id}
-                notification={notification}
-                onRemove={() => handleRemoveNotification(notification.id)}
-              />
+              <div key={notification.id} className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
+                    <span className="text-green-800 dark:text-green-200">
+                      ¡Saga completada: {notification.sagaName}!
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveNotification(notification.id)}
+                    className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -196,56 +159,53 @@ const AppContent: React.FC = () => {
         <CollapsibleSection
           title="Progreso de Lectura"
           icon={<Trophy className="h-5 w-5" />}
-          defaultOpen={true}
+          iconBgColor="bg-yellow-100 dark:bg-yellow-900/30"
+          iconColor="text-yellow-600 dark:text-yellow-400"
         >
           <ProgressBar />
         </CollapsibleSection>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <motion.button
+          <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setSearchModalOpen(true)}
             className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
           >
             <Search className="h-6 w-6 text-indigo-600 dark:text-indigo-400 mb-2" />
             <h3 className="font-medium text-gray-900 dark:text-white">Buscar Libros</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Encuentra libros en tu biblioteca</p>
-          </motion.button>
+          </motion.div>
 
-          <motion.button
+          <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setStatisticsModalOpen(true)}
             className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
           >
             <BarChart3 className="h-6 w-6 text-green-600 dark:text-green-400 mb-2" />
             <h3 className="font-medium text-gray-900 dark:text-white">Estadísticas</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Ver tu progreso detallado</p>
-          </motion.button>
+          </motion.div>
 
-          <motion.button
+          <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setExportImportModalOpen(true)}
             className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
           >
             <Database className="h-6 w-6 text-blue-600 dark:text-blue-400 mb-2" />
             <h3 className="font-medium text-gray-900 dark:text-white">Exportar/Importar</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Gestionar tus datos</p>
-          </motion.button>
+          </motion.div>
 
-          <motion.button
+          <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setScanHistoryModalOpen(true)}
             className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
           >
             <History className="h-6 w-6 text-purple-600 dark:text-purple-400 mb-2" />
             <h3 className="font-medium text-gray-900 dark:text-white">Historial</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Ver escaneos recientes</p>
-          </motion.button>
+          </motion.div>
         </div>
 
         {/* Main Content Grid */}
@@ -256,7 +216,8 @@ const AppContent: React.FC = () => {
             <CollapsibleSection
               title="Leyendo Actualmente"
               icon={<BookOpen className="h-5 w-5" />}
-              defaultOpen={true}
+              iconBgColor="bg-blue-100 dark:bg-blue-900/30"
+              iconColor="text-blue-600 dark:text-blue-400"
             >
               <BookList
                 books={state.libros.filter(book => book.estado === 'leyendo')}
@@ -269,7 +230,8 @@ const AppContent: React.FC = () => {
             <CollapsibleSection
               title="Por Leer (TBR)"
               icon={<Clock className="h-5 w-5" />}
-              defaultOpen={true}
+              iconBgColor="bg-orange-100 dark:bg-orange-900/30"
+              iconColor="text-orange-600 dark:text-orange-400"
             >
               <BookList
                 books={state.libros.filter(book => book.estado === 'tbr')}
@@ -282,7 +244,8 @@ const AppContent: React.FC = () => {
             <CollapsibleSection
               title="Libros Leídos"
               icon={<CheckCircle className="h-5 w-5" />}
-              defaultOpen={false}
+              iconBgColor="bg-green-100 dark:bg-green-900/30"
+              iconColor="text-green-600 dark:text-green-400"
             >
               <BookList
                 books={state.libros.filter(book => book.estado === 'leido')}
@@ -295,7 +258,8 @@ const AppContent: React.FC = () => {
             <CollapsibleSection
               title="Libros Abandonados"
               icon={<XCircle className="h-5 w-5" />}
-              defaultOpen={false}
+              iconBgColor="bg-red-100 dark:bg-red-900/30"
+              iconColor="text-red-600 dark:text-red-400"
             >
               <BookList
                 books={state.libros.filter(book => book.estado === 'abandonado')}
@@ -311,7 +275,8 @@ const AppContent: React.FC = () => {
             <CollapsibleSection
               title="Wishlist"
               icon={<Heart className="h-5 w-5" />}
-              defaultOpen={true}
+              iconBgColor="bg-pink-100 dark:bg-pink-900/30"
+              iconColor="text-pink-600 dark:text-pink-400"
             >
               <BookList
                 books={state.libros.filter(book => book.estado === 'wishlist')}
@@ -324,7 +289,8 @@ const AppContent: React.FC = () => {
             <CollapsibleSection
               title="Sagas"
               icon={<Users className="h-5 w-5" />}
-              defaultOpen={true}
+              iconBgColor="bg-purple-100 dark:bg-purple-900/30"
+              iconColor="text-purple-600 dark:text-purple-400"
             >
               <SagaList />
             </CollapsibleSection>
@@ -333,7 +299,8 @@ const AppContent: React.FC = () => {
             <CollapsibleSection
               title="Libros Comprados"
               icon={<ShoppingCart className="h-5 w-5" />}
-              defaultOpen={false}
+              iconBgColor="bg-emerald-100 dark:bg-emerald-900/30"
+              iconColor="text-emerald-600 dark:text-emerald-400"
             >
               <BookList
                 books={state.libros.filter(book => book.estado === 'comprado')}
@@ -346,7 +313,8 @@ const AppContent: React.FC = () => {
             <CollapsibleSection
               title="Libros Prestados"
               icon={<Share2 className="h-5 w-5" />}
-              defaultOpen={false}
+              iconBgColor="bg-cyan-100 dark:bg-cyan-900/30"
+              iconColor="text-cyan-600 dark:text-cyan-400"
             >
               <BookList
                 books={state.libros.filter(book => book.estado === 'prestado')}
@@ -357,65 +325,6 @@ const AppContent: React.FC = () => {
           </div>
         </div>
       </main>
-
-      {/* Modals */}
-      {configModalOpen && (
-        <ConfigForm
-          onClose={() => setConfigModalOpen(false)}
-          config={state.config}
-          onSave={(config) => dispatch({ type: 'SET_CONFIG', payload: config })}
-        />
-      )}
-
-      {searchModalOpen && (
-        <AdvancedSearch
-          onClose={() => setSearchModalOpen(false)}
-          books={state.libros}
-          searchResults={searchResults}
-          onSearchResultsChange={setSearchResults}
-        />
-      )}
-
-      {statisticsModalOpen && (
-        <AdvancedStatistics
-          onClose={() => setStatisticsModalOpen(false)}
-          books={state.libros}
-          sagas={state.sagas}
-        />
-      )}
-
-      {exportImportModalOpen && (
-        <DataExportImport
-          onClose={() => setExportImportModalOpen(false)}
-          state={state}
-          onImport={(data) => dispatch({ type: 'IMPORT_DATA', payload: data })}
-        />
-      )}
-
-      {scanHistoryModalOpen && (
-        <ScanHistory
-          onClose={() => setScanHistoryModalOpen(false)}
-          scanHistory={state.scanHistory}
-          onClearHistory={() => dispatch({ type: 'CLEAR_SCAN_HISTORY' })}
-        />
-      )}
-
-      {bulkScanModalOpen && (
-        <BulkScanModal
-          onClose={() => setBulkScanModalOpen(false)}
-          onBooksFound={(books) => {
-            books.forEach(book => dispatch({ type: 'ADD_BOOK', payload: book }));
-          }}
-        />
-      )}
-
-      {/* Mobile Sidebar */}
-      <Sidebar
-        isOpen={configSidebarOpen}
-        onClose={() => setConfigSidebarOpen(false)}
-        config={state.config}
-        onSave={(config) => dispatch({ type: 'SET_CONFIG', payload: config })}
-      />
     </div>
   );
 };

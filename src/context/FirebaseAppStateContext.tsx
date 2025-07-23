@@ -414,7 +414,7 @@ function appReducer(state: AppState, action: Action): AppState {
     case 'COMPRAR_LIBRO_CON_PUNTOS':
       newState = {
         ...state,
-        puntosActuales: Math.max(0, state.puntosActuales - state.config.puntosParaComprar),
+        puntosActuales: Math.max(0, state.puntosActuales - (state.config.puntosParaComprar || 25)),
         librosCompradosConPuntos: state.librosCompradosConPuntos + 1
       };
       break;
@@ -494,7 +494,16 @@ export const FirebaseAppStateProvider: React.FC<AppStateProviderProps> = ({
         if (hasFirebaseData) {
           // Load data from Firebase
           const firebaseData = await firebaseSync.loadAllData();
-          dispatch({ type: 'IMPORT_DATA', payload: firebaseData });
+          dispatch({ type: 'IMPORT_DATA', payload: {
+            libros: firebaseData.libros || [],
+            sagas: firebaseData.sagas || [],
+            config: firebaseData.config,
+            scanHistory: firebaseData.scanHistory || [],
+            searchHistory: firebaseData.searchHistory || [],
+            puntosActuales: firebaseData.puntosActuales || 0,
+            puntosGanados: firebaseData.puntosGanados || 0,
+            librosCompradosConPuntos: firebaseData.librosCompradosConPuntos || 0
+          }});
           console.log('Data loaded from Firebase');
         } else {
           // Check if there's local data to migrate

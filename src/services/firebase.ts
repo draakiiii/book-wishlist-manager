@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, Auth, User, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import { getFirestore, Firestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, deleteDoc, addDoc, orderBy, limit } from 'firebase/firestore';
+import { getAnalytics, Analytics } from 'firebase/analytics';
 
 // Firebase configuration - Replace with your actual Firebase config
 const firebaseConfig = {
@@ -20,6 +21,18 @@ export const auth: Auth = getAuth(app);
 
 // Initialize Cloud Firestore and get a reference to the service
 export const db: Firestore = getFirestore(app);
+
+// Initialize Analytics (only in browser environment)
+let analytics: Analytics | null = null;
+if (typeof window !== 'undefined') {
+  try {
+    analytics = getAnalytics(app);
+  } catch (error) {
+    console.warn('Analytics not available:', error);
+  }
+}
+
+export { analytics };
 
 // Authentication functions
 export const signInUser = async (email: string, password: string): Promise<User> => {

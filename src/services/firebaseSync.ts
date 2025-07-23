@@ -189,7 +189,10 @@ export class FirebaseSyncService {
 let firebaseSyncInstance: FirebaseSyncService | null = null;
 
 export const getFirebaseSyncService = (userId: string): FirebaseSyncService => {
-  if (!firebaseSyncInstance || firebaseSyncInstance.userId !== userId) {
+  if (!firebaseSyncInstance) {
+    firebaseSyncInstance = new FirebaseSyncService(userId);
+  } else {
+    // Create new instance if userId changes
     firebaseSyncInstance = new FirebaseSyncService(userId);
   }
   return firebaseSyncInstance;
