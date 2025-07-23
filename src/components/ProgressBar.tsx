@@ -92,31 +92,34 @@ const ProgressBar: React.FC = () => {
           </div>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-gradient-to-br from-secondary-50 to-secondary-100 dark:from-secondary-900/20 dark:to-secondary-800/20 rounded-xl p-3 sm:p-4 border border-secondary-200 dark:border-secondary-700"
-        >
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="p-1.5 sm:p-2 bg-secondary-500 rounded-lg">
-              <Target className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+        {/* Solo mostrar objetivo anual si está configurado mayor que 0 */}
+        {objetivoLibros > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-gradient-to-br from-secondary-50 to-secondary-100 dark:from-secondary-900/20 dark:to-secondary-800/20 rounded-xl p-3 sm:p-4 border border-secondary-200 dark:border-secondary-700"
+          >
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="p-1.5 sm:p-2 bg-secondary-500 rounded-lg">
+                <Target className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+              <div>
+                <p className="text-xs sm:text-sm font-medium text-secondary-700 dark:text-secondary-300">
+                  Objetivo Anual
+                </p>
+                <p className="text-xl sm:text-2xl font-bold text-secondary-900 dark:text-secondary-100">
+                  {objetivoLibros}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs sm:text-sm font-medium text-secondary-700 dark:text-secondary-300">
-                Objetivo Anual
-              </p>
-              <p className="text-xl sm:text-2xl font-bold text-secondary-900 dark:text-secondary-100">
-                {objetivoLibros}
-              </p>
-            </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: objetivoLibros > 0 ? 0.3 : 0.2 }}
           className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-3 sm:p-4 border border-green-200 dark:border-green-700"
         >
           <div className="flex items-center space-x-2 sm:space-x-3">
@@ -137,7 +140,7 @@ const ProgressBar: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: objetivoLibros > 0 ? 0.4 : 0.3 }}
           className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-3 sm:p-4 border border-purple-200 dark:border-purple-700"
         >
           <div className="flex items-center space-x-2 sm:space-x-3">
