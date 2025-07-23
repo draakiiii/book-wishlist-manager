@@ -414,7 +414,8 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
         historialEstados: [{
           estado: 'tbr',
           fecha: Date.now()
-        }]
+        }],
+        lecturas: [] // <-- Añadido para cumplir con el tipo Libro
       }));
 
     if (booksToAdd.length > 0) {
