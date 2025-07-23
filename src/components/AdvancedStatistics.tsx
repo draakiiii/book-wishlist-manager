@@ -13,7 +13,8 @@ import {
   BookMarked,
   BookX,
   ShoppingCart,
-  Share2
+  Share2,
+  Users
 } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 
@@ -26,15 +27,18 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
   const { state } = useAppState();
 
   const statistics = useMemo(() => {
+    // Filtrar libros excluyendo wishlist para estadísticas
+    const librosParaEstadisticas = state.libros.filter(book => book.estado !== 'wishlist');
+    
     // Calculate stats based on book states
-    const totalLibros = state.libros.length;
-    const librosTBR = state.libros.filter(book => book.estado === 'tbr').length;
-    const librosLeyendo = state.libros.filter(book => book.estado === 'leyendo').length;
-    const librosLeidos = state.libros.filter(book => book.estado === 'leido').length;
-    const librosAbandonados = state.libros.filter(book => book.estado === 'abandonado').length;
+    const totalLibros = librosParaEstadisticas.length;
+    const librosTBR = librosParaEstadisticas.filter(book => book.estado === 'tbr').length;
+    const librosLeyendo = librosParaEstadisticas.filter(book => book.estado === 'leyendo').length;
+    const librosLeidos = librosParaEstadisticas.filter(book => book.estado === 'leido').length;
+    const librosAbandonados = librosParaEstadisticas.filter(book => book.estado === 'abandonado').length;
     const librosWishlist = state.libros.filter(book => book.estado === 'wishlist').length;
-    const librosComprados = state.libros.filter(book => book.estado === 'comprado').length;
-    const librosPrestados = state.libros.filter(book => book.estado === 'prestado').length;
+    const librosPrestados = librosParaEstadisticas.filter(book => book.prestado).length;
+    const librosPrestadosDetalle = librosParaEstadisticas.filter(book => book.prestado);
     
     const sagasCompletadas = state.sagas.filter(s => s.isComplete).length;
     const sagasActivas = state.sagas.filter(s => !s.isComplete).length;
@@ -65,8 +69,8 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
       librosLeidos,
       librosAbandonados,
       librosWishlist,
-      librosComprados,
       librosPrestados,
+      librosPrestadosDetalle,
       sagasCompletadas,
       sagasActivas,
       paginasLeidas,
@@ -233,13 +237,7 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
                   </div>
                   <span className="font-semibold text-slate-900 dark:text-white">{statistics.librosWishlist}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <ShoppingCart className="h-4 w-4 text-green-500" />
-                    <span className="text-slate-600 dark:text-slate-400">Comprados</span>
-                  </div>
-                  <span className="font-semibold text-slate-900 dark:text-white">{statistics.librosComprados}</span>
-                </div>
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Share2 className="h-4 w-4 text-blue-500" />
@@ -257,6 +255,7 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
               </div>
             </motion.div>
           </div>
+
 
           {/* Sistema de Puntos */}
           {state.config.sistemaPuntosHabilitado && (
@@ -300,6 +299,47 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
                 <p className="text-sm text-yellow-800 dark:text-yellow-200 mt-1">
                   <strong>Costo de compra:</strong> {state.config.puntosParaComprar || 25} puntos por libro
                 </p>
+                
+          {/* Libros Prestados Detalle */}
+          {statistics.librosPrestados > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.65 }}
+              className="bg-white dark:bg-slate-700 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-600"
+            >
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center space-x-2">
+                <Users className="h-5 w-5 text-purple-500" />
+                <span>Libros Prestados ({statistics.librosPrestados})</span>
+              </h4>
+              <div className="space-y-3">
+                {statistics.librosPrestadosDetalle.slice(0, 5).map((libro) => (
+                  <div key={libro.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                        {libro.titulo}
+                      </p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                        Prestado a: {libro.prestadoA}
+                      </p>
+                    </div>
+                    {libro.fechaPrestamo && (
+                      <div className="text-xs text-slate-500 dark:text-slate-400 ml-2">
+                        {new Date(libro.fechaPrestamo).toLocaleDateString('es-ES', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: '2-digit'
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {statistics.librosPrestados > 5 && (
+                  <div className="text-center text-sm text-slate-500 dark:text-slate-400 pt-2">
+                    +{statistics.librosPrestados - 5} más libros prestados
+                  </div>
+                )}
+
               </div>
             </motion.div>
           )}

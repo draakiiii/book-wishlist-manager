@@ -288,6 +288,23 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
       return;
     }
 
+    // Check if book already exists in the library
+    const existingBook = state.libros.find(libro => libro.isbn === scannedCode);
+    if (existingBook) {
+      addFeedback('warning', `Libro ya existe en biblioteca: ${existingBook.titulo}`);
+      
+      // Add delay to prevent multiple scans of the same code even for duplicates
+      if (scanningTimeoutRef.current) {
+        clearTimeout(scanningTimeoutRef.current);
+      }
+      
+      scanningTimeoutRef.current = setTimeout(() => {
+        // Resume scanning after delay
+      }, 3000); // 3 second delay for duplicates
+      
+      return;
+    }
+
     // Add delay to prevent multiple scans of the same code
     if (scanningTimeoutRef.current) {
       clearTimeout(scanningTimeoutRef.current);
@@ -325,19 +342,43 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
       const bookData = await fetchBookData(scannedCode);
       
       if (bookData) {
-        setScannedBooks(prev => prev.map(book => 
-          book.id === newBook.id 
-            ? {
-                ...book,
-                titulo: bookData.titulo,
-                autor: bookData.autor || '',
-                paginas: bookData.paginas?.toString() || '',
-                status: 'found',
-                bookData
-              }
-            : book
-        ));
-        addFeedback('success', `Encontrado: ${bookData.titulo}`, 2000);
+        // Check for duplicates by title and author
+        const duplicateByTitle = state.libros.find(libro => 
+          libro.titulo.toLowerCase() === bookData.titulo.toLowerCase() &&
+          (!bookData.autor || !libro.autor || 
+           libro.autor.toLowerCase() === bookData.autor.toLowerCase())
+        );
+        
+        if (duplicateByTitle) {
+          setScannedBooks(prev => prev.map(book => 
+            book.id === newBook.id 
+              ? {
+                  ...book,
+                  titulo: bookData.titulo,
+                  autor: bookData.autor || '',
+                  paginas: bookData.paginas?.toString() || '',
+                  status: 'error',
+                  errorMessage: `Duplicado: ${duplicateByTitle.titulo} (${duplicateByTitle.estado})`,
+                  bookData
+                }
+              : book
+          ));
+          addFeedback('warning', `Libro duplicado: ${bookData.titulo}`);
+        } else {
+          setScannedBooks(prev => prev.map(book => 
+            book.id === newBook.id 
+              ? {
+                  ...book,
+                  titulo: bookData.titulo,
+                  autor: bookData.autor || '',
+                  paginas: bookData.paginas?.toString() || '',
+                  status: 'found',
+                  bookData
+                }
+              : book
+          ));
+          addFeedback('success', `Encontrado: ${bookData.titulo}`, 2000);
+        }
       } else {
         setScannedBooks(prev => prev.map(book => 
           book.id === newBook.id 

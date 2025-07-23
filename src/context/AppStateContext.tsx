@@ -499,7 +499,7 @@ function appReducer(state: AppState, action: Action): AppState {
       const librosActualizados = state.libros.map(libro => {
         if (libro.id === id) {
           const libroActualizado: Libro = {
-            ...agregarEstadoAlHistorial(libro, 'prestado', prestadoA),
+            ...libro,
             prestado: true,
             prestadoA,
             fechaPrestamo: fecha
@@ -519,15 +519,8 @@ function appReducer(state: AppState, action: Action): AppState {
       const { id, fecha = Date.now() } = action.payload;
       const librosActualizados = state.libros.map(libro => {
         if (libro.id === id) {
-          // Find the previous state before 'prestado'
-          const previousState = libro.historialEstados
-            .filter(h => h.estado !== 'prestado')
-            .sort((a, b) => b.fecha - a.fecha)[0];
-          
-          const estadoAnterior = previousState?.estado || 'tbr';
-          
           return {
-            ...agregarEstadoAlHistorial(libro, estadoAnterior, 'Libro devuelto'),
+            ...libro,
             prestado: false,
             prestadoA: undefined,
             fechaPrestamo: undefined

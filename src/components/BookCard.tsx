@@ -174,28 +174,29 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   };
 
   const getTypeColor = () => {
-    switch (type) {
+    // Si el libro está prestado, usar un color especial pero mantener el color base del estado
+    const baseColor = book.prestado ? 'border-purple-300 dark:border-purple-600 bg-purple-50 dark:bg-purple-900/20' : '';
+    
+    switch (book.estado) {
       case 'tbr':
-        return 'border-warning-300 dark:border-warning-600 bg-warning-50 dark:bg-warning-900/20';
+        return book.prestado ? 'border-warning-300 dark:border-warning-600 bg-warning-50 dark:bg-warning-900/20 ring-2 ring-purple-300 dark:ring-purple-600' : 'border-warning-300 dark:border-warning-600 bg-warning-50 dark:bg-warning-900/20';
       case 'leyendo':
-        return 'border-primary-300 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20';
+        return book.prestado ? 'border-primary-300 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 ring-2 ring-purple-300 dark:ring-purple-600' : 'border-primary-300 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20';
       case 'leido':
-        return 'border-success-300 dark:border-success-600 bg-success-50 dark:bg-success-900/20';
+        return book.prestado ? 'border-success-300 dark:border-success-600 bg-success-50 dark:bg-success-900/20 ring-2 ring-purple-300 dark:ring-purple-600' : 'border-success-300 dark:border-success-600 bg-success-50 dark:bg-success-900/20';
       case 'abandonado':
-        return 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20';
+        return book.prestado ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 ring-2 ring-purple-300 dark:ring-purple-600' : 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20';
       case 'wishlist':
-        return 'border-secondary-300 dark:border-secondary-600 bg-secondary-50 dark:bg-secondary-900/20';
+        return book.prestado ? 'border-secondary-300 dark:border-secondary-600 bg-secondary-50 dark:bg-secondary-900/20 ring-2 ring-purple-300 dark:ring-purple-600' : 'border-secondary-300 dark:border-secondary-600 bg-secondary-50 dark:bg-secondary-900/20';
       case 'comprado':
-        return 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20';
-      case 'prestado':
-        return 'border-purple-300 dark:border-purple-600 bg-purple-50 dark:bg-purple-900/20';
+        return book.prestado ? 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 ring-2 ring-purple-300 dark:ring-purple-600' : 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20';
       default:
-        return 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/20';
+        return book.prestado ? 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/20 ring-2 ring-purple-300 dark:ring-purple-600' : 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/20';
     }
   };
 
   const getTypeIcon = () => {
-    switch (type) {
+    switch (book.estado) {
       case 'tbr':
         return <Calendar className="h-4 w-4 text-warning-600 dark:text-warning-400" />;
       case 'leyendo':
@@ -208,32 +209,38 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
         return <Star className="h-4 w-4 text-secondary-600 dark:text-secondary-400" />;
       case 'comprado':
         return <ShoppingCart className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
-      case 'prestado':
-        return <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />;
       default:
         return <BookOpen className="h-4 w-4 text-slate-600 dark:text-slate-400" />;
     }
   };
 
   const getTypeLabel = () => {
-    switch (type) {
+    let baseLabel = '';
+    switch (book.estado) {
       case 'tbr':
-        return 'TBR';
+        baseLabel = 'TBR';
+        break;
       case 'leyendo':
-        return 'Leyendo';
+        baseLabel = 'Leyendo';
+        break;
       case 'leido':
-        return 'Leído';
+        baseLabel = 'Leído';
+        break;
       case 'abandonado':
-        return 'Abandonado';
+        baseLabel = 'Abandonado';
+        break;
       case 'wishlist':
-        return 'Deseos';
+        baseLabel = 'Deseos';
+        break;
       case 'comprado':
-        return 'Comprado';
-      case 'prestado':
-        return 'Prestado';
+        baseLabel = 'Comprado';
+        break;
       default:
-        return type;
+        baseLabel = book.estado;
     }
+    
+    // Si está prestado, agregar indicador
+    return book.prestado ? `${baseLabel} (Prestado)` : baseLabel;
   };
 
   return (
@@ -319,7 +326,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
           className="flex flex-wrap gap-1 sm:gap-2 pt-2"
         >
           {/* TBR Actions */}
-          {type === 'tbr' && (
+          {book.estado === 'tbr' && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -332,7 +339,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
           )}
 
           {/* Currently Reading Actions */}
-          {type === 'leyendo' && (
+          {book.estado === 'leyendo' && (
             <>
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -357,7 +364,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
           )}
 
           {/* Read Books Actions */}
-          {type === 'leido' && (
+          {book.estado === 'leido' && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -370,7 +377,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
           )}
 
           {/* Wishlist Actions */}
-          {type === 'wishlist' && (
+          {book.estado === 'wishlist' && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -388,7 +395,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
           )}
 
           {/* Purchased Books Actions */}
-          {type === 'comprado' && (
+          {book.estado === 'comprado' && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -400,8 +407,8 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
             </motion.button>
           )}
 
-          {/* Lent Books Actions */}
-          {type === 'prestado' && (
+          {/* Return action for lent books */}
+          {book.prestado && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -414,7 +421,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
           )}
 
           {/* Loan action for owned books */}
-          {(type === 'tbr' || type === 'leido' || type === 'comprado') && !book.prestado && (
+          {(book.estado === 'tbr' || book.estado === 'leido' || book.estado === 'comprado') && !book.prestado && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

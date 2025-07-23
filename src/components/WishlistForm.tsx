@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Heart, Plus, ShoppingCart, Search, Loader2, CheckCircle, AlertCircle, Camera, Barcode } from 'lucide-react';
+import { Heart, Search, Camera, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { useAppState } from '../context/AppStateContext';
+import { Libro, BookData } from '../types';
+import { fetchBookData } from '../services/googleBooksAPI';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import ISBNInputModal from './ISBNInputModal';
 import BarcodeScannerModal from './BarcodeScannerModal';
-import { BookData, Libro } from '../types';
-import { fetchBookData, validateISBN } from '../services/googleBooksAPI';
+import DuplicateBookModal from './DuplicateBookModal';
 
 interface WishlistFormProps {
   onOpenConfig?: () => void;
@@ -18,71 +19,114 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ onOpenConfig }) => {
   const [autor, setAutor] = useState('');
   const [paginas, setPaginas] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
-  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [showISBNInput, setShowISBNInput] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [isLoadingBook, setIsLoadingBook] = useState(false);
   const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'found' | 'error'>('idle');
   const [scanMessage, setScanMessage] = useState('');
   const [isBookFromScan, setIsBookFromScan] = useState(false);
   const [selectedBookData, setSelectedBookData] = useState<BookData | null>(null);
+  
+  // Estados para el modal de duplicados
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateBook, setDuplicateBook] = useState<Libro | null>(null);
+  const [pendingBookData, setPendingBookData] = useState<BookData | null>(null);
+
+  const validateISBN = (isbn: string): boolean => {
+    const cleanISBN = isbn.replace(/[-\s]/g, '');
+    return cleanISBN.length === 10 || cleanISBN.length === 13;
+  };
+
+  const checkForDuplicate = (bookData: BookData): Libro | null => {
+    // Buscar por ISBN primero
+    if (bookData.isbn) {
+      const existingByISBN = state.libros.find(libro => 
+        libro.isbn === bookData.isbn
+      );
+      if (existingByISBN) return existingByISBN;
+    }
+    
+    // Buscar por título y autor
+    const existingByTitle = state.libros.find(libro => 
+      libro.titulo.toLowerCase() === bookData.titulo.toLowerCase() &&
+      (!bookData.autor || !libro.autor || 
+       libro.autor.toLowerCase() === bookData.autor.toLowerCase())
+    );
+    
+    return existingByTitle || null;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (titulo.trim()) {
-      let nuevoLibro: Libro;
-      
-      // Si tenemos datos completos del libro seleccionado, usarlos
-      if (selectedBookData) {
-        nuevoLibro = {
-          id: Date.now(),
-          titulo: selectedBookData.titulo,
-          autor: selectedBookData.autor,
-          paginas: selectedBookData.paginas,
-          isbn: selectedBookData.isbn,
-          publicacion: selectedBookData.publicacion,
-          editorial: selectedBookData.editorial,
-          descripcion: selectedBookData.descripcion,
-          categorias: selectedBookData.categorias,
-          idioma: selectedBookData.idioma,
-          calificacion: selectedBookData.calificacion,
-          numCalificaciones: selectedBookData.numCalificaciones,
-          genero: selectedBookData.genero,
-          formato: selectedBookData.formato,
-          precio: selectedBookData.precio,
-          estado: 'wishlist',
-          historialEstados: [{
-            estado: 'wishlist',
-            fecha: Date.now()
-          }],
-          lecturas: []
-        };
-      } else {
-        // Si no hay datos completos, usar los campos del formulario
-        nuevoLibro = {
-          id: Date.now(),
-          titulo: titulo.trim(),
-          autor: autor.trim() || undefined,
-          paginas: paginas ? parseInt(paginas) : undefined,
-          estado: 'wishlist',
-          historialEstados: [{
-            estado: 'wishlist',
-            fecha: Date.now()
-          }],
-          lecturas: []
-        };
-      }
-
-      dispatch({ type: 'ADD_BOOK', payload: nuevoLibro });
-      
-      // Reset form
-      setTitulo('');
-      setAutor('');
-      setPaginas('');
-      setIsExpanded(false);
-      setScanStatus('idle');
-      setScanMessage('');
-      setSelectedBookData(null);
+    
+    if (!titulo.trim()) return;
+    
+    const newBookData: BookData = {
+      titulo: titulo.trim(),
+      autor: autor.trim() || undefined,
+      paginas: paginas ? parseInt(paginas) : undefined,
+      isbn: selectedBookData?.isbn,
+      publicacion: selectedBookData?.publicacion,
+      editorial: selectedBookData?.editorial,
+      descripcion: selectedBookData?.descripcion,
+      categorias: selectedBookData?.categorias,
+      idioma: selectedBookData?.idioma,
+      calificacion: selectedBookData?.calificacion,
+      numCalificaciones: selectedBookData?.numCalificaciones,
+      genero: selectedBookData?.genero,
+      formato: selectedBookData?.formato,
+      precio: selectedBookData?.precio
+    };
+    
+    // Verificar si es un duplicado
+    const duplicate = checkForDuplicate(newBookData);
+    
+    if (duplicate) {
+      setDuplicateBook(duplicate);
+      setPendingBookData(newBookData);
+      setShowDuplicateModal(true);
+      return;
     }
+    
+    // Si no es duplicado, agregar directamente
+    addBookToWishlist(newBookData);
+  };
+
+  const addBookToWishlist = (bookData: BookData) => {
+    const nuevoLibro: Libro = {
+      id: Date.now(),
+      titulo: bookData.titulo,
+      autor: bookData.autor,
+      paginas: bookData.paginas,
+      isbn: bookData.isbn,
+      publicacion: bookData.publicacion,
+      editorial: bookData.editorial,
+      descripcion: bookData.descripcion,
+      categorias: bookData.categorias,
+      idioma: bookData.idioma,
+      calificacion: bookData.calificacion,
+      numCalificaciones: bookData.numCalificaciones,
+      genero: bookData.genero,
+      formato: bookData.formato,
+      precio: bookData.precio,
+      estado: 'wishlist',
+      historialEstados: [{
+        estado: 'wishlist',
+        fecha: Date.now()
+      }],
+      lecturas: []
+    };
+    
+    dispatch({ type: 'ADD_BOOK', payload: nuevoLibro });
+    
+    // Limpiar formulario
+    setTitulo('');
+    setAutor('');
+    setPaginas('');
+    setIsExpanded(false);
+    setSelectedBookData(null);
+    setScanStatus('idle');
+    setScanMessage('');
   };
 
   const handleBookSelect = (bookData: BookData) => {
@@ -137,6 +181,21 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ onOpenConfig }) => {
       setIsLoadingBook(false);
       setIsBookFromScan(false);
     }
+  };
+
+  const handleDuplicateConfirm = () => {
+    if (pendingBookData) {
+      addBookToWishlist(pendingBookData);
+    }
+    setShowDuplicateModal(false);
+    setDuplicateBook(null);
+    setPendingBookData(null);
+  };
+
+  const handleDuplicateCancel = () => {
+    setShowDuplicateModal(false);
+    setDuplicateBook(null);
+    setPendingBookData(null);
   };
 
   const getStatusIcon = () => {
@@ -281,6 +340,18 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ onOpenConfig }) => {
           onClose={() => setShowBarcodeScanner(false)}
           onScanSuccess={handleSearchResult}
           onOpenConfig={onOpenConfig}
+        />
+      )}
+
+      {/* Duplicate Book Modal */}
+      {duplicateBook && pendingBookData && (
+        <DuplicateBookModal
+          isOpen={showDuplicateModal}
+          onClose={handleDuplicateCancel}
+          onConfirm={handleDuplicateConfirm}
+          onCancel={handleDuplicateCancel}
+          existingBook={duplicateBook}
+          newBookData={pendingBookData}
         />
       )}
     </div>
