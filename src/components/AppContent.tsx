@@ -5,29 +5,33 @@ import {
   Heart, 
   Clock, 
   Trophy, 
+  Settings,
   Search,
   BarChart3,
   Database,
   History,
   CheckCircle,
   XCircle,
-  ShoppingCart,
-  Users,
-  Share2,
   User,
-  Settings,
-  LogOut,
-  Bell,
   ChevronDown,
   Camera,
-  FileText,
-  Download,
-  Upload
+  X
 } from 'lucide-react';
+import CollapsibleConfig from './CollapsibleConfig';
 import CollapsibleSection from './CollapsibleSection';
+import Sidebar from './Sidebar';
 import ProgressBar from './ProgressBar';
+import WishlistForm from './WishlistForm';
+import TBRForm from './TBRForm';
 import BookList from './BookList';
 import SagaList from './SagaList';
+import SagaCompletionNotification from './SagaCompletionNotification';
+import AdvancedSearch from './AdvancedSearch';
+import AdvancedStatistics from './AdvancedStatistics';
+import DataExportImport from './DataExportImport';
+import ScanHistory from './ScanHistory';
+import ConfigForm from './ConfigForm';
+import BulkScanModal from './BulkScanModal';
 import UserProfile from './auth/UserProfile';
 
 import { useAppState } from '../context/FirebaseAppStateContext';
@@ -35,9 +39,16 @@ import { useAuth } from '../context/AuthContext';
 
 const AppContent: React.FC = () => {
   const { state, dispatch, loading, syncStatus } = useAppState();
-  const { currentUser, signOut } = useAuth();
+  const { currentUser } = useAuth();
+  const [configSidebarOpen, setConfigSidebarOpen] = React.useState(false);
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [statisticsModalOpen, setStatisticsModalOpen] = useState(false);
+  const [exportImportModalOpen, setExportImportModalOpen] = useState(false);
+  const [scanHistoryModalOpen, setScanHistoryModalOpen] = useState(false);
+  const [bulkScanModalOpen, setBulkScanModalOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [userProfileOpen, setUserProfileOpen] = useState(false);
-
 
   useEffect(() => {
     // Aplicar el modo oscuro al body
@@ -76,18 +87,12 @@ const AppContent: React.FC = () => {
     dispatch({ type: 'REMOVE_SAGA_NOTIFICATION', payload: { id } });
   };
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
+
 
   // Show loading screen while data is being loaded
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Cargando tu biblioteca...</p>
@@ -96,15 +101,40 @@ const AppContent: React.FC = () => {
     );
   }
 
+  // Filtrar libros por estado
+  const librosTBR = state.libros.filter(libro => libro.estado === 'tbr');
+  const librosLeyendo = state.libros.filter(libro => libro.estado === 'leyendo');
+  const librosLeidos = state.libros.filter(libro => libro.estado === 'leido');
+  const librosAbandonados = state.libros.filter(libro => libro.estado === 'abandonado');
+  const librosWishlist = state.libros.filter(libro => libro.estado === 'wishlist');
+
+
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header with menu and user info */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <div className="theme-transition min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
+      {/* Notificaciones de saga completada */}
+      {state.sagaNotifications && state.sagaNotifications.map((notification) => (
+        <SagaCompletionNotification
+          key={notification.id}
+          sagaName={notification.sagaName}
+          onClose={() => handleRemoveNotification(notification.id)}
+        />
+      ))}
+      
+      {/* Header */}
+      <motion.header 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="sticky top-0 z-50 glass-effect border-b border-white/20"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Guardian Compras
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg">
+                <BookOpen className="h-6 w-6 text-white" />
+              </div>
+              <h1 className="text-lg sm:text-xl font-display font-bold gradient-text">
+                Mi Biblioteca
               </h1>
               {/* Sync status indicator */}
               <div className="ml-4 flex items-center space-x-2">
@@ -113,7 +143,7 @@ const AppContent: React.FC = () => {
                   syncStatus === 'syncing' ? 'bg-yellow-500 animate-pulse' : 
                   'bg-red-500'
                 }`}></div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+                <span className="text-sm text-slate-500 dark:text-slate-400">
                   {syncStatus === 'idle' ? 'Sincronizado' : 
                    syncStatus === 'syncing' ? 'Sincronizando...' : 
                    'Error de sincronización'}
@@ -121,73 +151,79 @@ const AppContent: React.FC = () => {
               </div>
             </div>
             
-            {/* Menu buttons */}
             <div className="flex items-center space-x-2">
-              {/* Search */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => alert('Búsqueda avanzada - Funcionalidad en desarrollo')}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                title="Búsqueda avanzada"
-              >
-                <Search className="h-5 w-5" />
-              </motion.button>
+              {/* Advanced Features Buttons */}
+              <div className="flex items-center space-x-1 md:space-x-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setSearchModalOpen(true)}
+                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  title="Búsqueda Avanzada"
+                >
+                  <Search className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setStatisticsModalOpen(true)}
+                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  title="Estadísticas Avanzadas"
+                >
+                  <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setExportImportModalOpen(true)}
+                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  title="Exportar/Importar Datos"
+                >
+                  <Database className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setScanHistoryModalOpen(true)}
+                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  title="Historial de Escaneos"
+                >
+                  <History className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                </motion.button>
 
-              {/* Statistics */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => alert('Estadísticas avanzadas - Funcionalidad en desarrollo')}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                title="Estadísticas avanzadas"
-              >
-                <BarChart3 className="h-5 w-5" />
-              </motion.button>
-
-              {/* Export/Import */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => alert('Exportar/Importar datos - Funcionalidad en desarrollo')}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                title="Exportar/Importar datos"
-              >
-                <Database className="h-5 w-5" />
-              </motion.button>
-
-              {/* Scan History */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => alert('Historial de escaneos - Funcionalidad en desarrollo')}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                title="Historial de escaneos"
-              >
-                <History className="h-5 w-5" />
-              </motion.button>
-
-              {/* Bulk Scan */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => alert('Escaneo masivo - Funcionalidad en desarrollo')}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                title="Escaneo masivo"
-              >
-                <Camera className="h-5 w-5" />
-              </motion.button>
-
-              {/* Configuration */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => alert('Configuración - Funcionalidad en desarrollo')}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setBulkScanModalOpen(true)}
+                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  title="Escaneo Masivo"
+                >
+                  <Camera className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                </motion.button>
+              </div>
+              
+              {/* Settings button */}
+              <button
+                onClick={() => setConfigSidebarOpen(true)}
+                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 lg:hidden"
                 title="Configuración"
+                data-mobile-config="true"
               >
-                <Settings className="h-5 w-5" />
-              </motion.button>
+                <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+              </button>
+              
+              {/* Desktop Settings button - opens modal */}
+              <button
+                onClick={() => setConfigModalOpen(true)}
+                className="hidden lg:flex p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                title="Configuración"
+                data-desktop-config="true"
+              >
+                <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+              </button>
 
               {/* User menu */}
               <div className="relative ml-2">
@@ -195,7 +231,7 @@ const AppContent: React.FC = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setUserProfileOpen(!userProfileOpen)}
-                  className="flex items-center space-x-2 p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="flex items-center space-x-2 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/10 dark:hover:bg-white/20 rounded-lg transition-colors"
                 >
                   <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
                     <User className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
@@ -215,163 +251,195 @@ const AppContent: React.FC = () => {
             </div>
           </div>
         </div>
-      </header>
+      </motion.header>
 
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Notifications */}
-        {state.sagaNotifications.length > 0 && (
-          <div className="mb-6 space-y-2">
-            {state.sagaNotifications.map((notification) => (
-              <div key={notification.id} className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
-                    <span className="text-green-800 dark:text-green-200">
-                      ¡Saga completada: {notification.sagaName}!
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => handleRemoveNotification(notification.id)}
-                    className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
-                  >
-                    ×
-                  </button>
-                </div>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+            
+            {/* Configuration Section - Desktop Collapsible */}
+            <div className="hidden lg:block">
+              <CollapsibleConfig />
+            </div>
+
+            {/* Progress Section */}
+            <CollapsibleSection
+              title="Objetivos de Lectura"
+              icon={<Trophy className="h-5 w-5" />}
+              iconBgColor="bg-success-100 dark:bg-success-900/30"
+              iconColor="text-success-600 dark:text-success-400"
+            >
+              <ProgressBar />
+            </CollapsibleSection>
+
+            {/* Wishlist Section */}
+            <CollapsibleSection
+              title="Lista de Deseos"
+              icon={<Heart className="h-5 w-5" />}
+              iconBgColor="bg-secondary-100 dark:bg-secondary-900/30"
+              iconColor="text-secondary-600 dark:text-secondary-400"
+            >
+              <WishlistForm />
+              <div className="mt-4 sm:mt-6">
+                <BookList 
+                  books={librosWishlist}
+                  type="wishlist"
+                  emptyMessage="Tu lista de deseos está vacía."
+                />
               </div>
-            ))}
-          </div>
-        )}
+            </CollapsibleSection>
 
-        {/* Progress Section */}
-        <CollapsibleSection
-          title="Progreso de Lectura"
-          icon={<Trophy className="h-5 w-5" />}
-          iconBgColor="bg-yellow-100 dark:bg-yellow-900/30"
-          iconColor="text-yellow-600 dark:text-yellow-400"
-        >
-          <ProgressBar />
-        </CollapsibleSection>
+            {/* TBR Section */}
+            <CollapsibleSection
+              title="Pila de Lectura (TBR)"
+              icon={<Clock className="h-5 w-5" />}
+              iconBgColor="bg-warning-100 dark:bg-warning-900/30"
+              iconColor="text-warning-600 dark:text-warning-400"
+            >
+              <TBRForm />
+              <div className="mt-4 sm:mt-6">
+                <BookList 
+                  books={librosTBR}
+                  type="tbr"
+                  emptyMessage="Tu pila está vacía."
+                />
+              </div>
+            </CollapsibleSection>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Currently Reading */}
+            {/* Currently Reading Section */}
             <CollapsibleSection
               title="Leyendo Actualmente"
               icon={<BookOpen className="h-5 w-5" />}
-              iconBgColor="bg-blue-100 dark:bg-blue-900/30"
-              iconColor="text-blue-600 dark:text-blue-400"
+              iconBgColor="bg-primary-100 dark:bg-primary-900/30"
+              iconColor="text-primary-600 dark:text-primary-400"
             >
-              <BookList
-                books={state.libros.filter(book => book.estado === 'leyendo')}
+              <BookList 
+                books={librosLeyendo}
                 type="leyendo"
-                emptyMessage="No estás leyendo ningún libro actualmente"
+                emptyMessage="No estás leyendo ningún libro actualmente."
               />
             </CollapsibleSection>
 
-            {/* To Be Read */}
-            <CollapsibleSection
-              title="Por Leer (TBR)"
-              icon={<Clock className="h-5 w-5" />}
-              iconBgColor="bg-orange-100 dark:bg-orange-900/30"
-              iconColor="text-orange-600 dark:text-orange-400"
-            >
-              <BookList
-                books={state.libros.filter(book => book.estado === 'tbr')}
-                type="tbr"
-                emptyMessage="Tu lista de lectura está vacía"
-              />
-            </CollapsibleSection>
-
-            {/* Completed Books */}
+            {/* Completed Books Section */}
             <CollapsibleSection
               title="Libros Leídos"
               icon={<CheckCircle className="h-5 w-5" />}
               iconBgColor="bg-green-100 dark:bg-green-900/30"
               iconColor="text-green-600 dark:text-green-400"
             >
-              <BookList
-                books={state.libros.filter(book => book.estado === 'leido')}
+              <BookList 
+                books={librosLeidos}
                 type="leido"
-                emptyMessage="Aún no has leído ningún libro"
+                emptyMessage="Aún no has terminado ningún libro."
               />
             </CollapsibleSection>
 
-            {/* Abandoned Books */}
+            {/* Abandoned Books Section */}
             <CollapsibleSection
               title="Libros Abandonados"
               icon={<XCircle className="h-5 w-5" />}
               iconBgColor="bg-red-100 dark:bg-red-900/30"
               iconColor="text-red-600 dark:text-red-400"
             >
-              <BookList
-                books={state.libros.filter(book => book.estado === 'abandonado')}
+              <BookList 
+                books={librosAbandonados}
                 type="abandonado"
-                emptyMessage="No has abandonado ningún libro"
-              />
-            </CollapsibleSection>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-8">
-            {/* Wishlist */}
-            <CollapsibleSection
-              title="Wishlist"
-              icon={<Heart className="h-5 w-5" />}
-              iconBgColor="bg-pink-100 dark:bg-pink-900/30"
-              iconColor="text-pink-600 dark:text-pink-400"
-            >
-              <BookList
-                books={state.libros.filter(book => book.estado === 'wishlist')}
-                type="wishlist"
-                emptyMessage="Tu wishlist está vacía"
+                emptyMessage="No has abandonado ningún libro."
               />
             </CollapsibleSection>
 
-            {/* Sagas */}
+            {/* Sagas Section */}
             <CollapsibleSection
-              title="Sagas"
-              icon={<Users className="h-5 w-5" />}
+              title="Mis Sagas"
+              icon={<Trophy className="h-5 w-5" />}
               iconBgColor="bg-purple-100 dark:bg-purple-900/30"
               iconColor="text-purple-600 dark:text-purple-400"
             >
               <SagaList />
             </CollapsibleSection>
-
-            {/* Purchased Books */}
-            <CollapsibleSection
-              title="Libros Comprados"
-              icon={<ShoppingCart className="h-5 w-5" />}
-              iconBgColor="bg-emerald-100 dark:bg-emerald-900/30"
-              iconColor="text-emerald-600 dark:text-emerald-400"
-            >
-              <BookList
-                books={state.libros.filter(book => book.estado === 'comprado')}
-                type="comprado"
-                emptyMessage="No has comprado ningún libro"
-              />
-            </CollapsibleSection>
-
-            {/* Lent Books */}
-            <CollapsibleSection
-              title="Libros Prestados"
-              icon={<Share2 className="h-5 w-5" />}
-              iconBgColor="bg-cyan-100 dark:bg-cyan-900/30"
-              iconColor="text-cyan-600 dark:text-cyan-400"
-            >
-              <BookList
-                books={state.libros.filter(book => book.estado === 'prestado')}
-                type="prestado"
-                emptyMessage="No tienes libros prestados"
-              />
-            </CollapsibleSection>
-          </div>
         </div>
       </main>
+      
+      {/* Mobile Configuration Sidebar */}
+      <Sidebar 
+        isOpen={configSidebarOpen} 
+        onClose={() => setConfigSidebarOpen(false)} 
+      />
 
-      {/* Modals - Placeholder for future implementation */}
+      {/* Desktop Configuration Modal */}
+      {configModalOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setConfigModalOpen(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center space-x-2">
+                <Settings className="h-5 w-5 text-primary-500" />
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Configuración
+                </h3>
+              </div>
+              <button
+                onClick={() => setConfigModalOpen(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
+              >
+                <X className="h-5 w-5 text-slate-500" />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <ConfigForm />
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Advanced Search Modal */}
+      <AdvancedSearch
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        onSearch={setSearchResults}
+      />
+
+      {/* Advanced Statistics Modal */}
+      <AdvancedStatistics
+        isOpen={statisticsModalOpen}
+        onClose={() => setStatisticsModalOpen(false)}
+      />
+
+      {/* Data Export/Import Modal */}
+      <DataExportImport
+        isOpen={exportImportModalOpen}
+        onClose={() => setExportImportModalOpen(false)}
+      />
+
+      {/* Scan History Modal */}
+      <ScanHistory
+        isOpen={scanHistoryModalOpen}
+        onClose={() => setScanHistoryModalOpen(false)}
+      />
+
+      {/* Bulk Scan Modal */}
+      <BulkScanModal
+        isOpen={bulkScanModalOpen}
+        onClose={() => setBulkScanModalOpen(false)}
+        onBooksAdded={(books) => {
+          // Los libros se agregarán automáticamente a través del contexto
+          setBulkScanModalOpen(false);
+        }}
+      />
     </div>
   );
 };

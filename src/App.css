@@ -51,6 +51,26 @@
   animation: theme-transition 0.3s ease-in-out;
 }
 
+/* Glass effect para el header */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+/* Gradient text effect */
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Font display for headings */
+.font-display {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 /* Estilos para scrollbar personalizada */
 ::-webkit-scrollbar {
   width: 8px;
