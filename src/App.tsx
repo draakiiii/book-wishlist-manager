@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { AppStateProvider, useAppState } from './context/AppStateContext';
-import { SectionStateProvider, useSectionState } from './context/SectionStateContext';
 import { motion } from 'framer-motion';
 import { 
   Shield, 
@@ -13,10 +12,7 @@ import {
   Search,
   BarChart3,
   Database,
-  History,
-  Zap,
-  ChevronDown,
-  ChevronUp
+  History
 } from 'lucide-react';
 import CollapsibleConfig from './components/CollapsibleConfig';
 import CollapsibleSection from './components/CollapsibleSection';
@@ -36,7 +32,6 @@ import './App.css';
 
 const AppContent: React.FC = () => {
   const { state, dispatch } = useAppState();
-  const { expandAll, collapseAll, toggleAll, isAllExpanded } = useSectionState();
   const [configSidebarOpen, setConfigSidebarOpen] = React.useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [statisticsModalOpen, setStatisticsModalOpen] = useState(false);
@@ -181,38 +176,7 @@ const AppContent: React.FC = () => {
                 </motion.button>
               </div>
               
-              {/* Section Control Buttons */}
-              <div className="flex items-center space-x-1 md:space-x-2 mr-2">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={expandAll}
-                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
-                  title="Expandir todas las secciones"
-                >
-                  <ChevronDown className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-                </motion.button>
-                
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={collapseAll}
-                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
-                  title="Minimizar todas las secciones"
-                >
-                  <ChevronUp className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-                </motion.button>
-                
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={toggleAll}
-                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
-                  title={isAllExpanded ? "Minimizar todas" : "Expandir todas"}
-                >
-                  <Zap className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-                </motion.button>
-              </div>
+
               
               {/* Settings button */}
               <button
@@ -374,9 +338,7 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AppStateProvider>
-      <SectionStateProvider>
-        <AppContent />
-      </SectionStateProvider>
+      <AppContent />
     </AppStateProvider>
   );
 };

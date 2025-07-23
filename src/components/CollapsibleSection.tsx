@@ -39,24 +39,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
     localStorage.setItem(storageKey, JSON.stringify(isExpanded));
   }, [isExpanded, storageKey]);
 
-  // Escuchar eventos para expandir/colapsar todas las secciones
-  useEffect(() => {
-    const handleExpandAll = () => {
-      setIsExpanded(true);
-    };
 
-    const handleCollapseAll = () => {
-      setIsExpanded(false);
-    };
-
-    window.addEventListener('expandAllSections', handleExpandAll);
-    window.addEventListener('collapseAllSections', handleCollapseAll);
-
-    return () => {
-      window.removeEventListener('expandAllSections', handleExpandAll);
-      window.removeEventListener('collapseAllSections', handleCollapseAll);
-    };
-  }, []);
 
   return (
     <motion.section
