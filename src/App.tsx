@@ -396,6 +396,43 @@ const AppContent: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Libros Prestados */}
+                {librosPrestados.length > 0 && (
+                  <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3">
+                    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center space-x-2">
+                      <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <span>Libros Prestados ({librosPrestados.length})</span>
+                    </div>
+                    <div className="space-y-2">
+                      {librosPrestados.slice(0, 3).map((libro) => (
+                        <div key={libro.id} className="flex items-center justify-between text-xs">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-slate-900 dark:text-white font-medium truncate">
+                              {libro.titulo}
+                            </p>
+                            <p className="text-slate-600 dark:text-slate-400 truncate">
+                              Prestado a: {libro.prestadoA}
+                            </p>
+                          </div>
+                          {libro.fechaPrestamo && (
+                            <div className="text-slate-500 dark:text-slate-400 text-xs ml-2">
+                              {new Date(libro.fechaPrestamo).toLocaleDateString('es-ES', {
+                                day: '2-digit',
+                                month: '2-digit'
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      {librosPrestados.length > 3 && (
+                        <div className="text-xs text-slate-500 dark:text-slate-400 text-center pt-1">
+                          +{librosPrestados.length - 3} más
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </CollapsibleSection>
           </div>

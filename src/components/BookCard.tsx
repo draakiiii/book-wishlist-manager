@@ -16,10 +16,10 @@ import {
   Edit3,
   Eye,
   XCircle,
-  Users,
-  Clock
+  Users
 } from 'lucide-react';
 import BookDescriptionModal from './BookDescriptionModal';
+import RatingModal from './RatingModal';
 
 interface BookCardProps {
   book: Libro;
@@ -32,6 +32,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   const { state, dispatch } = useAppState();
   const [showActions, setShowActions] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
 
   // Función para calcular el número del libro en la saga
   const getBookNumberInSaga = (book: Libro): number | null => {
@@ -50,14 +51,17 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   };
 
   const handleFinishReading = () => {
-    const calificacion = prompt('¿Qué calificación le das al libro? (1-5)');
+    setShowRatingModal(true);
+  };
+
+  const handleRatingConfirm = (calificacion: number) => {
     const notas = prompt('¿Algún comentario sobre el libro?');
     
     dispatch({ 
       type: 'FINISH_READING', 
       payload: { 
         id: book.id,
-        calificacion: calificacion ? parseInt(calificacion) : undefined,
+        calificacion,
         notas: notas || undefined
       } 
     });
@@ -414,6 +418,15 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
       isOpen={showDescriptionModal}
       onClose={() => setShowDescriptionModal(false)}
       book={book}
+    />
+
+    {/* Rating Modal */}
+    <RatingModal
+      isOpen={showRatingModal}
+      onClose={() => setShowRatingModal(false)}
+      onConfirm={handleRatingConfirm}
+      bookTitle={book.titulo}
+      currentRating={book.calificacion || 0}
     />
     </>
   );
