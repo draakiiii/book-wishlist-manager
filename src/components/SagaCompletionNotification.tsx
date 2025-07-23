@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, X } from 'lucide-react';
-import { useAppState } from '../context/AppStateContext';
+import { useAppState } from '../context/FirebaseAppStateContext';
 
 interface SagaCompletionNotificationProps {
   sagaName: string;

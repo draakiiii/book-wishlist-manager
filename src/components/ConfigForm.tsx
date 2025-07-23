@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAppState } from '../context/AppStateContext';
+import { useAppState } from '../context/FirebaseAppStateContext';
 import { motion } from 'framer-motion';
-import { Settings, Save, RotateCcw, Camera, CheckCircle, AlertCircle, Loader2, Target, Bell, Trophy } from 'lucide-react';
+import { Settings, Save, RotateCcw, Camera, CheckCircle, AlertCircle, Loader2, Target, Bell, Trophy, History, Database, Download, Upload } from 'lucide-react';
 import { useDialog } from '../hooks/useDialog';
 import Dialog from './Dialog';
 
@@ -31,6 +31,85 @@ const ConfigForm: React.FC = () => {
       dispatch({ type: 'CLEAN_DUPLICATE_SAGAS' });
       showSuccess('Sagas limpiadas', 'Sagas duplicadas limpiadas correctamente.');
     }
+  };
+
+  const handleClearScanHistory = () => {
+    if (window.confirm('¿Estás seguro de que quieres limpiar el historial de escaneos? Esta acción no se puede deshacer.')) {
+      dispatch({ type: 'CLEAR_SCAN_HISTORY' });
+      showSuccess('Historial limpiado', 'Historial de escaneos limpiado correctamente.');
+    }
+  };
+
+  const handleExportData = () => {
+    try {
+      const exportData = {
+        version: '1.0',
+        timestamp: Date.now(),
+        config: state.config,
+        libros: state.libros,
+        sagas: state.sagas,
+        scanHistory: state.scanHistory,
+        searchHistory: state.searchHistory,
+        puntosActuales: state.puntosActuales,
+        puntosGanados: state.puntosGanados,
+        librosCompradosConPuntos: state.librosCompradosConPuntos
+      };
+
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `biblioteca-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showSuccess('Datos exportados', 'Tus datos han sido exportados correctamente.');
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      showError('Error al exportar', 'Error al exportar los datos. Inténtalo de nuevo.');
+    }
+  };
+
+  const handleImportData = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const importedData = JSON.parse(event.target?.result as string);
+            
+            if (window.confirm('¿Estás seguro de que quieres importar estos datos? Esto sobrescribirá tus datos actuales.')) {
+              dispatch({ 
+                type: 'IMPORT_DATA', 
+                payload: {
+                  libros: importedData.libros || [],
+                  sagas: importedData.sagas || [],
+                  config: importedData.config || {},
+                  scanHistory: importedData.scanHistory || [],
+                  searchHistory: importedData.searchHistory || [],
+                  puntosActuales: importedData.puntosActuales || 0,
+                  puntosGanados: importedData.puntosGanados || 0,
+                  librosCompradosConPuntos: importedData.librosCompradosConPuntos || 0
+                }
+              });
+              showSuccess('Datos importados', 'Datos importados correctamente.');
+            }
+          } catch (error) {
+            console.error('Error importing data:', error);
+            showError('Error al importar', 'El archivo no es válido o está corrupto.');
+          }
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
   };
 
   const handleInputChange = (field: keyof typeof config, value: number) => {
@@ -448,6 +527,78 @@ const ConfigForm: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Historial de Escaneos */}
+        <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center space-x-2 mb-4">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <History className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            </div>
+            <h3 className="text-sm font-medium text-slate-900 dark:text-white">
+              Historial de Escaneos
+            </h3>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Escaneos registrados
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  {state.scanHistory.length} escaneos en el historial
+                </p>
+              </div>
+            </div>
+            
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={handleClearScanHistory}
+              className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
+            >
+              <History className="h-4 w-4" />
+              <span>Limpiar Historial de Escaneos</span>
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Exportar/Importar Datos */}
+        <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center space-x-2 mb-4">
+            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+              <Database className="h-4 w-4 text-green-600 dark:text-green-400" />
+            </div>
+            <h3 className="text-sm font-medium text-slate-900 dark:text-white">
+              Exportar/Importar Datos
+            </h3>
+          </div>
+          
+          <div className="space-y-3">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={handleExportData}
+              className="w-full px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
+            >
+              <Download className="h-4 w-4" />
+              <span>Exportar Datos</span>
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={handleImportData}
+              className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
+            >
+              <Upload className="h-4 w-4" />
+              <span>Importar Datos</span>
+            </motion.button>
           </div>
         </div>
 

@@ -16,7 +16,7 @@ import {
   Zap
 } from 'lucide-react';
 import { BrowserMultiFormatReader } from '@zxing/library';
-import { useAppState } from '../context/AppStateContext';
+import { useAppState } from '../context/FirebaseAppStateContext';
 import { Libro, BookData } from '../types';
 import { validateISBN, fetchBookData } from '../services/googleBooksAPI';
 import { useDialog } from '../hooks/useDialog';

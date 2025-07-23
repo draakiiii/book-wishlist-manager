@@ -1,188 +1,186 @@
-# Guardián de Compras - Versión 7.0
+# Guardian Compras - Gestor de Biblioteca Personal
 
-Una aplicación avanzada para gestionar tu biblioteca personal, con sistema de recompensas, seguimiento de lectura y herramientas avanzadas de gestión.
+Una aplicación React TypeScript moderna para gestionar tu biblioteca personal de libros, con sistema de autenticación Firebase y sincronización en la nube.
 
-## 🚀 Nuevas Características - Versión 7.0
+## 🚀 Características
 
-### 🔍 Búsqueda y Filtros Avanzados
-- **Búsqueda en tiempo real** con debounce para mejor rendimiento
-- **Filtros múltiples**: por autor, saga, género, idioma, editorial, calificación, páginas, precio
-- **Filtros por estado**: TBR, Historial, Wishlist, Actual
-- **Historial de búsquedas** con las últimas 20 consultas
-- **Búsqueda por ISBN, título, autor, editorial**
-- **Resultados en tiempo real** con contadores por categoría
+- **Sistema de Autenticación**: Registro, inicio de sesión y recuperación de contraseña
+- **Sincronización en la Nube**: Todos los datos se sincronizan automáticamente con Firebase
+- **Gestión de Libros**: Organiza tus libros por estado (leyendo, TBR, leído, etc.)
+- **Sistema de Sagas**: Agrupa libros en sagas y recibe notificaciones de completado
+- **Sistema de Puntos**: Gana puntos por completar libros y compra libros con ellos
+- **Modo Oscuro**: Interfaz adaptativa con tema claro/oscuro
+- **Responsive Design**: Funciona perfectamente en móvil y desktop
+- **Migración Automática**: Migra automáticamente datos de localStorage a Firebase
 
-### 📊 Estadísticas Avanzadas
-- **Dashboard completo** con métricas detalladas
-- **Gráficos interactivos**: líneas, barras, áreas, circulares
-- **Progreso mensual y anual** con visualizaciones
-- **Análisis de géneros y autores** más leídos
-- **Métricas de rendimiento** en tiempo real
-- **Tiempo promedio de lectura** calculado automáticamente
-- **Tasa de éxito de escaneos** y estadísticas de uso
+## 🛠️ Tecnologías
 
-### 💾 Exportación e Importación de Datos
-- **Múltiples formatos**: JSON, CSV, Excel
-- **Respaldo automático** con timestamps
-- **Importación inteligente** que detecta formatos automáticamente
-- **Migración de versiones** anteriores
-- **Resumen de datos** antes de importar
-- **Zona de peligro** para eliminación completa
-- **Historial de respaldos** con fechas
-
-### 📱 Escáner de Códigos de Barras Mejorado
-- **Linterna integrada** para escaneo en condiciones de poca luz
-- **Zoom digital** con controles precisos (1x - 5x)
-- **Historial de escaneos** con estadísticas detalladas
-- **Filtros por éxito/error** y búsqueda en historial
-- **Tasa de éxito** y métricas de rendimiento
-- **Interfaz mejorada** con controles táctiles
-- **Detección automática** de capacidades de cámara
-
-### ⚡ Mejoras en Performance
-- **Virtualización de listas** para mejor rendimiento
-- **Memoización inteligente** de componentes
-- **Debounce en búsquedas** para reducir carga
-- **Lazy loading** de componentes pesados
-- **Métricas de rendimiento** en tiempo real
-- **Optimización de re-renders** con React.memo
-- **Gestión eficiente de memoria**
-
-### 🎯 Gestión de Sagas Mejorada
-- **Detección automática** de sagas por nombre
-- **Contadores dinámicos** de libros por saga
-- **Notificaciones inteligentes** de completado
-- **Gestión de sagas huérfanas** automática
-- **Estadísticas detalladas** por saga
-- **Filtros por estado** de completado
-- **Importación/exportación** de datos de sagas
-
-### 📈 Historial de Escaneos
-- **Registro completo** de todos los escaneos
-- **Filtros avanzados** por éxito, fecha, ISBN
-- **Búsqueda en historial** con resultados en tiempo real
-- **Estadísticas detalladas** de uso
-- **Exportación** del historial completo
-- **Limpieza selectiva** de registros
-- **Métricas de rendimiento** del escáner
-
-## 🛠️ Tecnologías Utilizadas
-
-### Frontend
-- **React 19** con TypeScript
-- **Framer Motion** para animaciones
-- **Tailwind CSS** para estilos
-- **Lucide React** para iconos
-- **Recharts** para gráficos
-- **React Window** para virtualización
-
-### Escáner de Códigos
-- **@zxing/library** para decodificación
-- **MediaDevices API** para acceso a cámara
-- **Torch API** para control de linterna
-- **Zoom API** para zoom digital
-
-### Gestión de Datos
-- **File-Saver** para descarga de archivos
-- **PapaParse** para parsing CSV
-- **Date-fns** para manejo de fechas
-- **LocalStorage** para persistencia
-
-### Performance
-- **React.memo** para optimización
-- **useDebounce** para búsquedas
-- **React Intersection Observer** para lazy loading
-- **Performance API** para métricas
+- **Frontend**: React 18, TypeScript, Tailwind CSS
+- **Autenticación**: Firebase Authentication
+- **Base de Datos**: Firebase Firestore
+- **Analytics**: Firebase Analytics
+- **Animaciones**: Framer Motion
+- **Iconos**: Lucide React
 
 ## 📦 Instalación
 
-```bash
-# Clonar el repositorio
-git clone <repository-url>
-cd guardian-compras
+1. **Clona el repositorio**
+   ```bash
+   git clone <tu-repositorio>
+   cd book-wishlist-manager
+   ```
 
-# Instalar dependencias
-npm install
+2. **Instala las dependencias**
+   ```bash
+   npm install
+   ```
 
-# Iniciar en modo desarrollo
-npm start
+3. **Configura Firebase**
+   
+   a. Ve a [Firebase Console](https://console.firebase.google.com/)
+   
+   b. Crea un nuevo proyecto o selecciona uno existente
+   
+   c. Habilita Authentication:
+   - Ve a Authentication > Sign-in method
+   - Habilita "Email/Password"
+   - Habilita "Google" (opcional, pero recomendado)
+   
+   d. Habilita Firestore:
+      - Ve a Firestore Database
+      - Crea una base de datos en modo de prueba
+   
+   e. Obtén la configuración:
+      - Ve a Project Settings > General
+      - En "Your apps", crea una nueva app web
+      - Copia la configuración
 
-# Construir para producción
-npm run build
-```
+4. **Configuración de Firebase (Ya configurado)**
 
-## 🎮 Uso
+   La aplicación ya está configurada con Firebase. Si necesitas cambiar la configuración, edita `src/services/firebase.ts`:
+   ```javascript
+   const firebaseConfig = {
+     apiKey: "AIzaSyCNVULfkfb77peQh7Y_LEguqNOiWSAHF5w",
+     authDomain: "book-manager-1861b.firebaseapp.com",
+     projectId: "book-manager-1861b",
+     storageBucket: "book-manager-1861b.firebasestorage.app",
+     messagingSenderId: "899173432766",
+     appId: "1:899173432766:web:0ce14cfb20f0c2a2d94def",
+     measurementId: "G-WQ0RP6111V"
+   };
+   ```
 
-### Funciones Básicas
-1. **Agregar libros** a tu TBR (To Be Read)
-2. **Iniciar lectura** de un libro
-3. **Marcar como completado** para ganar puntos
-4. **Gestionar wishlist** para compras futuras
-5. **Seguir sagas** automáticamente
+5. **Configura las reglas de Firestore**
+   
+   En Firebase Console > Firestore Database > Rules, usa estas reglas:
+   ```javascript
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       // Los usuarios solo pueden acceder a sus propios datos
+       match /users/{userId} {
+         allow read, write: if request.auth != null && request.auth.uid == userId;
+         
+         // Subcolecciones del usuario
+         match /{document=**} {
+           allow read, write: if request.auth != null && request.auth.uid == userId;
+         }
+       }
+     }
+   }
+   ```
 
-### Funciones Avanzadas
-1. **Búsqueda avanzada** con múltiples filtros
-2. **Estadísticas detalladas** de tu lectura
-3. **Exportar/importar** todos tus datos
-4. **Escáner mejorado** con linterna y zoom
-5. **Historial completo** de escaneos
+6. **Ejecuta la aplicación**
+   ```bash
+   npm start
+   ```
 
-## 🔧 Configuración
+   La aplicación se abrirá en `http://localhost:3000`
 
-### Configuración del Escáner
-- **Preferencia de cámara**: Selecciona cámara frontal/trasera
-- **Linterna**: Activa/desactiva según necesidad
-- **Zoom**: Ajusta de 1x a 5x para mejor enfoque
-- **Historial**: Guarda todos los escaneos automáticamente
+## 🔧 Configuración de Vercel (Opcional)
 
-### Configuración de Búsqueda
-- **Debounce**: 300ms para búsquedas en tiempo real
-- **Historial**: Últimas 20 búsquedas guardadas
-- **Filtros**: Configurables por tipo de dato
-- **Resultados**: Ordenables por múltiples criterios
+Si quieres desplegar en Vercel:
 
-### Configuración de Exportación
-- **Formato por defecto**: JSON
-- **Respaldo automático**: Cada 30 segundos
-- **Compresión**: Opcional para archivos grandes
-- **Validación**: Verificación de integridad
+1. **Conecta tu repositorio a Vercel**
+2. **No necesitas configurar variables de entorno** (Firebase ya está configurado)
+3. **Deploy automático**
+   - Cada push a la rama principal se desplegará automáticamente
 
-## 📊 Métricas de Performance
+## 📱 Uso
 
-La aplicación incluye monitoreo en tiempo real de:
-- **Tiempo de renderizado**: Promedio y actual
-- **Uso de memoria**: Heap size y garbage collection
-- **Tiempo de respuesta**: Interacciones del usuario
-- **Carga de componentes**: Lazy loading metrics
+### Registro e Inicio de Sesión
+1. Al abrir la aplicación por primera vez, verás la pantalla de login
+2. Puedes registrarte con email y contraseña
+3. **O usar Google** para un acceso más rápido y seguro
+4. O iniciar sesión si ya tienes una cuenta
+5. Usa "¿Olvidaste tu contraseña?" para recuperar acceso
 
-## 🔒 Privacidad y Seguridad
+### Gestión de Libros
+- **Agregar libros**: Usa el botón "+" en cualquier sección
+- **Cambiar estado**: Haz clic en un libro y selecciona el nuevo estado
+- **Editar información**: Haz clic en un libro para editar detalles
+- **Eliminar**: Usa el botón de eliminar en la tarjeta del libro
 
-- **Datos locales**: Todo se almacena en tu dispositivo
-- **Sin tracking**: No se envían datos a servidores externos
-- **Exportación segura**: Archivos locales únicamente
-- **Permisos mínimos**: Solo cámara cuando se usa escáner
+### Sistema de Sagas
+- **Crear saga**: Agrega libros a una saga existente o crea una nueva
+- **Ver progreso**: Las sagas muestran el progreso de lectura
+- **Notificaciones**: Recibe notificaciones cuando completes una saga
 
-## 🐛 Solución de Problemas
+### Sistema de Puntos
+- **Ganar puntos**: Completa libros para ganar puntos
+- **Comprar libros**: Usa puntos para "comprar" libros de tu wishlist
+- **Ver estadísticas**: Consulta tu balance de puntos en el perfil
 
-### Escáner no funciona
-1. Verifica permisos de cámara
-2. Prueba cambiar de cámara
-3. Activa linterna si hay poca luz
-4. Ajusta zoom para mejor enfoque
+### Sincronización
+- **Automática**: Los datos se sincronizan automáticamente
+- **Estado**: El indicador verde muestra que todo está sincronizado
+- **Offline**: La app funciona offline y sincroniza cuando hay conexión
 
-### Búsqueda lenta
-1. Usa filtros específicos
-2. Reduce términos de búsqueda
-3. Verifica que no haya demasiados libros
-4. Reinicia la aplicación si es necesario
+## 🔄 Migración de Datos
 
-### Problemas de importación
-1. Verifica formato del archivo
-2. Asegúrate de que sea JSON o CSV válido
-3. Revisa la versión de exportación
-4. Haz respaldo antes de importar
+Si tienes datos en localStorage de una versión anterior:
 
-## 🤝 Contribución
+1. **Inicia sesión** con tu cuenta de Firebase
+2. **Los datos se migrarán automáticamente** en el primer inicio
+3. **Verifica** que todos tus libros y sagas estén presentes
+4. **Los datos locales se mantienen** como respaldo
+
+## 🎨 Personalización
+
+### Modo Oscuro
+- **Automático**: Se adapta a la preferencia del sistema
+- **Manual**: Cambia en el perfil de usuario
+- **Persistente**: Se recuerda entre sesiones
+
+### Configuración
+- **Puntos por libro**: Configura cuántos puntos ganas por completar un libro
+- **Puntos para comprar**: Configura cuántos puntos cuesta "comprar" un libro
+- **Notificaciones**: Controla las notificaciones de sagas completadas
+
+## 🚨 Solución de Problemas
+
+### Error de Build
+- Verifica que todas las variables de entorno estén configuradas
+- Asegúrate de que Firebase esté correctamente configurado
+- Revisa la consola del navegador para errores específicos
+
+### Problemas de Sincronización
+- Verifica tu conexión a internet
+- Asegúrate de estar autenticado
+- Revisa las reglas de Firestore
+
+### Datos No Aparecen
+- Verifica que hayas iniciado sesión
+- Comprueba que los datos se hayan migrado correctamente
+- Revisa la consola para errores de Firebase
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT.
+
+## 🤝 Contribuciones
+
+Las contribuciones son bienvenidas. Por favor:
 
 1. Fork el proyecto
 2. Crea una rama para tu feature
@@ -190,31 +188,15 @@ La aplicación incluye monitoreo en tiempo real de:
 4. Push a la rama
 5. Abre un Pull Request
 
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
-
-## 🆕 Changelog
-
-### v7.0.0
-- ✨ Búsqueda y filtros avanzados
-- 📊 Estadísticas avanzadas con gráficos
-- 💾 Exportación/importación de datos
-- 📱 Escáner mejorado con linterna y zoom
-- ⚡ Optimizaciones de performance
-- 🎯 Gestión de sagas mejorada
-- 📈 Historial de escaneos completo
-
-### v6.0.0
-- 🎨 Sistema de temas mejorado
-- 📱 Interfaz responsive
-- 🔧 Configuración avanzada
-- 📊 Progreso visual mejorado
-
 ## 📞 Soporte
 
-Para reportar bugs o solicitar features, por favor abre un issue en GitHub.
+Si tienes problemas o preguntas:
+
+1. Revisa la documentación de Firebase
+2. Consulta los logs de la consola del navegador
+3. Verifica la configuración de las variables de entorno
+4. Abre un issue en el repositorio
 
 ---
 
-**Guardián de Compras v7.0** - Tu compañero perfecto para gestionar tu biblioteca personal 🚀 
+¡Disfruta gestionando tu biblioteca personal! 📚✨ 

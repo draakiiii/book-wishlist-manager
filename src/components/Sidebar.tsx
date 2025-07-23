@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { X, Settings } from 'lucide-react';
 import ConfigForm from './ConfigForm';
-import { useAppState } from '../context/AppStateContext';
+import { useAppState } from '../context/FirebaseAppStateContext';
 
 interface SidebarProps {
   isOpen: boolean;

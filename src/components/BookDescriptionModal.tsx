@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, BookOpen, Clock, Star, Plus, Edit, Trash2 } from 'lucide-react';
 import { Libro, EstadoLibro, Lectura } from '../types';
-import { useAppState } from '../context/AppStateContext';
+import { useAppState } from '../context/FirebaseAppStateContext';
 
 interface BookDescriptionModalProps {
   book: Libro | null;

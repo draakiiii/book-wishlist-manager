@@ -4,7 +4,7 @@ import BookCard from './BookCard';
 import BookEditModal from './BookEditModal';
 import { motion } from 'framer-motion';
 import { BookOpen, Inbox } from 'lucide-react';
-import { useAppState } from '../context/AppStateContext';
+import { useAppState } from '../context/FirebaseAppStateContext';
 
 interface BookListProps {
   books: Libro[];
