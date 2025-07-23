@@ -309,6 +309,11 @@ function appReducer(state: AppState, action: Action): AppState {
     }
 
     case 'ADD_BOOK': {
+      console.log('AppStateContext: ADD_BOOK action triggered', { 
+        libro: action.payload,
+        currentLibrosCount: state.libros.length 
+      });
+      
       const nuevoLibro = {
         ...action.payload,
         id: Date.now(),
@@ -324,6 +329,12 @@ function appReducer(state: AppState, action: Action): AppState {
         ...state, 
         libros: [...state.libros, nuevoLibro] 
       };
+      
+      console.log('AppStateContext: New state after ADD_BOOK', { 
+        newLibrosCount: nuevoEstado.libros.length,
+        wishlistCount: nuevoEstado.libros.filter(l => l.estado === 'wishlist').length,
+        tbrCount: nuevoEstado.libros.filter(l => l.estado === 'tbr').length
+      });
       
       // Manejar saga si existe
       if (nuevoLibro.sagaName) {
@@ -1013,7 +1024,13 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
     if (isAuthenticated && user && !isLoading) {
       const saveToFirebase = async () => {
         try {
+          console.log('AppStateContext: Saving to Firebase', { 
+            librosCount: state.libros.length,
+            wishlistCount: state.libros.filter(l => l.estado === 'wishlist').length,
+            tbrCount: state.libros.filter(l => l.estado === 'tbr').length
+          });
           await DatabaseService.saveAppState(state);
+          console.log('AppStateContext: Successfully saved to Firebase');
         } catch (error) {
           console.error('Error saving to Firebase:', error);
         }
