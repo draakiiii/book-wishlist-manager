@@ -83,14 +83,26 @@ export class DatabaseService {
   static async loadAppState(): Promise<AppState | null> {
     try {
       const userDataRef = this.getUserDataRef();
+      console.log('DatabaseService.loadAppState: Loading from ref:', userDataRef.path);
+      
       const docSnap = await getDoc(userDataRef);
+      console.log('DatabaseService.loadAppState: Document exists:', docSnap.exists());
       
       if (docSnap.exists()) {
         const data = docSnap.data();
+        console.log('DatabaseService.loadAppState: Raw data from Firebase:', data);
+        
         // Remover campos de Firebase que no son parte del estado
         const { lastUpdated, version, ...appState } = data;
+        console.log('DatabaseService.loadAppState: Cleaned app state:', {
+          librosCount: appState.libros?.length || 0,
+          wishlistCount: appState.libros?.filter((l: any) => l.estado === 'wishlist').length || 0,
+          tbrCount: appState.libros?.filter((l: any) => l.estado === 'tbr').length || 0
+        });
+        
         return appState as AppState;
       }
+      console.log('DatabaseService.loadAppState: Document does not exist');
       return null;
     } catch (error) {
       console.error('Error loading app state:', error);

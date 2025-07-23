@@ -46,10 +46,14 @@ const initialState: AppState = {
 
 async function loadStateFromFirebase(): Promise<AppState | null> {
   try {
+    console.log('loadStateFromFirebase: Starting to load from Firebase');
     const firebaseState = await DatabaseService.loadAppState();
+    console.log('loadStateFromFirebase: Raw Firebase state:', firebaseState);
+    
     if (firebaseState) {
       // Migrar desde versión anterior si es necesario
       if (firebaseState.progreso !== undefined) {
+        console.log('loadStateFromFirebase: Migrating from old version');
         return migrateFromOldVersion(firebaseState);
       }
       
@@ -68,8 +72,15 @@ async function loadStateFromFirebase(): Promise<AppState | null> {
         librosCompradosConPuntos: firebaseState.librosCompradosConPuntos || 0,
       };
       
+      console.log('loadStateFromFirebase: Complete state after merge:', {
+        librosCount: completeState.libros.length,
+        wishlistCount: completeState.libros.filter(l => l.estado === 'wishlist').length,
+        tbrCount: completeState.libros.filter(l => l.estado === 'tbr').length
+      });
+      
       return completeState;
     }
+    console.log('loadStateFromFirebase: No Firebase state found, returning null');
     return null;
   } catch (error) {
     console.error('Error loading state from Firebase:', error);
