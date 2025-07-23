@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Search, Camera, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Clock, Search, Camera, Loader2, CheckCircle, AlertCircle, Barcode } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 import { Libro, BookData } from '../types';
 import { fetchBookData } from '../services/googleBooksAPI';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import ISBNInputModal from './ISBNInputModal';
 import BarcodeScannerModal from './BarcodeScannerModal';
+import BulkScanModal from './BulkScanModal';
 import DuplicateBookModal from './DuplicateBookModal';
 
 const TBRForm: React.FC = () => {
@@ -17,6 +18,7 @@ const TBRForm: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showISBNInput, setShowISBNInput] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [showBulkScanModal, setShowBulkScanModal] = useState(false);
   const [isLoadingBook, setIsLoadingBook] = useState(false);
   const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'found' | 'error'>('idle');
   const [scanMessage, setScanMessage] = useState('');
@@ -254,6 +256,16 @@ const TBRForm: React.FC = () => {
             >
               <Camera className="h-4 w-4 text-green-600 dark:text-green-400" />
             </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowBulkScanModal(true)}
+              className="p-2 bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-800/30 rounded-lg transition-colors duration-200"
+              title="Escaneo múltiple"
+            >
+              <Barcode className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            </motion.button>
           </div>
         </div>
 
@@ -335,6 +347,17 @@ const TBRForm: React.FC = () => {
         <BarcodeScannerModal
           onClose={() => setShowBarcodeScanner(false)}
           onScanSuccess={handleSearchResult}
+        />
+      )}
+
+      {showBulkScanModal && (
+        <BulkScanModal
+          isOpen={showBulkScanModal}
+          onClose={() => setShowBulkScanModal(false)}
+          onBooksAdded={(books) => {
+            // Los libros se agregarán automáticamente a través del contexto
+            setShowBulkScanModal(false);
+          }}
         />
       )}
 
