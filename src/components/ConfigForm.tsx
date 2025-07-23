@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Settings, Save, RotateCcw, Camera } from 'lucide-react';
+import { Settings, Save, RotateCcw, Camera, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 const ConfigForm: React.FC = () => {
   const { state, dispatch } = useAppState();
   const [config, setConfig] = useState(state.config);
   const [isEditing, setIsEditing] = useState(false);
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
+  const [isVerifyingCameras, setIsVerifyingCameras] = useState(false);
+  const [cameraVerificationStatus, setCameraVerificationStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +34,56 @@ const ConfigForm: React.FC = () => {
     setConfig(prev => ({ ...prev, [field]: Math.max(0, value) }));
   };
 
-  // Get available cameras
+  // Verify cameras and request permissions
+  const handleVerifyCameras = async () => {
+    setIsVerifyingCameras(true);
+    setCameraVerificationStatus('idle');
+    
+    try {
+      // Request camera permissions
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      });
+      
+      // Stop the stream immediately after getting permissions
+      stream.getTracks().forEach(track => track.stop());
+      
+      // Get available cameras
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      setAvailableCameras(videoDevices);
+      
+      setCameraVerificationStatus('success');
+      
+      if (videoDevices.length === 0) {
+        alert('No se encontraron cámaras disponibles en tu dispositivo.');
+      } else {
+        alert(`Se encontraron ${videoDevices.length} cámara(s) disponible(s).`);
+      }
+    } catch (error) {
+      console.error('Error verifying cameras:', error);
+      setCameraVerificationStatus('error');
+      
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          alert('Permiso de cámara denegado. Por favor, permite el acceso a la cámara en tu navegador.');
+        } else if (error.name === 'NotFoundError') {
+          alert('No se encontraron cámaras disponibles en tu dispositivo.');
+        } else {
+          alert(`Error al verificar cámaras: ${error.message}`);
+        }
+      } else {
+        alert('Error inesperado al verificar cámaras.');
+      }
+    } finally {
+      setIsVerifyingCameras(false);
+    }
+  };
+
+  // Get available cameras on component mount
   useEffect(() => {
     const getCameras = async () => {
       try {
@@ -72,6 +123,34 @@ const ConfigForm: React.FC = () => {
               <span>Editar</span>
             </motion.button>
           )}
+          
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleVerifyCameras}
+            disabled={isVerifyingCameras}
+            className="w-full sm:w-auto px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
+          >
+            {isVerifyingCameras ? (
+              <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+            ) : cameraVerificationStatus === 'success' ? (
+              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+            ) : cameraVerificationStatus === 'error' ? (
+              <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+            ) : (
+              <Camera className="h-3 w-3 sm:h-4 sm:w-4" />
+            )}
+            <span>
+              {isVerifyingCameras 
+                ? 'Verificando...' 
+                : cameraVerificationStatus === 'success' 
+                  ? 'Cámaras OK' 
+                  : cameraVerificationStatus === 'error' 
+                    ? 'Error Cámaras' 
+                    : 'Verificar Cámaras'
+              }
+            </span>
+          </motion.button>
           
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -212,16 +291,31 @@ const ConfigForm: React.FC = () => {
         </div>
 
         {/* Camera Configuration */}
-        {availableCameras.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="space-y-1.5 sm:space-y-2"
-          >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="space-y-1.5 sm:space-y-2"
+        >
+          <div className="flex items-center justify-between">
             <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
               Cámara Preferida para Escáner
             </label>
+            {cameraVerificationStatus === 'success' && (
+              <div className="flex items-center space-x-1 text-xs text-green-600 dark:text-green-400">
+                <CheckCircle className="h-3 w-3" />
+                <span>Verificada</span>
+              </div>
+            )}
+            {cameraVerificationStatus === 'error' && (
+              <div className="flex items-center space-x-1 text-xs text-red-600 dark:text-red-400">
+                <AlertCircle className="h-3 w-3" />
+                <span>Error</span>
+              </div>
+            )}
+          </div>
+          
+          {availableCameras.length > 0 ? (
             <div className="relative">
               <select
                 value={config.cameraPreference || 0}
@@ -239,11 +333,20 @@ const ConfigForm: React.FC = () => {
                 <Camera className="h-4 w-4 text-slate-500 dark:text-slate-400" />
               </div>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Cámara que se usará por defecto al escanear códigos de barras
-            </p>
-          </motion.div>
-        )}
+          ) : (
+            <div className="px-3 sm:px-4 py-2 sm:py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-sm flex items-center space-x-2">
+              <Camera className="h-4 w-4" />
+              <span>No hay cámaras disponibles. Haz clic en "Verificar Cámaras" para configurar.</span>
+            </div>
+          )}
+          
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {availableCameras.length > 0 
+              ? 'Cámara que se usará por defecto al escanear códigos de barras'
+              : 'Haz clic en "Verificar Cámaras" para solicitar permisos y detectar cámaras disponibles'
+            }
+          </p>
+        </motion.div>
 
         {/* Action Buttons */}
         {isEditing && (
@@ -317,22 +420,37 @@ const ConfigForm: React.FC = () => {
           </div>
           
           {/* Camera Configuration Display */}
-          {availableCameras.length > 0 && (
-            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-200 dark:border-slate-700">
-              <div className="flex items-center space-x-2 mb-2">
+          <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
                 <Camera className="h-3 w-3 text-slate-500 dark:text-slate-400" />
                 <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
                   Cámara Preferida
                 </span>
               </div>
-              <span className="text-xs sm:text-sm text-slate-900 dark:text-slate-100">
-                {config.cameraPreference !== undefined && config.cameraPreference < availableCameras.length
-                  ? `Cámara ${config.cameraPreference + 1}: ${availableCameras[config.cameraPreference]?.label || 'Cámara sin nombre'}`
-                  : 'Automática (mejor cámara disponible)'
-                }
-              </span>
+              {cameraVerificationStatus === 'success' && (
+                <div className="flex items-center space-x-1 text-xs text-green-600 dark:text-green-400">
+                  <CheckCircle className="h-3 w-3" />
+                  <span>Verificada</span>
+                </div>
+              )}
+              {cameraVerificationStatus === 'error' && (
+                <div className="flex items-center space-x-1 text-xs text-red-600 dark:text-red-400">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>Error</span>
+                </div>
+              )}
             </div>
-          )}
+            <span className="text-xs sm:text-sm text-slate-900 dark:text-slate-100">
+              {availableCameras.length > 0 
+                ? (config.cameraPreference !== undefined && config.cameraPreference < availableCameras.length
+                    ? `Cámara ${config.cameraPreference + 1}: ${availableCameras[config.cameraPreference]?.label || 'Cámara sin nombre'}`
+                    : 'Automática (mejor cámara disponible)'
+                  )
+                : 'No hay cámaras configuradas'
+              }
+            </span>
+          </div>
         </motion.div>
       )}
     </div>
