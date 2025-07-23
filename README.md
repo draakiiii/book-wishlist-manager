@@ -42,8 +42,9 @@ Una aplicación React TypeScript moderna para gestionar tu biblioteca personal d
    b. Crea un nuevo proyecto o selecciona uno existente
    
    c. Habilita Authentication:
-      - Ve a Authentication > Sign-in method
-      - Habilita "Email/Password"
+   - Ve a Authentication > Sign-in method
+   - Habilita "Email/Password"
+   - Habilita "Google" (opcional, pero recomendado)
    
    d. Habilita Firestore:
       - Ve a Firestore Database
@@ -110,8 +111,9 @@ Si quieres desplegar en Vercel:
 ### Registro e Inicio de Sesión
 1. Al abrir la aplicación por primera vez, verás la pantalla de login
 2. Puedes registrarte con email y contraseña
-3. O iniciar sesión si ya tienes una cuenta
-4. Usa "¿Olvidaste tu contraseña?" para recuperar acceso
+3. **O usar Google** para un acceso más rápido y seguro
+4. O iniciar sesión si ya tienes una cuenta
+5. Usa "¿Olvidaste tu contraseña?" para recuperar acceso
 
 ### Gestión de Libros
 - **Agregar libros**: Usa el botón "+" en cualquier sección

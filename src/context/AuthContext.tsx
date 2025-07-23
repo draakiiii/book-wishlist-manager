@@ -6,7 +6,9 @@ import {
   signUpUser, 
   signOutUser, 
   resetPassword, 
-  onAuthStateChange 
+  onAuthStateChange,
+  signInWithGoogle,
+  getGoogleRedirectResult
 } from '../services/firebase';
 
 interface AuthContextType {
@@ -14,6 +16,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName?: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 }
@@ -42,6 +45,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
     });
 
+    // Check for Google redirect result
+    const checkGoogleRedirect = async () => {
+      try {
+        await getGoogleRedirectResult();
+      } catch (error) {
+        console.error('Error checking Google redirect:', error);
+      }
+    };
+
+    checkGoogleRedirect();
+
     return unsubscribe;
   }, []);
 
@@ -69,6 +83,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const signInWithGoogleAuth = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const resetPassword = async (email: string) => {
     try {
       await resetPassword(email);
@@ -82,6 +104,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     signIn,
     signUp,
+    signInWithGoogle: signInWithGoogleAuth,
     signOut,
     resetPassword
   };
