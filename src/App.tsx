@@ -15,7 +15,9 @@ import {
   CheckCircle,
   XCircle,
   ShoppingCart,
-  Users
+  Users,
+  X,
+  Share2
 } from 'lucide-react';
 import CollapsibleConfig from './components/CollapsibleConfig';
 import CollapsibleSection from './components/CollapsibleSection';
@@ -36,6 +38,7 @@ import './App.css';
 const AppContent: React.FC = () => {
   const { state, dispatch } = useAppState();
   const [configSidebarOpen, setConfigSidebarOpen] = React.useState(false);
+  const [configModalOpen, setConfigModalOpen] = React.useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [statisticsModalOpen, setStatisticsModalOpen] = useState(false);
   const [exportImportModalOpen, setExportImportModalOpen] = useState(false);
@@ -191,7 +194,17 @@ const AppContent: React.FC = () => {
               {/* Settings button */}
               <button
                 onClick={() => setConfigSidebarOpen(true)}
-                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 lg:hidden"
+                title="Configuración"
+              >
+                <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+              </button>
+              
+              {/* Desktop Settings button - opens modal */}
+              <button
+                onClick={() => setConfigModalOpen(true)}
+                className="hidden lg:flex p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                title="Configuración"
               >
                 <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
               </button>
@@ -425,6 +438,46 @@ const AppContent: React.FC = () => {
         isOpen={configSidebarOpen} 
         onClose={() => setConfigSidebarOpen(false)} 
       />
+
+      {/* Desktop Configuration Modal */}
+      {configModalOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setConfigModalOpen(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center space-x-2">
+                <Settings className="h-5 w-5 text-primary-500" />
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Configuración
+                </h3>
+              </div>
+              <button
+                onClick={() => setConfigModalOpen(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
+              >
+                <X className="h-5 w-5 text-slate-500" />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <ConfigForm />
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
 
       {/* Advanced Search Modal */}
       <AdvancedSearch
