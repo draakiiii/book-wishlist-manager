@@ -1,7 +1,27 @@
 import React from 'react';
 import { Libro } from '../types';
 import { motion } from 'framer-motion';
-import { X, BookOpen, User, FileText, Star, Calendar, Building, Globe, Tag } from 'lucide-react';
+import { 
+  X, 
+  BookOpen, 
+  User, 
+  FileText, 
+  Star, 
+  Calendar, 
+  Building, 
+  Globe, 
+  Tag, 
+  Euro,
+  MapPin,
+  Book,
+  MessageSquare,
+  Users,
+  Clock,
+  ShoppingCart,
+  CheckCircle,
+  XCircle,
+  RotateCcw
+} from 'lucide-react';
 
 interface BookDescriptionModalProps {
   isOpen: boolean;
@@ -11,6 +31,47 @@ interface BookDescriptionModalProps {
 
 const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ isOpen, onClose, book }) => {
   if (!book) return null;
+
+  // Función para formatear fechas
+  const formatearFecha = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // Función para formatear precio
+  const formatearPrecio = (precio: number) => {
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(precio);
+  };
+
+  // Función para obtener el estado del libro
+  const getEstadoInfo = (estado: string) => {
+    switch (estado) {
+      case 'tbr':
+        return { label: 'Por leer', icon: <BookOpen className="h-4 w-4" />, color: 'text-warning-600' };
+      case 'leyendo':
+        return { label: 'Leyendo', icon: <BookOpen className="h-4 w-4" />, color: 'text-primary-600' };
+      case 'leido':
+        return { label: 'Leído', icon: <CheckCircle className="h-4 w-4" />, color: 'text-success-600' };
+      case 'abandonado':
+        return { label: 'Abandonado', icon: <XCircle className="h-4 w-4" />, color: 'text-red-600' };
+      case 'wishlist':
+        return { label: 'Lista de deseos', icon: <Star className="h-4 w-4" />, color: 'text-secondary-600' };
+      case 'comprado':
+        return { label: 'Comprado', icon: <ShoppingCart className="h-4 w-4" />, color: 'text-blue-600' };
+      case 'prestado':
+        return { label: 'Prestado', icon: <Users className="h-4 w-4" />, color: 'text-purple-600' };
+      default:
+        return { label: estado, icon: <BookOpen className="h-4 w-4" />, color: 'text-slate-600' };
+    }
+  };
+
+  const estadoInfo = getEstadoInfo(book.estado);
 
   return (
     <>
@@ -26,7 +87,7 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ isOpen, onC
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+            className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -48,16 +109,26 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ isOpen, onC
             </div>
 
             {/* Content */}
-            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-              {/* Title */}
-              <div>
+            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              {/* Title and Status */}
+              <div className="space-y-3">
                 <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-tight">
                   {book.titulo}
                 </h3>
+                
+                {/* Estado del libro */}
+                <div className="flex items-center space-x-2">
+                  <div className={`p-2 rounded-lg bg-slate-100 dark:bg-slate-700 ${estadoInfo.color}`}>
+                    {estadoInfo.icon}
+                  </div>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {estadoInfo.label}
+                  </span>
+                </div>
               </div>
 
               {/* Basic Info Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {book.autor && (
                   <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                     <User className="h-4 w-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
@@ -78,11 +149,21 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ isOpen, onC
                   </div>
                 )}
 
+                {book.paginasLeidas && (
+                  <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                    <FileText className="h-4 w-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Páginas Leídas</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">{book.paginasLeidas}</p>
+                    </div>
+                  </div>
+                )}
+
                 {book.publicacion && (
                   <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                     <Calendar className="h-4 w-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
                     <div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Año</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Año Publicación</p>
                       <p className="text-sm font-medium text-slate-900 dark:text-white">{book.publicacion}</p>
                     </div>
                   </div>
@@ -108,6 +189,46 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ isOpen, onC
                   </div>
                 )}
 
+                {book.genero && (
+                  <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                    <Tag className="h-4 w-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Género</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">{book.genero}</p>
+                    </div>
+                  </div>
+                )}
+
+                {book.formato && (
+                  <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                    <Book className="h-4 w-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Formato</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white capitalize">{book.formato}</p>
+                    </div>
+                  </div>
+                )}
+
+                {book.precio && (
+                  <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                    <Euro className="h-4 w-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Precio</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">{formatearPrecio(book.precio)}</p>
+                    </div>
+                  </div>
+                )}
+
+                {book.ubicacion && (
+                  <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                    <MapPin className="h-4 w-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Ubicación</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">{book.ubicacion}</p>
+                    </div>
+                  </div>
+                )}
+
                 {book.calificacion && (
                   <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                     <Star className="h-4 w-4 text-amber-500 flex-shrink-0" />
@@ -124,7 +245,91 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ isOpen, onC
                     </div>
                   </div>
                 )}
+
+                {book.sagaName && (
+                  <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                    <Star className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Saga</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">{book.sagaName}</p>
+                    </div>
+                  </div>
+                )}
+
+                {book.ordenLectura && (
+                  <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                    <RotateCcw className="h-4 w-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Orden en Saga</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">#{book.ordenLectura}</p>
+                    </div>
+                  </div>
+                )}
+
+                {book.prestado && book.prestadoA && (
+                  <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                    <Users className="h-4 w-4 text-purple-500 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Prestado a</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">{book.prestadoA}</p>
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* Fechas importantes */}
+              {(book.fechaAgregado || book.fechaInicio || book.fechaFin || book.fechaAbandonado || book.fechaCompra || book.fechaPrestamo) && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center space-x-2">
+                    <Clock className="h-4 w-4" />
+                    <span>Fechas Importantes</span>
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {book.fechaAgregado && (
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Calendar className="h-3 w-3 text-slate-400" />
+                        <span className="text-slate-600 dark:text-slate-400">Agregado:</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{formatearFecha(book.fechaAgregado)}</span>
+                      </div>
+                    )}
+                    {book.fechaInicio && (
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Calendar className="h-3 w-3 text-slate-400" />
+                        <span className="text-slate-600 dark:text-slate-400">Inicio lectura:</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{formatearFecha(book.fechaInicio)}</span>
+                      </div>
+                    )}
+                    {book.fechaFin && (
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Calendar className="h-3 w-3 text-slate-400" />
+                        <span className="text-slate-600 dark:text-slate-400">Fin lectura:</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{formatearFecha(book.fechaFin)}</span>
+                      </div>
+                    )}
+                    {book.fechaAbandonado && (
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Calendar className="h-3 w-3 text-slate-400" />
+                        <span className="text-slate-600 dark:text-slate-400">Abandonado:</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{formatearFecha(book.fechaAbandonado)}</span>
+                      </div>
+                    )}
+                    {book.fechaCompra && (
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Calendar className="h-3 w-3 text-slate-400" />
+                        <span className="text-slate-600 dark:text-slate-400">Comprado:</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{formatearFecha(book.fechaCompra)}</span>
+                      </div>
+                    )}
+                    {book.fechaPrestamo && (
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Calendar className="h-3 w-3 text-slate-400" />
+                        <span className="text-slate-600 dark:text-slate-400">Prestado:</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{formatearFecha(book.fechaPrestamo)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Categories */}
               {book.categorias && book.categorias.length > 0 && (
@@ -142,6 +347,21 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ isOpen, onC
                         {categoria}
                       </span>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes/Review */}
+              {book.notas && (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <MessageSquare className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Mi Reseña</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                      {book.notas}
+                    </p>
                   </div>
                 </div>
               )}
