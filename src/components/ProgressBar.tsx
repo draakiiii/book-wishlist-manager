@@ -226,9 +226,9 @@ const ProgressBar: React.FC = () => {
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-600 dark:text-slate-400">Tiempo total:</span>
+            <span className="text-slate-600 dark:text-slate-400">Valor comprado:</span>
             <span className="font-medium text-slate-900 dark:text-slate-100">
-              {formatearTiempo(tiempoTotalLectura)}
+              {formatearPrecio(valorLibrosComprados)}
             </span>
           </div>
         </div>
