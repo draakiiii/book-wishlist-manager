@@ -234,11 +234,11 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden"
+        className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
           <div className="flex items-center space-x-2">
             <Database className="h-5 w-5 text-primary-500" />
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -253,7 +253,7 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-80px)]">
           {/* Last Backup Info */}
           {state.lastBackup && (
             <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">

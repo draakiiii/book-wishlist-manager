@@ -32,6 +32,7 @@ import AdvancedSearch from './components/AdvancedSearch';
 import AdvancedStatistics from './components/AdvancedStatistics';
 import DataExportImport from './components/DataExportImport';
 import ScanHistory from './components/ScanHistory';
+import ConfigForm from './components/ConfigForm';
 
 import './App.css';
 
@@ -393,38 +394,6 @@ const AppContent: React.FC = () => {
                     <div className="text-xs text-slate-600 dark:text-slate-400">
                       Leyendo
                     </div>
-                  </div>
-                </div>
-                
-                <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3">
-                  <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Próximas Acciones
-                  </div>
-                  <div className="space-y-2 text-xs">
-                    {librosLeyendo.length > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span>Continuar leyendo</span>
-                        <span className="text-primary-600 dark:text-primary-400">
-                          {librosLeyendo.length} libro{librosLeyendo.length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    )}
-                    {librosPrestados.length > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span>Libros prestados</span>
-                        <span className="text-purple-600 dark:text-purple-400">
-                          {librosPrestados.length}
-                        </span>
-                      </div>
-                    )}
-                    {state.sagas.filter(s => !s.isComplete && s.count > 0).length > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span>Sagas activas</span>
-                        <span className="text-purple-600 dark:text-purple-400">
-                          {state.sagas.filter(s => !s.isComplete && s.count > 0).length}
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>

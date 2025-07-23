@@ -372,9 +372,10 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             onClick={handleSubmit}
-            className="fixed bottom-6 right-6 z-50 p-4 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-lg transition-colors duration-200"
+            className="fixed bottom-6 right-6 z-50 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-xl transition-all duration-200 flex items-center space-x-2 font-medium"
           >
-            <Save className="h-5 w-5" />
+            <Save className="h-4 w-4" />
+            <span>Guardar</span>
           </motion.button>
         )}
       </motion.div>
