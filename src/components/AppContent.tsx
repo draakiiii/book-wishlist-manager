@@ -127,23 +127,24 @@ const AppContent: React.FC = () => {
         animate={{ y: 0, opacity: 1 }}
         className="sticky top-0 z-50 glass-effect border-b border-white/20"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg">
-                <BookOpen className="h-6 w-6 text-white" />
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            {/* Left side - Logo and title */}
+            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+              <div className="p-1.5 sm:p-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg flex-shrink-0">
+                <BookOpen className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
               </div>
-              <h1 className="text-lg sm:text-xl font-display font-bold gradient-text">
+              <h1 className="text-base sm:text-lg lg:text-xl font-display font-bold gradient-text truncate">
                 Mi Biblioteca
               </h1>
-              {/* Sync status indicator */}
-              <div className="ml-4 flex items-center space-x-2">
+              {/* Sync status indicator - hidden on very small screens */}
+              <div className="hidden sm:flex ml-2 lg:ml-4 items-center space-x-2">
                 <div className={`w-2 h-2 rounded-full ${
                   syncStatus === 'idle' ? 'bg-green-500' : 
                   syncStatus === 'syncing' ? 'bg-yellow-500 animate-pulse' : 
                   'bg-red-500'
                 }`}></div>
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-xs lg:text-sm text-slate-500 dark:text-slate-400">
                   {syncStatus === 'idle' ? 'Sincronizado' : 
                    syncStatus === 'syncing' ? 'Sincronizando...' : 
                    'Error de sincronización'}
@@ -151,99 +152,113 @@ const AppContent: React.FC = () => {
               </div>
             </div>
             
-            <div className="flex items-center space-x-2">
-              {/* Advanced Features Buttons */}
-              <div className="flex items-center space-x-1 md:space-x-2">
+            {/* Right side - Action buttons */}
+            <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+              {/* Advanced Features Buttons - Responsive grid */}
+              <div className="hidden sm:flex items-center space-x-1 lg:space-x-2">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setSearchModalOpen(true)}
-                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  className="p-1.5 lg:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
                   title="Búsqueda Avanzada"
                 >
-                  <Search className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                  <Search className="h-4 w-4 lg:h-5 lg:w-5 text-slate-600 dark:text-slate-400" />
                 </motion.button>
                 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setStatisticsModalOpen(true)}
-                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  className="p-1.5 lg:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
                   title="Estadísticas Avanzadas"
                 >
-                  <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                  <BarChart3 className="h-4 w-4 lg:h-5 lg:w-5 text-slate-600 dark:text-slate-400" />
                 </motion.button>
                 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setExportImportModalOpen(true)}
-                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  className="p-1.5 lg:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
                   title="Exportar/Importar Datos"
                 >
-                  <Database className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                  <Database className="h-4 w-4 lg:h-5 lg:w-5 text-slate-600 dark:text-slate-400" />
                 </motion.button>
                 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setScanHistoryModalOpen(true)}
-                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  className="p-1.5 lg:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
                   title="Historial de Escaneos"
                 >
-                  <History className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                  <History className="h-4 w-4 lg:h-5 lg:w-5 text-slate-600 dark:text-slate-400" />
                 </motion.button>
 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setBulkScanModalOpen(true)}
-                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  className="p-1.5 lg:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
                   title="Escaneo Masivo"
                 >
-                  <Camera className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                  <Camera className="h-4 w-4 lg:h-5 lg:w-5 text-slate-600 dark:text-slate-400" />
+                </motion.button>
+              </div>
+              
+              {/* Mobile menu button for advanced features */}
+              <div className="sm:hidden">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setSearchModalOpen(true)}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  title="Búsqueda"
+                >
+                  <Search className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                 </motion.button>
               </div>
               
               {/* Settings button */}
               <button
                 onClick={() => setConfigSidebarOpen(true)}
-                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 lg:hidden"
+                className="p-1.5 sm:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 lg:hidden"
                 title="Configuración"
                 data-mobile-config="true"
               >
-                <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600 dark:text-slate-400" />
               </button>
               
               {/* Desktop Settings button - opens modal */}
               <button
                 onClick={() => setConfigModalOpen(true)}
-                className="hidden lg:flex p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                className="hidden lg:flex p-1.5 sm:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
                 title="Configuración"
                 data-desktop-config="true"
               >
-                <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600 dark:text-slate-400" />
               </button>
 
               {/* User menu */}
-              <div className="relative ml-2">
+              <div className="relative ml-1 sm:ml-2">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setUserProfileOpen(!userProfileOpen)}
-                  className="flex items-center space-x-2 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/10 dark:hover:bg-white/20 rounded-lg transition-colors"
+                  className="flex items-center space-x-1 sm:space-x-2 p-1.5 sm:p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/10 dark:hover:bg-white/20 rounded-lg transition-colors"
                 >
-                  <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
-                    <User className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center flex-shrink-0">
+                    <User className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-600 dark:text-indigo-400" />
                   </div>
-                  <span className="hidden sm:block text-sm font-medium">
+                  <span className="hidden md:block text-sm font-medium truncate max-w-24 lg:max-w-32">
                     {currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Usuario'}
                   </span>
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                 </motion.button>
                 
                 {userProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-80 z-50">
+                  <div className="absolute right-0 mt-2 w-72 sm:w-80 z-50">
                     <UserProfile />
                   </div>
                 )}
@@ -254,8 +269,8 @@ const AppContent: React.FC = () => {
       </motion.header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-3 sm:py-6 lg:py-8">
+        <div className="space-y-3 sm:space-y-4 lg:space-y-6 xl:space-y-8">
             
             {/* Configuration Section - Desktop Collapsible */}
             <div className="hidden lg:block">
@@ -372,34 +387,34 @@ const AppContent: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4"
           onClick={() => setConfigModalOpen(false)}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden"
+            className="relative bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between p-3 sm:p-4 border-b border-slate-200 dark:border-slate-700">
               <div className="flex items-center space-x-2">
-                <Settings className="h-5 w-5 text-primary-500" />
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-primary-500" />
+                <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
                   Configuración
                 </h3>
               </div>
               <button
                 onClick={() => setConfigModalOpen(false)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
+                className="p-1.5 sm:p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
               >
-                <X className="h-5 w-5 text-slate-500" />
+                <X className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500" />
               </button>
             </div>
             
             {/* Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+            <div className="p-3 sm:p-6 overflow-y-auto max-h-[calc(95vh-60px)] sm:max-h-[calc(90vh-80px)]">
               <ConfigForm />
             </div>
           </motion.div>
