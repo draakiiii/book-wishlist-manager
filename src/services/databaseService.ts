@@ -181,9 +181,28 @@ export class DatabaseService {
   static async updateLastLogin(): Promise<void> {
     try {
       const userDocRef = this.getUserDocRef();
-      await updateDoc(userDocRef, {
-        lastLogin: serverTimestamp()
-      });
+      const user = auth.currentUser;
+      
+      if (!user) {
+        throw new Error('No authenticated user found');
+      }
+
+      // Verificar si el documento existe
+      const docSnap = await getDoc(userDocRef);
+      
+      if (docSnap.exists()) {
+        // Si existe, actualizar
+        await updateDoc(userDocRef, {
+          lastLogin: serverTimestamp()
+        });
+      } else {
+        // Si no existe, crear el perfil
+        await setDoc(userDocRef, {
+          email: user.email,
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp()
+        });
+      }
     } catch (error) {
       console.error('Error updating last login:', error);
       throw error;
