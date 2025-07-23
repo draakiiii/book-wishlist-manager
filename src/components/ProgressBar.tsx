@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Target, BookOpen, TrendingUp, Calendar } from 'lucide-react';
+import { Target, BookOpen, TrendingUp, Calendar, Trophy } from 'lucide-react';
 
 const ProgressBar: React.FC = () => {
   const { state } = useAppState();
@@ -270,6 +270,44 @@ const ProgressBar: React.FC = () => {
           </div>
         </div>
       </motion.div>
+
+      {/* Sistema de Puntos */}
+      {config.sistemaPuntosHabilitado && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl p-3 sm:p-4 border border-yellow-200 dark:border-yellow-700"
+        >
+          <h4 className="text-xs sm:text-sm font-semibold text-yellow-900 dark:text-yellow-100 mb-2 sm:mb-3 flex items-center space-x-2">
+            <Trophy className="h-4 w-4" />
+            <span>Sistema de Puntos</span>
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-xs sm:text-sm">
+            <div className="flex justify-between">
+              <span className="text-yellow-700 dark:text-yellow-300">Puntos actuales:</span>
+              <span className="font-bold text-yellow-900 dark:text-yellow-100">
+                {state.puntosActuales}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-yellow-700 dark:text-yellow-300">Puntos ganados:</span>
+              <span className="font-medium text-yellow-900 dark:text-yellow-100">
+                {state.puntosGanados}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-yellow-700 dark:text-yellow-300">Libros comprados:</span>
+              <span className="font-medium text-yellow-900 dark:text-yellow-100">
+                {state.librosCompradosConPuntos}
+              </span>
+            </div>
+          </div>
+          <div className="mt-2 text-xs text-yellow-600 dark:text-yellow-400">
+            Necesitas {config.puntosParaComprar || 25} puntos para comprar un libro de tu wishlist
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };

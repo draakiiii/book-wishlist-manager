@@ -22,7 +22,13 @@ const initialState: AppState = {
     flashlightEnabled: false,
     zoomLevel: 1,
     datosAnonimos: false,
-    compartirEstadisticas: false
+    compartirEstadisticas: false,
+    // Configuración del sistema de puntos
+    sistemaPuntosHabilitado: true,
+    puntosPorLibro: 10,
+    puntosPorSaga: 50,
+    puntosPorPagina: 1,
+    puntosParaComprar: 25
   },
   libros: [],
   sagas: [],
@@ -30,7 +36,10 @@ const initialState: AppState = {
   darkMode: getInitialTheme(),
   scanHistory: [],
   searchHistory: [],
-
+  // Sistema de puntos
+  puntosActuales: 0,
+  puntosGanados: 0,
+  librosCompradosConPuntos: 0,
 };
 
 function loadStateFromStorage(): AppState | null {
@@ -53,7 +62,10 @@ function loadStateFromStorage(): AppState | null {
         sagas: parsedState.sagas || [],
         scanHistory: parsedState.scanHistory || [],
         searchHistory: parsedState.searchHistory || [],
-
+        // Sistema de puntos
+        puntosActuales: parsedState.puntosActuales || 0,
+        puntosGanados: parsedState.puntosGanados || 0,
+        librosCompradosConPuntos: parsedState.librosCompradosConPuntos || 0,
       };
       
       return completeState;
@@ -415,7 +427,36 @@ function appReducer(state: AppState, action: Action): AppState {
         }
       }
       
-      return estadoConSagas;
+      // Sistema de puntos - otorgar puntos por completar libro
+      let estadoFinal = estadoConSagas;
+      if (estadoFinal.config.sistemaPuntosHabilitado) {
+        let puntosGanados = 0;
+        const puntosPorLibro = estadoFinal.config.puntosPorLibro || 10;
+        const puntosPorPagina = estadoFinal.config.puntosPorPagina || 1;
+        
+        // Puntos por completar el libro
+        puntosGanados += puntosPorLibro;
+        
+        // Puntos por páginas leídas
+        const paginasLeidas = libro.paginasLeidas || libro.paginas || 0;
+        puntosGanados += paginasLeidas * puntosPorPagina;
+        
+        // Puntos por completar saga (si es el caso)
+        if (sagaAhoraCompleta && !sagaPreviaCompleta) {
+          const puntosPorSaga = estadoFinal.config.puntosPorSaga || 50;
+          puntosGanados += puntosPorSaga;
+        }
+        
+        if (puntosGanados > 0) {
+          estadoFinal = {
+            ...estadoFinal,
+            puntosActuales: estadoFinal.puntosActuales + puntosGanados,
+            puntosGanados: estadoFinal.puntosGanados + puntosGanados
+          };
+        }
+      }
+      
+      return estadoFinal;
     }
 
     case 'ABANDON_BOOK': {
@@ -660,7 +701,7 @@ function appReducer(state: AppState, action: Action): AppState {
     }
 
     case 'IMPORT_DATA': {
-      const { libros, sagas, config, scanHistory, searchHistory, lastBackup } = action.payload;
+      const { libros, sagas, config, scanHistory, searchHistory, lastBackup, puntosActuales, puntosGanados, librosCompradosConPuntos } = action.payload;
       
       let newState = { ...state };
       
@@ -686,6 +727,17 @@ function appReducer(state: AppState, action: Action): AppState {
       
       if (lastBackup) {
         newState.lastBackup = lastBackup;
+      }
+      
+      // Sistema de puntos
+      if (puntosActuales !== undefined) {
+        newState.puntosActuales = puntosActuales;
+      }
+      if (puntosGanados !== undefined) {
+        newState.puntosGanados = puntosGanados;
+      }
+      if (librosCompradosConPuntos !== undefined) {
+        newState.librosCompradosConPuntos = librosCompradosConPuntos;
       }
       
       return actualizarContadoresSagas(newState);
@@ -767,6 +819,60 @@ function appReducer(state: AppState, action: Action): AppState {
 
     case 'MIGRATE_FROM_OLD_VERSION':
       return migrateFromOldVersion(action.payload);
+
+    // Acciones del sistema de puntos
+    case 'GANAR_PUNTOS': {
+      const { cantidad, motivo } = action.payload;
+      return {
+        ...state,
+        puntosActuales: state.puntosActuales + cantidad,
+        puntosGanados: state.puntosGanados + cantidad
+      };
+    }
+
+    case 'GASTAR_PUNTOS': {
+      const { cantidad, motivo } = action.payload;
+      return {
+        ...state,
+        puntosActuales: Math.max(0, state.puntosActuales - cantidad)
+      };
+    }
+
+    case 'COMPRAR_LIBRO_CON_PUNTOS': {
+      const { libroId } = action.payload;
+      const libro = state.libros.find(l => l.id === libroId);
+      
+      if (!libro || !state.config.sistemaPuntosHabilitado) {
+        return state;
+      }
+
+      const puntosNecesarios = state.config.puntosParaComprar || 25;
+      
+      if (state.puntosActuales < puntosNecesarios) {
+        return state;
+      }
+
+      // Cambiar el estado del libro de 'wishlist' a 'tbr' (comprado y listo para leer)
+      const librosActualizados = state.libros.map(l => 
+        l.id === libroId ? agregarEstadoAlHistorial(l, 'tbr', `Comprado con ${puntosNecesarios} puntos`) : l
+      );
+
+      return {
+        ...state,
+        libros: librosActualizados,
+        puntosActuales: state.puntosActuales - puntosNecesarios,
+        librosCompradosConPuntos: state.librosCompradosConPuntos + 1
+      };
+    }
+
+    case 'RESETEAR_PUNTOS': {
+      return {
+        ...state,
+        puntosActuales: 0,
+        puntosGanados: 0,
+        librosCompradosConPuntos: 0
+      };
+    }
 
     default:
       return state;

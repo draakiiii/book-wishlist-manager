@@ -19,6 +19,8 @@ import { BrowserMultiFormatReader } from '@zxing/library';
 import { useAppState } from '../context/AppStateContext';
 import { Libro, BookData } from '../types';
 import { validateISBN, fetchBookData } from '../services/googleBooksAPI';
+import { useDialog } from '../hooks/useDialog';
+import Dialog from './Dialog';
 
 interface ScannedBook {
   id: number;
@@ -46,6 +48,7 @@ interface BulkScanModalProps {
 
 const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksAdded }) => {
   const { state, dispatch } = useAppState();
+  const { dialog, showError, showConfirm, hideDialog } = useDialog();
   const [scannedBooks, setScannedBooks] = useState<ScannedBook[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [editingBook, setEditingBook] = useState<number | null>(null);
@@ -183,14 +186,68 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
       setAvailableCameras(cameras);
 
       if (cameras.length === 0) {
-        addFeedback('error', 'No se encontraron cámaras disponibles');
+        showError(
+          'No hay cámaras disponibles',
+          'No se encontraron cámaras en tu dispositivo. Verifica que tengas una cámara conectada.'
+        );
         return;
       }
 
+      // Verificar si las cámaras han sido verificadas en configuración
+      const hasVerifiedCameras = cameras.some(camera => camera.label && camera.label !== '');
+      
+      if (!hasVerifiedCameras) {
+        showConfirm(
+          'Verificar cámaras',
+          'Para usar el escáner múltiple, primero debes verificar las cámaras disponibles en la configuración. ¿Quieres ir a la configuración ahora?',
+          () => {
+            // Cerrar el modal del escáner y abrir la configuración
+            onClose();
+            // Abrir configuración automáticamente
+            setTimeout(() => {
+              // Buscar y hacer clic en el botón de configuración apropiado
+              const isMobile = window.innerWidth < 768;
+              const configButton = document.querySelector(
+                isMobile ? '[data-mobile-config]' : '[data-desktop-config]'
+              ) as HTMLElement;
+              
+              if (configButton) {
+                configButton.click();
+              } else {
+                // Fallback: buscar cualquier botón de configuración
+                const fallbackButton = document.querySelector('[data-config-button]') as HTMLElement;
+                if (fallbackButton) {
+                  fallbackButton.click();
+                }
+              }
+            }, 100);
+          },
+          () => {
+            // Continuar sin verificar (usar la primera cámara disponible)
+            continueInitialization(cameras);
+          },
+          'Ir a Configuración',
+          'Continuar sin verificar'
+        );
+        return;
+      }
+
+      continueInitialization(cameras);
+    } catch (error) {
+      console.error('Error initializing scanner:', error);
+      showError(
+        'Error al inicializar el escáner',
+        'No se pudo acceder a la cámara. Verifica los permisos de cámara en tu navegador.'
+      );
+    }
+  };
+
+  const continueInitialization = async (cameras: MediaDeviceInfo[]) => {
+    try {
       const bestCameraIndex = findBestCamera(cameras);
       setCurrentCamera(bestCameraIndex);
 
-      // Request camera permissions
+      // Request camera permissions with specific device
       await navigator.mediaDevices.getUserMedia({ 
         video: { 
           deviceId: cameras[bestCameraIndex].deviceId,
@@ -202,8 +259,11 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
       setIsInitialized(true);
       addFeedback('success', 'Escáner inicializado correctamente', 2000);
     } catch (error) {
-      console.error('Error initializing scanner:', error);
-      addFeedback('error', 'Error al inicializar el escáner');
+      console.error('Error continuing initialization:', error);
+      showError(
+        'Error al acceder a la cámara',
+        'No se pudo obtener acceso a la cámara. Verifica que hayas dado permisos de cámara al navegador.'
+      );
     }
   };
 
@@ -543,13 +603,14 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
   if (!isOpen) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
-    >
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -918,6 +979,22 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
         </div>
       </motion.div>
     </motion.div>
+
+    {/* Dialog for camera verification */}
+    {dialog && (
+      <Dialog
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        onConfirm={dialog.onConfirm}
+        onCancel={dialog.onCancel}
+        onClose={hideDialog}
+        confirmText={dialog.confirmText}
+        cancelText={dialog.cancelText}
+      />
+    )}
+  </>
   );
 };
 

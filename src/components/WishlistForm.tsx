@@ -9,7 +9,11 @@ import ISBNInputModal from './ISBNInputModal';
 import BarcodeScannerModal from './BarcodeScannerModal';
 import DuplicateBookModal from './DuplicateBookModal';
 
-const WishlistForm: React.FC = () => {
+interface WishlistFormProps {
+  onOpenConfig?: () => void;
+}
+
+const WishlistForm: React.FC<WishlistFormProps> = ({ onOpenConfig }) => {
   const { state, dispatch } = useAppState();
   const [titulo, setTitulo] = useState('');
   const [autor, setAutor] = useState('');
@@ -335,6 +339,7 @@ const WishlistForm: React.FC = () => {
         <BarcodeScannerModal
           onClose={() => setShowBarcodeScanner(false)}
           onScanSuccess={handleSearchResult}
+          onOpenConfig={onOpenConfig}
         />
       )}
 

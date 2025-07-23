@@ -50,7 +50,10 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
         scanHistory: state.scanHistory,
         searchHistory: state.searchHistory,
         lastBackup: state.lastBackup,
-
+        // Sistema de puntos
+        puntosActuales: state.puntosActuales,
+        puntosGanados: state.puntosGanados,
+        librosCompradosConPuntos: state.librosCompradosConPuntos,
       };
 
       const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss', { locale: es });
@@ -175,7 +178,11 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
         payload: { 
           libros, 
           sagas, 
-          config 
+          config,
+          // Sistema de puntos
+          puntosActuales: parsedData.puntosActuales || 0,
+          puntosGanados: parsedData.puntosGanados || 0,
+          librosCompradosConPuntos: parsedData.librosCompradosConPuntos || 0,
         } 
       });
 
@@ -391,6 +398,22 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
                 <span className="text-slate-600 dark:text-slate-400">Sagas:</span>
                 <span className="ml-2 font-medium text-slate-900 dark:text-white">{state.sagas.length}</span>
               </div>
+              {state.config.sistemaPuntosHabilitado && (
+                <>
+                  <div>
+                    <span className="text-slate-600 dark:text-slate-400">Puntos Actuales:</span>
+                    <span className="ml-2 font-medium text-slate-900 dark:text-white">{state.puntosActuales}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-600 dark:text-slate-400">Puntos Ganados:</span>
+                    <span className="ml-2 font-medium text-slate-900 dark:text-white">{state.puntosGanados}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-600 dark:text-slate-400">Libros Comprados con Puntos:</span>
+                    <span className="ml-2 font-medium text-slate-900 dark:text-white">{state.librosCompradosConPuntos}</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

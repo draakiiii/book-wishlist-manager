@@ -256,6 +256,53 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
             </motion.div>
           </div>
 
+
+          {/* Sistema de Puntos */}
+          {state.config.sistemaPuntosHabilitado && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.65 }}
+              className="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl p-6 shadow-lg border border-yellow-200 dark:border-yellow-600"
+            >
+              <h4 className="text-lg font-semibold text-yellow-900 dark:text-yellow-100 mb-4 flex items-center space-x-2">
+                <Award className="h-5 w-5 text-yellow-600" />
+                <span>Sistema de Puntos</span>
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300">Puntos Actuales</p>
+                  <p className="text-lg font-semibold text-yellow-900 dark:text-yellow-100">
+                    {state.puntosActuales}
+                  </p>
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400">disponibles</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300">Puntos Ganados</p>
+                  <p className="text-lg font-semibold text-yellow-900 dark:text-yellow-100">
+                    {state.puntosGanados}
+                  </p>
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400">total</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300">Libros Comprados</p>
+                  <p className="text-lg font-semibold text-yellow-900 dark:text-yellow-100">
+                    {state.librosCompradosConPuntos}
+                  </p>
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400">con puntos</p>
+                </div>
+              </div>
+              <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <strong>Configuración actual:</strong> {state.config.puntosPorLibro || 10} pts/libro, {state.config.puntosPorSaga || 50} pts/saga, {state.config.puntosPorPagina || 1} pt/página
+                </p>
+                <p className="text-sm text-yellow-800 dark:text-yellow-200 mt-1">
+                  <strong>Costo de compra:</strong> {state.config.puntosParaComprar || 25} puntos por libro
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           {/* Libros Prestados Detalle */}
           {statistics.librosPrestados > 0 && (
             <motion.div
@@ -295,6 +342,7 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
                     +{statistics.librosPrestados - 5} más libros prestados
                   </div>
                 )}
+
               </div>
             </motion.div>
           )}
