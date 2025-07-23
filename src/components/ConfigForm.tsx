@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Settings, Save, RotateCcw, Camera, CheckCircle, AlertCircle, Loader2, BookOpen, Target, Bell } from 'lucide-react';
+import { Settings, Save, RotateCcw, Camera, CheckCircle, AlertCircle, Loader2, Target, Bell } from 'lucide-react';
 
 const ConfigForm: React.FC = () => {
   const { state, dispatch } = useAppState();
@@ -289,47 +289,6 @@ const ConfigForm: React.FC = () => {
           </div>
           
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Linterna automática
-                </p>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Activar linterna automáticamente al escanear
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={config.flashlightEnabled || false}
-                  onChange={(e) => handleBooleanChange('flashlightEnabled', e.target.checked)}
-                  disabled={!isEditing}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-purple-600 disabled:opacity-50"></div>
-              </label>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Nivel de zoom
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="3"
-                step="0.1"
-                value={config.zoomLevel || 1}
-                onChange={(e) => handleInputChange('zoomLevel', parseFloat(e.target.value))}
-                disabled={!isEditing}
-                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 disabled:opacity-50"
-              />
-              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-1">
-                <span>1x</span>
-                <span>2x</span>
-                <span>3x</span>
-              </div>
-            </div>
             
             <motion.button
               whileHover={{ scale: 1.02 }}
