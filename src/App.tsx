@@ -12,10 +12,10 @@ import {
   Search,
   BarChart3,
   Database,
-  History,
-  Zap
+  History
 } from 'lucide-react';
 import CollapsibleConfig from './components/CollapsibleConfig';
+import CollapsibleSection from './components/CollapsibleSection';
 import Sidebar from './components/Sidebar';
 import ProgressBar from './components/ProgressBar';
 import WishlistForm from './components/WishlistForm';
@@ -176,6 +176,8 @@ const AppContent: React.FC = () => {
                 </motion.button>
               </div>
               
+
+              
               {/* Settings button */}
               <button
                 onClick={() => setConfigSidebarOpen(true)}
@@ -203,169 +205,98 @@ const AppContent: React.FC = () => {
 
 
             {/* Progress Section */}
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+            <CollapsibleSection
+              title="Bóveda de Recompensas"
+              icon={<Wallet className="h-5 w-5" />}
+              iconBgColor="bg-success-100 dark:bg-success-900/30"
+              iconColor="text-success-600 dark:text-success-400"
             >
-              <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-success-100 dark:bg-success-900/30 rounded-lg">
-                    <Wallet className="h-5 w-5 text-success-600 dark:text-success-400" />
-                  </div>
-                  <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
-                    Bóveda de Recompensas
-                  </h2>
-                </div>
-              </div>
-              <div className="p-4 sm:p-6">
-                <ProgressBar />
-              </div>
-            </motion.section>
+              <ProgressBar />
+            </CollapsibleSection>
 
             {/* Wishlist Section */}
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+            <CollapsibleSection
+              title="Lista de Deseos"
+              icon={<Heart className="h-5 w-5" />}
+              iconBgColor="bg-secondary-100 dark:bg-secondary-900/30"
+              iconColor="text-secondary-600 dark:text-secondary-400"
             >
-              <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-secondary-100 dark:bg-secondary-900/30 rounded-lg">
-                    <Heart className="h-5 w-5 text-secondary-600 dark:text-secondary-400" />
-                  </div>
-                  <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
-                    Lista de Deseos
-                  </h2>
-                </div>
-              </div>
-              <div className="p-4 sm:p-6">
-                <WishlistForm />
-                <div className="mt-4 sm:mt-6">
-                  <BookList 
-                    books={state.wishlist}
-                    type="wishlist"
-                    emptyMessage="Tu lista de deseos está vacía."
-                  />
-                </div>
-              </div>
-            </motion.section>
-
-            {/* TBR Section */}
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
-            >
-              <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-warning-100 dark:bg-warning-900/30 rounded-lg">
-                    <Clock className="h-5 w-5 text-warning-600 dark:text-warning-400" />
-                  </div>
-                  <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
-                    Pila de Lectura (TBR)
-                  </h2>
-                </div>
-              </div>
-              <div className="p-4 sm:p-6">
-                <TBRForm />
-                <div className="mt-4 sm:mt-6">
-                  <BookList 
-                    books={state.tbr}
-                    type="tbr"
-                    emptyMessage="Tu pila está vacía."
-                  />
-                </div>
-              </div>
-            </motion.section>
-
-            {/* History Section */}
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
-            >
-              <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                    <Trophy className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
-                    Historial de Lectura
-                  </h2>
-                </div>
-              </div>
-              <div className="p-4 sm:p-6">
+              <WishlistForm />
+              <div className="mt-4 sm:mt-6">
                 <BookList 
-                  books={state.historial}
-                  type="historial"
-                  emptyMessage="Aún no has terminado ninguno."
+                  books={state.wishlist}
+                  type="wishlist"
+                  emptyMessage="Tu lista de deseos está vacía."
                 />
               </div>
-            </motion.section>
+            </CollapsibleSection>
+
+            {/* TBR Section */}
+            <CollapsibleSection
+              title="Pila de Lectura (TBR)"
+              icon={<Clock className="h-5 w-5" />}
+              iconBgColor="bg-warning-100 dark:bg-warning-900/30"
+              iconColor="text-warning-600 dark:text-warning-400"
+            >
+              <TBRForm />
+              <div className="mt-4 sm:mt-6">
+                <BookList 
+                  books={state.tbr}
+                  type="tbr"
+                  emptyMessage="Tu pila está vacía."
+                />
+              </div>
+            </CollapsibleSection>
+
+            {/* History Section */}
+            <CollapsibleSection
+              title="Historial de Lectura"
+              icon={<Trophy className="h-5 w-5" />}
+              iconBgColor="bg-amber-100 dark:bg-amber-900/30"
+              iconColor="text-amber-600 dark:text-amber-400"
+            >
+              <BookList 
+                books={state.historial}
+                type="historial"
+                emptyMessage="Aún no has terminado ninguno."
+              />
+            </CollapsibleSection>
 
             {/* Sagas Section */}
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+            <CollapsibleSection
+              title="Mis Sagas"
+              icon={<Trophy className="h-5 w-5" />}
+              iconBgColor="bg-purple-100 dark:bg-purple-900/30"
+              iconColor="text-purple-600 dark:text-purple-400"
             >
-              <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                    <Trophy className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
-                    Mis Sagas
-                  </h2>
-                </div>
-              </div>
-              <div className="p-4 sm:p-6">
-                <SagaList />
-              </div>
-            </motion.section>
+              <SagaList />
+            </CollapsibleSection>
           </div>
 
           {/* Right Column - Current Book */}
           <div className="lg:col-span-1">
-            <motion.section
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 }}
-              className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden lg:sticky lg:top-24"
+            <CollapsibleSection
+              title="Libro Actual"
+              icon={<BookOpen className="h-5 w-5" />}
+              iconBgColor="bg-primary-100 dark:bg-primary-900/30"
+              iconColor="text-primary-600 dark:text-primary-400"
+              className="lg:sticky lg:top-24"
             >
-              <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-                    <BookOpen className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-                  </div>
-                  <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
-                    Libro Actual
-                  </h2>
+              {state.librosActuales.length > 0 ? (
+                <BookList
+                  books={state.librosActuales}
+                  type="actual"
+                  emptyMessage=""
+                />
+              ) : (
+                <div className="text-center py-6 sm:py-8">
+                  <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-slate-400 mx-auto mb-3 sm:mb-4" />
+                  <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
+                    Elige un libro de tu pila para empezar.
+                  </p>
                 </div>
-              </div>
-              <div className="p-4 sm:p-6">
-                        {state.librosActuales.length > 0 ? (
-          <BookList
-            books={state.librosActuales}
-                    type="actual"
-                    emptyMessage=""
-                  />
-                ) : (
-                  <div className="text-center py-6 sm:py-8">
-                    <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-slate-400 mx-auto mb-3 sm:mb-4" />
-                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-                      Elige un libro de tu pila para empezar.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </motion.section>
+              )}
+            </CollapsibleSection>
           </div>
         </div>
       </main>
