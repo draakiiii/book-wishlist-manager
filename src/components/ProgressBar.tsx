@@ -13,7 +13,20 @@ const ProgressBar: React.FC = () => {
   
   // Calcular valor total de la colección
   const valorTotalColeccion = libros.reduce((total, libro) => total + (libro.precio || 0), 0);
-  const valorLibrosComprados = libros.filter(l => l.estado === 'comprado').reduce((total, libro) => total + (libro.precio || 0), 0);
+  
+  // Calcular valor de libros comprados - incluir también libros con precio aunque no estén en estado 'comprado'
+  const librosConPrecio = libros.filter(l => l.precio && l.precio > 0);
+  const valorLibrosComprados = librosConPrecio.reduce((total, libro) => total + (libro.precio || 0), 0);
+  
+  // Debug: mostrar información en consola
+  console.log('Debug valores:', {
+    totalLibros: libros.length,
+    librosConPrecio: librosConPrecio.length,
+    librosComprados: libros.filter(l => l.estado === 'comprado').length,
+    valorTotalColeccion,
+    valorLibrosComprados,
+    librosConPrecioDetalle: librosConPrecio.map(l => ({ titulo: l.titulo, precio: l.precio, estado: l.estado }))
+  });
   
   // Objetivos anuales
   const objetivoLibros = config.objetivoLecturaAnual || 12;
