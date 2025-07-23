@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { X, Camera, CameraOff, RotateCcw, AlertCircle, CheckCircle, Loader2, Zap } from 'lucide-react';
 import { BrowserMultiFormatReader } from '@zxing/library';
 import { useAppState } from '../context/AppStateContext';
+import { fetchBookData } from '../services/googleBooksAPI';
 
 interface BarcodeScannerModalProps {
   onClose: () => void;
@@ -262,13 +263,29 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
             const existingBook = allBooks.find(book => book.isbn === scannedCode);
             
             if (state.config.scanHistoryEnabled) {
+              // If book not found in local lists, try to fetch from API
+              let titulo = existingBook?.titulo;
+              let autor = existingBook?.autor;
+              
+              if (!titulo && !autor && validateISBN(scannedCode)) {
+                try {
+                  const bookData = await fetchBookData(scannedCode);
+                  if (bookData) {
+                    titulo = bookData.titulo;
+                    autor = bookData.autor;
+                  }
+                } catch (error) {
+                  console.log('Could not fetch book data from API:', error);
+                }
+              }
+              
               dispatch({
                 type: 'ADD_SCAN_HISTORY',
                 payload: {
                   id: Date.now(),
                   isbn: scannedCode,
-                  titulo: existingBook?.titulo,
-                  autor: existingBook?.autor,
+                  titulo: titulo,
+                  autor: autor,
                   timestamp: Date.now(),
                   success: validateISBN(scannedCode),
                   errorMessage: validateISBN(scannedCode) ? undefined : 'ISBN inválido'
