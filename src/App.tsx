@@ -295,9 +295,6 @@ const AppContent: React.FC = () => {
             >
               <SagaList />
             </CollapsibleSection>
-          </div>
-
-
         </div>
       </main>
       
