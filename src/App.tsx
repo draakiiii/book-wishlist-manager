@@ -39,7 +39,7 @@ import './App.css';
 const AppContent: React.FC = () => {
   const { state, dispatch } = useAppState();
   const [configSidebarOpen, setConfigSidebarOpen] = React.useState(false);
-  const [configModalOpen, setConfigModalOpen] = React.useState(false);
+  const [configModalOpen, setConfigModalOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [statisticsModalOpen, setStatisticsModalOpen] = useState(false);
   const [exportImportModalOpen, setExportImportModalOpen] = useState(false);
@@ -92,7 +92,8 @@ const AppContent: React.FC = () => {
   const librosAbandonados = state.libros.filter(libro => libro.estado === 'abandonado');
   const librosWishlist = state.libros.filter(libro => libro.estado === 'wishlist');
 
-  const librosPrestados = state.libros.filter(libro => libro.estado === 'prestado');
+  // Libros prestados (para mostrar en resumen, pero no como sección separada)
+  const librosPrestados = state.libros.filter(libro => libro.prestado === true);
 
   return (
     <div className="theme-transition min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
@@ -287,20 +288,6 @@ const AppContent: React.FC = () => {
             </CollapsibleSection>
 
 
-
-            {/* Lent Books Section */}
-            <CollapsibleSection
-              title="Libros Prestados"
-              icon={<Users className="h-5 w-5" />}
-              iconBgColor="bg-purple-100 dark:bg-purple-900/30"
-              iconColor="text-purple-600 dark:text-purple-400"
-            >
-              <BookList 
-                books={librosPrestados}
-                type="prestado"
-                emptyMessage="No tienes libros prestados."
-              />
-            </CollapsibleSection>
 
             {/* Sagas Section */}
             <CollapsibleSection

@@ -1,103 +1,147 @@
 import React, { useState } from 'react';
-import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Clock, Plus, Search, BookOpen, Loader2, CheckCircle, AlertCircle, Camera, Barcode } from 'lucide-react';
+import { Clock, Search, Camera, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { useAppState } from '../context/AppStateContext';
+import { Libro, BookData } from '../types';
+import { fetchBookData } from '../services/googleBooksAPI';
+import BookTitleAutocomplete from './BookTitleAutocomplete';
 import ISBNInputModal from './ISBNInputModal';
 import BarcodeScannerModal from './BarcodeScannerModal';
-import BulkScanModal from './BulkScanModal';
-import SagaAutocomplete from './SagaAutocomplete';
-import BookTitleAutocomplete from './BookTitleAutocomplete';
-import { fetchBookData, validateISBN } from '../services/googleBooksAPI';
-import { BookData, Libro } from '../types';
+import DuplicateBookModal from './DuplicateBookModal';
 
 const TBRForm: React.FC = () => {
-  const { dispatch } = useAppState();
+  const { state, dispatch } = useAppState();
   const [titulo, setTitulo] = useState('');
   const [autor, setAutor] = useState('');
   const [paginas, setPaginas] = useState('');
-  const [sagaName, setSagaName] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [showISBNInput, setShowISBNInput] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
-  const [showBulkScan, setShowBulkScan] = useState(false);
   const [isLoadingBook, setIsLoadingBook] = useState(false);
   const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'found' | 'error'>('idle');
   const [scanMessage, setScanMessage] = useState('');
   const [isBookFromScan, setIsBookFromScan] = useState(false);
   const [selectedBookData, setSelectedBookData] = useState<BookData | null>(null);
+  
+  // Estados para el modal de duplicados
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateBook, setDuplicateBook] = useState<Libro | null>(null);
+  const [pendingBookData, setPendingBookData] = useState<BookData | null>(null);
+
+  const validateISBN = (isbn: string): boolean => {
+    const cleanISBN = isbn.replace(/[-\s]/g, '');
+    return cleanISBN.length === 10 || cleanISBN.length === 13;
+  };
+
+  const checkForDuplicate = (bookData: BookData): Libro | null => {
+    // Buscar por ISBN primero
+    if (bookData.isbn) {
+      const existingByISBN = state.libros.find(libro => 
+        libro.isbn === bookData.isbn
+      );
+      if (existingByISBN) return existingByISBN;
+    }
+    
+    // Buscar por título y autor
+    const existingByTitle = state.libros.find(libro => 
+      libro.titulo.toLowerCase() === bookData.titulo.toLowerCase() &&
+      (!bookData.autor || !libro.autor || 
+       libro.autor.toLowerCase() === bookData.autor.toLowerCase())
+    );
+    
+    return existingByTitle || null;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (titulo.trim()) {
-      let nuevoLibro: Libro;
-      
-      // Si tenemos datos completos del libro seleccionado, usarlos
-      if (selectedBookData) {
-        nuevoLibro = {
-          id: Date.now(),
-          titulo: selectedBookData.titulo,
-          autor: selectedBookData.autor,
-          paginas: selectedBookData.paginas,
-          isbn: selectedBookData.isbn,
-          publicacion: selectedBookData.publicacion,
-          editorial: selectedBookData.editorial,
-          descripcion: selectedBookData.descripcion,
-          categorias: selectedBookData.categorias,
-          idioma: selectedBookData.idioma,
-          calificacion: selectedBookData.calificacion,
-          numCalificaciones: selectedBookData.numCalificaciones,
-          genero: selectedBookData.genero,
-          formato: selectedBookData.formato,
-          precio: selectedBookData.precio,
-          sagaName: sagaName || undefined,
-          estado: 'tbr',
-          historialEstados: [{
-            estado: 'tbr',
-            fecha: Date.now()
-          }],
-          lecturas: []
-        };
-      } else {
-        // Si no hay datos completos, usar los campos del formulario
-        nuevoLibro = {
-          id: Date.now(),
-          titulo: titulo.trim(),
-          autor: autor.trim() || undefined,
-          paginas: paginas ? parseInt(paginas) : undefined,
-          sagaName: sagaName || undefined,
-          estado: 'tbr',
-          historialEstados: [{
-            estado: 'tbr',
-            fecha: Date.now()
-          }],
-          lecturas: []
-        };
-      }
-
-      dispatch({ type: 'ADD_BOOK', payload: nuevoLibro });
-      
-      // Reset form
-      setTitulo('');
-      setAutor('');
-      setPaginas('');
-      setSagaName('');
-      setIsExpanded(false);
-      setScanStatus('idle');
-      setScanMessage('');
-      setSelectedBookData(null);
+    
+    if (!titulo.trim()) return;
+    
+    const newBookData: BookData = {
+      titulo: titulo.trim(),
+      autor: autor.trim() || undefined,
+      paginas: paginas ? parseInt(paginas) : undefined,
+      isbn: selectedBookData?.isbn,
+      publicacion: selectedBookData?.publicacion,
+      editorial: selectedBookData?.editorial,
+      descripcion: selectedBookData?.descripcion,
+      categorias: selectedBookData?.categorias,
+      idioma: selectedBookData?.idioma,
+      calificacion: selectedBookData?.calificacion,
+      numCalificaciones: selectedBookData?.numCalificaciones,
+      genero: selectedBookData?.genero,
+      formato: selectedBookData?.formato,
+      precio: selectedBookData?.precio
+    };
+    
+    // Verificar si es un duplicado
+    const duplicate = checkForDuplicate(newBookData);
+    
+    if (duplicate) {
+      setDuplicateBook(duplicate);
+      setPendingBookData(newBookData);
+      setShowDuplicateModal(true);
+      return;
     }
+    
+    // Si no es duplicado, agregar directamente
+    addBookToTBR(newBookData);
+  };
+
+  const addBookToTBR = (bookData: BookData) => {
+    const nuevoLibro: Libro = {
+      id: Date.now(),
+      titulo: bookData.titulo,
+      autor: bookData.autor,
+      paginas: bookData.paginas,
+      isbn: bookData.isbn,
+      publicacion: bookData.publicacion,
+      editorial: bookData.editorial,
+      descripcion: bookData.descripcion,
+      categorias: bookData.categorias,
+      idioma: bookData.idioma,
+      calificacion: bookData.calificacion,
+      numCalificaciones: bookData.numCalificaciones,
+      genero: bookData.genero,
+      formato: bookData.formato,
+      precio: bookData.precio,
+      estado: 'tbr',
+      historialEstados: [{
+        estado: 'tbr',
+        fecha: Date.now()
+      }],
+      lecturas: []
+    };
+    
+    dispatch({ type: 'ADD_BOOK', payload: nuevoLibro });
+    
+    // Limpiar formulario
+    setTitulo('');
+    setAutor('');
+    setPaginas('');
+    setIsExpanded(false);
+    setSelectedBookData(null);
+    setScanStatus('idle');
+    setScanMessage('');
+  };
+
+  const handleBookSelect = (bookData: BookData) => {
+    setSelectedBookData(bookData);
+    setTitulo(bookData.titulo);
+    setAutor(bookData.autor || '');
+    setPaginas(bookData.paginas?.toString() || '');
+    setIsExpanded(true);
   };
 
   const handleSearchResult = async (result: string) => {
     setShowISBNInput(false);
-    setShowBarcodeScanner(false); // Close barcode scanner modal
+    setShowBarcodeScanner(false);
     setIsLoadingBook(true);
     setScanStatus('scanning');
     setScanMessage('Validando ISBN...');
-    setIsBookFromScan(true); // Mark that this book came from scanning
+    setIsBookFromScan(true);
     
     try {
-      // Validate ISBN format
       if (!validateISBN(result)) {
         setScanStatus('error');
         setScanMessage('Código de barras no válido. Debe ser un ISBN de 10 o 13 dígitos.');
@@ -108,7 +152,6 @@ const TBRForm: React.FC = () => {
       
       setScanMessage('Buscando información del libro...');
       
-      // Fetch book data from Google Books API
       const bookData = await fetchBookData(result);
       
       if (bookData) {
@@ -118,7 +161,7 @@ const TBRForm: React.FC = () => {
         setAutor(bookData.autor || '');
         setPaginas(bookData.paginas?.toString() || '');
         setScanStatus('found');
-        setScanMessage('¡Libro encontrado! Completa los detalles y agrega a tu TBR.');
+        setScanMessage('¡Libro encontrado! Completa los detalles y agrega a tu pila de lectura.');
         setIsExpanded(true);
       } else {
         setScanStatus('error');
@@ -136,12 +179,19 @@ const TBRForm: React.FC = () => {
     }
   };
 
-  const handleBookSelect = (bookData: BookData) => {
-    setSelectedBookData(bookData);
-    setTitulo(bookData.titulo);
-    setAutor(bookData.autor || '');
-    setPaginas(bookData.paginas?.toString() || '');
-    setIsExpanded(true);
+  const handleDuplicateConfirm = () => {
+    if (pendingBookData) {
+      addBookToTBR(pendingBookData);
+    }
+    setShowDuplicateModal(false);
+    setDuplicateBook(null);
+    setPendingBookData(null);
+  };
+
+  const handleDuplicateCancel = () => {
+    setShowDuplicateModal(false);
+    setDuplicateBook(null);
+    setPendingBookData(null);
   };
 
   const getStatusIcon = () => {
@@ -180,7 +230,7 @@ const TBRForm: React.FC = () => {
               <Clock className="h-4 w-4 text-warning-600 dark:text-warning-400" />
             </div>
             <h3 className="text-sm font-medium text-slate-900 dark:text-white">
-              Agregar a TBR
+              Agregar a Pila de Lectura
             </h3>
           </div>
           
@@ -204,16 +254,6 @@ const TBRForm: React.FC = () => {
             >
               <Camera className="h-4 w-4 text-green-600 dark:text-green-400" />
             </motion.button>
-            
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowBulkScan(true)}
-              className="p-2 bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-800/30 rounded-lg transition-colors duration-200"
-              title="Escaneo masivo"
-            >
-              <Barcode className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-            </motion.button>
           </div>
         </div>
 
@@ -221,12 +261,12 @@ const TBRForm: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-                              <BookTitleAutocomplete
-                  value={titulo}
-                  onChange={setTitulo}
-                  onBookSelect={handleBookSelect}
-                  placeholder="Título del libro"
-                />
+              <BookTitleAutocomplete
+                value={titulo}
+                onChange={setTitulo}
+                onBookSelect={handleBookSelect}
+                placeholder="Título del libro"
+              />
             </div>
             
             <div>
@@ -240,24 +280,14 @@ const TBRForm: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <input
-                type="number"
-                value={paginas}
-                onChange={(e) => setPaginas(e.target.value)}
-                placeholder="Páginas (opcional)"
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-warning-500 focus:border-transparent"
-              />
-            </div>
-            
-            <div>
-              <SagaAutocomplete
-                value={sagaName}
-                onChange={setSagaName}
-                placeholder="Saga (opcional)"
-              />
-            </div>
+          <div>
+            <input
+              type="number"
+              value={paginas}
+              onChange={(e) => setPaginas(e.target.value)}
+              placeholder="Páginas (opcional)"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-warning-500 focus:border-transparent"
+            />
           </div>
 
           {/* Scan Status */}
@@ -286,7 +316,7 @@ const TBRForm: React.FC = () => {
               disabled={!titulo.trim() || isLoadingBook}
               className="px-4 py-2 bg-warning-500 hover:bg-warning-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 disabled:cursor-not-allowed"
             >
-              <Plus className="h-4 w-4" />
+              <Clock className="h-4 w-4" />
               <span>Agregar a TBR</span>
             </motion.button>
           </div>
@@ -308,14 +338,17 @@ const TBRForm: React.FC = () => {
         />
       )}
 
-              <BulkScanModal
-          isOpen={showBulkScan}
-          onClose={() => setShowBulkScan(false)}
-          onBooksAdded={(books) => {
-            // Handle books added from bulk scan
-            console.log('Books added from bulk scan:', books);
-          }}
+      {/* Duplicate Book Modal */}
+      {duplicateBook && pendingBookData && (
+        <DuplicateBookModal
+          isOpen={showDuplicateModal}
+          onClose={handleDuplicateCancel}
+          onConfirm={handleDuplicateConfirm}
+          onCancel={handleDuplicateCancel}
+          existingBook={duplicateBook}
+          newBookData={pendingBookData}
         />
+      )}
     </div>
   );
 };
