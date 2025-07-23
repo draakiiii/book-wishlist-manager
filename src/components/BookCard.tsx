@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import BookDescriptionModal from './BookDescriptionModal';
 import RatingModal from './RatingModal';
+import LoanModal from './LoanModal';
 
 interface BookCardProps {
   book: Libro;
@@ -33,6 +34,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   const [showActions, setShowActions] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const [showLoanModal, setShowLoanModal] = useState(false);
 
   // Función para calcular el número del libro en la saga
   const getBookNumberInSaga = (book: Libro): number | null => {
@@ -54,15 +56,13 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
     setShowRatingModal(true);
   };
 
-  const handleRatingConfirm = (calificacion: number) => {
-    const notas = prompt('¿Algún comentario sobre el libro?');
-    
+  const handleRatingConfirm = (calificacion: number, review: string) => {
     dispatch({ 
       type: 'FINISH_READING', 
       payload: { 
         id: book.id,
         calificacion,
-        notas: notas || undefined
+        notas: review || undefined
       } 
     });
   };
@@ -94,13 +94,14 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   };
 
   const handleLoanBook = () => {
-    const prestadoA = prompt('¿A quién se lo prestaste?');
-    if (prestadoA) {
-      dispatch({ 
-        type: 'LOAN_BOOK', 
-        payload: { id: book.id, prestadoA } 
-      });
-    }
+    setShowLoanModal(true);
+  };
+
+  const handleLoanConfirm = (prestadoA: string) => {
+    dispatch({ 
+      type: 'LOAN_BOOK', 
+      payload: { id: book.id, prestadoA } 
+    });
   };
 
   const handleReturnBook = () => {
@@ -427,6 +428,15 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
       onConfirm={handleRatingConfirm}
       bookTitle={book.titulo}
       currentRating={book.calificacion || 0}
+      currentReview={book.notas || ''}
+    />
+
+    {/* Loan Modal */}
+    <LoanModal
+      isOpen={showLoanModal}
+      onClose={() => setShowLoanModal(false)}
+      onConfirm={handleLoanConfirm}
+      bookTitle={book.titulo}
     />
     </>
   );
