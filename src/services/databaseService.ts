@@ -66,13 +66,28 @@ export class DatabaseService {
   static async saveAppState(state: AppState): Promise<void> {
     try {
       const userDataRef = this.getUserDataRef();
+      console.log('DatabaseService.saveAppState: Saving to ref:', userDataRef.path);
+      console.log('DatabaseService.saveAppState: State to save:', {
+        librosCount: state.libros.length,
+        wishlistCount: state.libros.filter(l => l.estado === 'wishlist').length,
+        tbrCount: state.libros.filter(l => l.estado === 'tbr').length,
+        libros: state.libros.map(l => ({ id: l.id, titulo: l.titulo, estado: l.estado }))
+      });
+      
       const cleanedState = this.cleanStateForFirebase(state);
+      console.log('DatabaseService.saveAppState: Cleaned state:', {
+        librosCount: cleanedState.libros?.length || 0,
+        wishlistCount: cleanedState.libros?.filter((l: any) => l.estado === 'wishlist').length || 0,
+        tbrCount: cleanedState.libros?.filter((l: any) => l.estado === 'tbr').length || 0
+      });
       
       await setDoc(userDataRef, {
         ...cleanedState,
         lastUpdated: serverTimestamp(),
         version: '1.0'
       });
+      
+      console.log('DatabaseService.saveAppState: Successfully saved to Firebase');
     } catch (error) {
       console.error('Error saving app state:', error);
       throw error;
