@@ -14,7 +14,7 @@ import {
   Filter,
   RotateCcw
 } from 'lucide-react';
-import { useAppState } from '../context/AppStateContext';
+import { useAppState } from '../context/FirebaseAppStateContext';
 import { ScanHistory as ScanHistoryType } from '../types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';

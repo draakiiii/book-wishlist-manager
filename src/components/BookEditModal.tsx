@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Save, BookOpen, Heart } from 'lucide-react';
-import { useAppState } from '../context/AppStateContext';
+import { useAppState } from '../context/FirebaseAppStateContext';
 import { Libro, BookListType } from '../types';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import SagaAutocomplete from './SagaAutocomplete';

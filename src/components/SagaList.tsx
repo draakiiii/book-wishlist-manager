@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, BookOpen, CheckCircle, Clock, BookMarked, BookX } from 'lucide-react';
-import { useAppState } from '../context/AppStateContext';
+import { useAppState } from '../context/FirebaseAppStateContext';
 
 const SagaList: React.FC = () => {
   const { state } = useAppState();

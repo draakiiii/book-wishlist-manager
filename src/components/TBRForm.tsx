@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Search, Camera, Loader2, CheckCircle, AlertCircle, Barcode } from 'lucide-react';
-import { useAppState } from '../context/AppStateContext';
+import { useAppState } from '../context/FirebaseAppStateContext';
 import { Libro, BookData } from '../types';
 import { fetchBookData } from '../services/googleBooksAPI';
 import BookTitleAutocomplete from './BookTitleAutocomplete';

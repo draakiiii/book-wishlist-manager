@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppState } from '../context/AppStateContext';
+import { useAppState } from '../context/FirebaseAppStateContext';
 import { motion } from 'framer-motion';
 import { Target, BookOpen, TrendingUp, Calendar, Trophy } from 'lucide-react';
 

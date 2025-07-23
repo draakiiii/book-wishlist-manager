@@ -21,7 +21,7 @@ import {
   ShoppingCart,
   Share2
 } from 'lucide-react';
-import { useAppState } from '../context/AppStateContext';
+import { useAppState } from '../context/FirebaseAppStateContext';
 import { SearchFilters, Libro } from '../types';
 import { useDebounce } from 'use-debounce';
 import BookList from './BookList';

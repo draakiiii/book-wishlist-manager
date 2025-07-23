@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X, Camera, CameraOff, RotateCcw, AlertCircle, CheckCircle, Loader2, Zap, Settings } from 'lucide-react';
 import { BrowserMultiFormatReader, Result } from '@zxing/library';
-import { useAppState } from '../context/AppStateContext';
+import { useAppState } from '../context/FirebaseAppStateContext';
 import { fetchBookData } from '../services/googleBooksAPI';
 import { useDialog } from '../hooks/useDialog';
 import Dialog from './Dialog';

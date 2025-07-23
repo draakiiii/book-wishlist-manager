@@ -16,7 +16,7 @@ import {
   Share2,
   Users
 } from 'lucide-react';
-import { useAppState } from '../context/AppStateContext';
+import { useAppState } from '../context/FirebaseAppStateContext';
 
 interface AdvancedStatisticsProps {
   isOpen: boolean;
