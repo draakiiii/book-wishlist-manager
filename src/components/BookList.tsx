@@ -26,6 +26,8 @@ const BookList: React.FC<BookListProps> = ({ books, type, emptyMessage }) => {
 
   const getEmptyMessage = () => {
     switch (type) {
+      case 'todos':
+        return 'No se encontraron libros que coincidan con los filtros aplicados';
       case 'tbr':
         return 'Agrega libros a tu pila para empezar a leer';
       case 'wishlist':
