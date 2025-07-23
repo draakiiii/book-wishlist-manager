@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
-import { AppState, Action, Libro, ScanHistory, Statistics, Saga, EstadoLibro } from '../types';
+import { AppState, Action, Libro, ScanHistory, Statistics, Saga, EstadoLibro, Lectura } from '../types';
 import { getInitialTheme, persistThemePreference } from '../utils/themeConfig';
 
 const STORAGE_KEY = 'bibliotecaLibrosState_v1_0';

@@ -54,7 +54,8 @@ const TBRForm: React.FC = () => {
           historialEstados: [{
             estado: 'tbr',
             fecha: Date.now()
-          }]
+          }],
+          lecturas: []
         };
       } else {
         // Si no hay datos completos, usar los campos del formulario
@@ -68,7 +69,8 @@ const TBRForm: React.FC = () => {
           historialEstados: [{
             estado: 'tbr',
             fecha: Date.now()
-          }]
+          }],
+          lecturas: []
         };
       }
 

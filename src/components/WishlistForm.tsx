@@ -49,7 +49,8 @@ const WishlistForm: React.FC = () => {
           historialEstados: [{
             estado: 'wishlist',
             fecha: Date.now()
-          }]
+          }],
+          lecturas: []
         };
       } else {
         // Si no hay datos completos, usar los campos del formulario
@@ -62,7 +63,8 @@ const WishlistForm: React.FC = () => {
           historialEstados: [{
             estado: 'wishlist',
             fecha: Date.now()
-          }]
+          }],
+          lecturas: []
         };
       }
 
