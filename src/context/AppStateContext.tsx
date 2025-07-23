@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useEffect, useState } from 'react';
 import { AppState, Action, Libro, ScanHistory, Statistics, Saga, EstadoLibro, Lectura } from '../types';
 import { getInitialTheme, persistThemePreference } from '../utils/themeConfig';
+import DatabaseService from '../services/databaseService';
+import { useAuth } from './AuthContext';
 
 const STORAGE_KEY = 'bibliotecaLibrosState_v1_0';
 
@@ -41,6 +43,39 @@ const initialState: AppState = {
   puntosGanados: 0,
   librosCompradosConPuntos: 0,
 };
+
+async function loadStateFromFirebase(): Promise<AppState | null> {
+  try {
+    const firebaseState = await DatabaseService.loadAppState();
+    if (firebaseState) {
+      // Migrar desde versión anterior si es necesario
+      if (firebaseState.progreso !== undefined) {
+        return migrateFromOldVersion(firebaseState);
+      }
+      
+      // Asegurar que todas las propiedades del estado inicial estén presentes
+      const completeState = {
+        ...initialState,
+        ...firebaseState,
+        sagaNotifications: firebaseState.sagaNotifications || [],
+        darkMode: firebaseState.darkMode || false,
+        sagas: firebaseState.sagas || [],
+        scanHistory: firebaseState.scanHistory || [],
+        searchHistory: firebaseState.searchHistory || [],
+        // Sistema de puntos
+        puntosActuales: firebaseState.puntosActuales || 0,
+        puntosGanados: firebaseState.puntosGanados || 0,
+        librosCompradosConPuntos: firebaseState.librosCompradosConPuntos || 0,
+      };
+      
+      return completeState;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error loading state from Firebase:', error);
+    return null;
+  }
+}
 
 function loadStateFromStorage(): AppState | null {
   try {
@@ -940,14 +975,73 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
   children, 
   initialState: customInitialState 
 }) => {
-  const savedState = loadStateFromStorage();
-  const initialAppState = savedState || customInitialState || initialState;
-  
-  const [state, dispatch] = useReducer(appReducer, initialAppState);
+  const { isAuthenticated, user } = useAuth();
+  const [state, dispatch] = useReducer(appReducer, initialState);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // Cargar estado inicial
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+    const initializeState = async () => {
+      if (isAuthenticated && user) {
+        try {
+          // Intentar cargar desde Firebase
+          const firebaseState = await loadStateFromFirebase();
+          if (firebaseState) {
+            dispatch({ type: 'IMPORT_DATA', payload: firebaseState });
+          }
+        } catch (error) {
+          console.error('Error loading from Firebase, falling back to localStorage:', error);
+          // Fallback a localStorage
+          const savedState = loadStateFromStorage();
+          if (savedState) {
+            dispatch({ type: 'IMPORT_DATA', payload: savedState });
+          }
+        }
+      } else if (!isAuthenticated) {
+        // Si no está autenticado, cargar desde localStorage
+        const savedState = loadStateFromStorage();
+        if (savedState) {
+          dispatch({ type: 'IMPORT_DATA', payload: savedState });
+        }
+      }
+      setIsInitialized(true);
+      setIsLoading(false);
+    };
+
+    if (!isLoading) {
+      initializeState();
+    }
+  }, [isAuthenticated, user]);
+
+  // Guardar estado en Firebase cuando esté autenticado
+  useEffect(() => {
+    if (isAuthenticated && user && isInitialized) {
+      const saveToFirebase = async () => {
+        try {
+          await DatabaseService.saveAppState(state);
+        } catch (error) {
+          console.error('Error saving to Firebase:', error);
+        }
+      };
+      saveToFirebase();
+    }
+  }, [state, isAuthenticated, user, isInitialized]);
+
+  // Fallback a localStorage cuando no esté autenticado
+  useEffect(() => {
+    if (!isAuthenticated && isInitialized) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+  }, [state, isAuthenticated, isInitialized]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <AppStateContext.Provider value={{ state, dispatch }}>
