@@ -248,6 +248,7 @@ export interface BookData {
   titulo: string;
   autor?: string;
   paginas?: number;
+  sagaName?: string;
   isbn?: string;
   publicacion?: number;
   editorial?: string;

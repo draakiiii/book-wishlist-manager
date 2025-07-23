@@ -5,6 +5,7 @@ import { useAppState } from '../context/AppStateContext';
 import { Libro, BookData } from '../types';
 import { fetchBookData } from '../services/googleBooksAPI';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
+import SagaAutocomplete from './SagaAutocomplete';
 import ISBNInputModal from './ISBNInputModal';
 import BarcodeScannerModal from './BarcodeScannerModal';
 import BulkScanModal from './BulkScanModal';
@@ -15,6 +16,7 @@ const TBRForm: React.FC = () => {
   const [titulo, setTitulo] = useState('');
   const [autor, setAutor] = useState('');
   const [paginas, setPaginas] = useState('');
+  const [sagaName, setSagaName] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [showISBNInput, setShowISBNInput] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
@@ -63,6 +65,7 @@ const TBRForm: React.FC = () => {
       titulo: titulo.trim(),
       autor: autor.trim() || undefined,
       paginas: paginas ? parseInt(paginas) : undefined,
+      sagaName: sagaName.trim() || undefined,
       isbn: selectedBookData?.isbn,
       publicacion: selectedBookData?.publicacion,
       editorial: selectedBookData?.editorial,
@@ -96,6 +99,7 @@ const TBRForm: React.FC = () => {
       titulo: bookData.titulo,
       autor: bookData.autor,
       paginas: bookData.paginas,
+      sagaName: bookData.sagaName,
       isbn: bookData.isbn,
       publicacion: bookData.publicacion,
       editorial: bookData.editorial,
@@ -121,6 +125,7 @@ const TBRForm: React.FC = () => {
     setTitulo('');
     setAutor('');
     setPaginas('');
+    setSagaName('');
     setIsExpanded(false);
     setSelectedBookData(null);
     setScanStatus('idle');
@@ -292,14 +297,24 @@ const TBRForm: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <input
-              type="number"
-              value={paginas}
-              onChange={(e) => setPaginas(e.target.value)}
-              placeholder="Páginas (opcional)"
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-warning-500 focus:border-transparent"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <input
+                type="number"
+                value={paginas}
+                onChange={(e) => setPaginas(e.target.value)}
+                placeholder="Páginas (opcional)"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-warning-500 focus:border-transparent"
+              />
+            </div>
+            
+            <div>
+              <SagaAutocomplete
+                value={sagaName}
+                onChange={setSagaName}
+                placeholder="Nombre de la saga (opcional)"
+              />
+            </div>
           </div>
 
           {/* Scan Status */}
