@@ -299,7 +299,10 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
                 <p className="text-sm text-yellow-800 dark:text-yellow-200 mt-1">
                   <strong>Costo de compra:</strong> {state.config.puntosParaComprar || 25} puntos por libro
                 </p>
-                
+              </div>
+            </motion.div>
+          )}
+
           {/* Libros Prestados Detalle */}
           {statistics.librosPrestados > 0 && (
             <motion.div
