@@ -191,10 +191,7 @@ const AppContent: React.FC = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-          
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6 lg:space-y-8">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-8">
             
             {/* Configuration Section - Desktop Collapsible */}
             <div className="hidden lg:block">
@@ -300,91 +297,7 @@ const AppContent: React.FC = () => {
             </CollapsibleSection>
           </div>
 
-          {/* Right Column - Quick Actions & Stats */}
-          <div className="lg:col-span-1">
-            {/* Quick Stats */}
-            <CollapsibleSection
-              title="Resumen de Biblioteca"
-              icon={<BarChart3 className="h-5 w-5" />}
-              iconBgColor="bg-indigo-100 dark:bg-indigo-900/30"
-              iconColor="text-indigo-600 dark:text-indigo-400"
-              className="lg:sticky lg:top-24"
-            >
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                      {state.libros.length}
-                    </div>
-                    <div className="text-xs text-slate-600 dark:text-slate-400">
-                      Total Libros
-                    </div>
-                  </div>
-                  <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      {librosLeidos.length}
-                    </div>
-                    <div className="text-xs text-slate-600 dark:text-slate-400">
-                      Leídos
-                    </div>
-                  </div>
-                  <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-warning-600 dark:text-warning-400">
-                      {librosTBR.length}
-                    </div>
-                    <div className="text-xs text-slate-600 dark:text-slate-400">
-                      En TBR
-                    </div>
-                  </div>
-                  <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                      {librosLeyendo.length}
-                    </div>
-                    <div className="text-xs text-slate-600 dark:text-slate-400">
-                      Leyendo
-                    </div>
-                  </div>
-                </div>
 
-                {/* Libros Prestados */}
-                {librosPrestados.length > 0 && (
-                  <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3">
-                    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center space-x-2">
-                      <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      <span>Libros Prestados ({librosPrestados.length})</span>
-                    </div>
-                    <div className="space-y-2">
-                      {librosPrestados.slice(0, 3).map((libro) => (
-                        <div key={libro.id} className="flex items-center justify-between text-xs">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-slate-900 dark:text-white font-medium truncate">
-                              {libro.titulo}
-                            </p>
-                            <p className="text-slate-600 dark:text-slate-400 truncate">
-                              Prestado a: {libro.prestadoA}
-                            </p>
-                          </div>
-                          {libro.fechaPrestamo && (
-                            <div className="text-slate-500 dark:text-slate-400 text-xs ml-2">
-                              {new Date(libro.fechaPrestamo).toLocaleDateString('es-ES', {
-                                day: '2-digit',
-                                month: '2-digit'
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                      {librosPrestados.length > 3 && (
-                        <div className="text-xs text-slate-500 dark:text-slate-400 text-center pt-1">
-                          +{librosPrestados.length - 3} más
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CollapsibleSection>
-          </div>
         </div>
       </main>
       
