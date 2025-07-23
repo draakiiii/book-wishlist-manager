@@ -859,8 +859,9 @@ function appReducer(state: AppState, action: Action): AppState {
         return state;
       }
 
+      // Cambiar el estado del libro de 'wishlist' a 'tbr' (comprado y listo para leer)
       const librosActualizados = state.libros.map(l => 
-        l.id === libroId ? agregarEstadoAlHistorial(l, 'comprado', `Comprado con ${puntosNecesarios} puntos`) : l
+        l.id === libroId ? agregarEstadoAlHistorial(l, 'tbr', `Comprado con ${puntosNecesarios} puntos`) : l
       );
 
       return {

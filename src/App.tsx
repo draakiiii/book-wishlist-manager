@@ -46,6 +46,13 @@ const AppContent: React.FC = () => {
   const [scanHistoryModalOpen, setScanHistoryModalOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
+  // Inicializar searchResults con todos los libros cuando se abre el modal
+  useEffect(() => {
+    if (searchModalOpen) {
+      setSearchResults(state.libros);
+    }
+  }, [searchModalOpen, state.libros]);
+
   useEffect(() => {
     // Aplicar el modo oscuro al body
     document.body.classList.toggle('dark', state.darkMode);
