@@ -26,15 +26,17 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
   const { state } = useAppState();
 
   const statistics = useMemo(() => {
+    // Filtrar libros excluyendo wishlist para estadísticas
+    const librosParaEstadisticas = state.libros.filter(book => book.estado !== 'wishlist');
+    
     // Calculate stats based on book states
-    const totalLibros = state.libros.length;
-    const librosTBR = state.libros.filter(book => book.estado === 'tbr').length;
-    const librosLeyendo = state.libros.filter(book => book.estado === 'leyendo').length;
-    const librosLeidos = state.libros.filter(book => book.estado === 'leido').length;
-    const librosAbandonados = state.libros.filter(book => book.estado === 'abandonado').length;
+    const totalLibros = librosParaEstadisticas.length;
+    const librosTBR = librosParaEstadisticas.filter(book => book.estado === 'tbr').length;
+    const librosLeyendo = librosParaEstadisticas.filter(book => book.estado === 'leyendo').length;
+    const librosLeidos = librosParaEstadisticas.filter(book => book.estado === 'leido').length;
+    const librosAbandonados = librosParaEstadisticas.filter(book => book.estado === 'abandonado').length;
     const librosWishlist = state.libros.filter(book => book.estado === 'wishlist').length;
-    const librosComprados = state.libros.filter(book => book.estado === 'comprado').length;
-    const librosPrestados = state.libros.filter(book => book.estado === 'prestado').length;
+    const librosPrestados = librosParaEstadisticas.filter(book => book.prestado).length;
     
     const sagasCompletadas = state.sagas.filter(s => s.isComplete).length;
     const sagasActivas = state.sagas.filter(s => !s.isComplete).length;
@@ -65,7 +67,6 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
       librosLeidos,
       librosAbandonados,
       librosWishlist,
-      librosComprados,
       librosPrestados,
       sagasCompletadas,
       sagasActivas,
@@ -233,13 +234,7 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
                   </div>
                   <span className="font-semibold text-slate-900 dark:text-white">{statistics.librosWishlist}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <ShoppingCart className="h-4 w-4 text-green-500" />
-                    <span className="text-slate-600 dark:text-slate-400">Comprados</span>
-                  </div>
-                  <span className="font-semibold text-slate-900 dark:text-white">{statistics.librosComprados}</span>
-                </div>
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Share2 className="h-4 w-4 text-blue-500" />

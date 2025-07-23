@@ -261,7 +261,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onClose, isOp
               </div>
 
                           {/* Estado Filter */}
-            <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-7 gap-1 sm:gap-2 mb-3 sm:mb-4">
+            <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-6 gap-1 sm:gap-2 mb-3 sm:mb-4">
               {[
                 { value: 'todos', label: 'Todos', icon: BookOpen, color: 'bg-slate-500', shortLabel: 'Todos' },
                 { value: 'tbr', label: 'TBR', icon: BookMarked, color: 'bg-blue-500', shortLabel: 'TBR' },
@@ -269,7 +269,6 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onClose, isOp
                 { value: 'leido', label: 'Leídos', icon: CheckCircle, color: 'bg-green-500', shortLabel: 'Leídos' },
                 { value: 'abandonado', label: 'Abandonados', icon: BookX, color: 'bg-red-500', shortLabel: 'Abandonados' },
                 { value: 'wishlist', label: 'Wishlist', icon: Heart, color: 'bg-pink-500', shortLabel: 'Wishlist' },
-                { value: 'comprado', label: 'Comprados', icon: ShoppingCart, color: 'bg-green-600', shortLabel: 'Comprados' },
                 { value: 'prestado', label: 'Prestados', icon: Share2, color: 'bg-purple-500', shortLabel: 'Prestados' }
               ].map(({ value, label, icon: Icon, color, shortLabel }) => (
                 <button

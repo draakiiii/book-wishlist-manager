@@ -27,23 +27,21 @@ const ProgressBar: React.FC = () => {
     return total;
   }, 0);
   
-  // Calcular valor total de la colección
-  const valorTotalColeccion = libros.reduce((total, libro) => total + (libro.precio || 0), 0);
+  // Filtrar libros excluyendo wishlist para estadísticas
+  const librosParaEstadisticas = libros.filter(l => l.estado !== 'wishlist');
   
-  // Calcular valor de libros comprados - incluir también libros con precio aunque no estén en estado 'comprado'
-  const librosConPrecio = libros.filter(l => l.precio && l.precio > 0);
-  const valorLibrosComprados = librosConPrecio.reduce((total, libro) => total + (libro.precio || 0), 0);
+  // Calcular valor total de la colección (excluyendo wishlist)
+  const librosConPrecio = librosParaEstadisticas.filter(l => l.precio && l.precio > 0);
+  const valorTotalColeccion = librosConPrecio.reduce((total, libro) => total + (libro.precio || 0), 0);
   
   // Debug: mostrar información en consola
   console.log('Debug valores:', {
-    totalLibros: libros.length,
+    totalLibros: librosParaEstadisticas.length,
     librosConPrecio: librosConPrecio.length,
-    librosComprados: libros.filter(l => l.estado === 'comprado').length,
     valorTotalColeccion,
-    valorLibrosComprados,
     paginasLeidas,
     librosConPrecioDetalle: librosConPrecio.map(l => ({ titulo: l.titulo, precio: l.precio, estado: l.estado })),
-    librosConPaginas: libros.filter(l => l.paginasLeidas || (l.estado === 'leido' && l.paginas)).map(l => ({ 
+    librosConPaginas: librosParaEstadisticas.filter(l => l.paginasLeidas || (l.estado === 'leido' && l.paginas)).map(l => ({ 
       titulo: l.titulo, 
       estado: l.estado, 
       paginas: l.paginas, 
@@ -251,29 +249,23 @@ const ProgressBar: React.FC = () => {
         <h4 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2 sm:mb-3">
           Estadísticas de Lectura
         </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 text-xs sm:text-sm">
           <div className="flex justify-between">
             <span className="text-slate-600 dark:text-slate-400">Total libros:</span>
             <span className="font-medium text-slate-900 dark:text-slate-100">
-              {libros.length}
+              {librosParaEstadisticas.length}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-600 dark:text-slate-400">En TBR:</span>
             <span className="font-medium text-slate-900 dark:text-slate-100">
-              {libros.filter(l => l.estado === 'tbr').length}
+              {librosParaEstadisticas.filter(l => l.estado === 'tbr').length}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-600 dark:text-slate-400">Leyendo:</span>
             <span className="font-medium text-slate-900 dark:text-slate-100">
-              {libros.filter(l => l.estado === 'leyendo').length}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-600 dark:text-slate-400">Valor comprado:</span>
-            <span className="font-medium text-slate-900 dark:text-slate-100">
-              {formatearPrecio(valorLibrosComprados)}
+              {librosParaEstadisticas.filter(l => l.estado === 'leyendo').length}
             </span>
           </div>
         </div>
