@@ -326,12 +326,47 @@ function appReducer(state: AppState, action: Action): AppState {
 
     case 'UPDATE_BOOK': {
       const { id, updates } = action.payload;
-      const librosActualizados = state.libros.map(libro => 
+      const libroOriginal = state.libros.find(libro => libro.id === id);
+      if (!libroOriginal) return state;
+      
+      let nuevoEstado = { ...state };
+      
+      // Manejar saga si se está actualizando
+      if (updates.sagaName !== undefined) {
+        const sagaNameNormalized = updates.sagaName.trim().toLowerCase();
+        let sagaExistente = state.sagas.find(s => 
+          s.name.trim().toLowerCase() === sagaNameNormalized
+        );
+        
+        if (sagaExistente) {
+          // Usar saga existente
+          updates.sagaId = sagaExistente.id;
+        } else if (updates.sagaName.trim()) {
+          // Crear nueva saga
+          const nuevaSaga = {
+            id: Date.now(),
+            name: updates.sagaName.trim(),
+            count: 0,
+            isComplete: false,
+            libros: []
+          };
+          nuevoEstado = {
+            ...nuevoEstado,
+            sagas: [...nuevoEstado.sagas, nuevaSaga]
+          };
+          updates.sagaId = nuevaSaga.id;
+        } else {
+          // Eliminar saga
+          updates.sagaId = undefined;
+        }
+      }
+      
+      const librosActualizados = nuevoEstado.libros.map(libro => 
         libro.id === id ? { ...libro, ...updates } : libro
       );
       
       return actualizarContadoresSagas({
-        ...state,
+        ...nuevoEstado,
         libros: librosActualizados
       });
     }
