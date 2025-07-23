@@ -10,6 +10,7 @@ import Dialog from './Dialog';
 interface BarcodeScannerModalProps {
   onClose: () => void;
   onScanSuccess: (isbn: string) => void;
+  onOpenConfig?: () => void;
 }
 
 interface ScanFeedback {
@@ -18,7 +19,7 @@ interface ScanFeedback {
   timestamp: number;
 }
 
-const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onScanSuccess }) => {
+const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onScanSuccess, onOpenConfig }) => {
   const { state, dispatch } = useAppState();
   const { dialog, showError, showConfirm, hideDialog } = useDialog();
   const [isScanning, setIsScanning] = useState(false);
@@ -167,8 +168,26 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
           'Verificar cámaras',
           'Para usar el escáner, primero debes verificar las cámaras disponibles en la configuración. ¿Quieres ir a la configuración ahora?',
           () => {
-            // Aquí podríamos abrir la configuración, pero por ahora solo cerramos el modal
+            // Cerrar el modal del escáner y abrir la configuración
             onClose();
+            // Abrir configuración automáticamente
+            setTimeout(() => {
+              // Buscar y hacer clic en el botón de configuración apropiado
+              const isMobile = window.innerWidth < 768;
+              const configButton = document.querySelector(
+                isMobile ? '[data-mobile-config]' : '[data-desktop-config]'
+              ) as HTMLElement;
+              
+              if (configButton) {
+                configButton.click();
+              } else {
+                // Fallback: buscar cualquier botón de configuración
+                const fallbackButton = document.querySelector('[data-config-button]') as HTMLElement;
+                if (fallbackButton) {
+                  fallbackButton.click();
+                }
+              }
+            }, 100);
           },
           () => {
             // Continuar sin verificar (usar la primera cámara disponible)
