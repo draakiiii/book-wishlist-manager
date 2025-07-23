@@ -35,7 +35,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [hasMigratedData, setHasMigratedData] = useState(false);
 
   useEffect(() => {
+    console.log('AuthContext: Setting up auth state listener');
     const unsubscribe = AuthService.onAuthStateChange((user) => {
+      console.log('AuthContext: Auth state changed', { user: user?.email });
       setUser(user);
       setLoading(false);
     });

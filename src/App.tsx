@@ -52,6 +52,8 @@ const AppContent: React.FC = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
+  console.log('AppContent rendered', { authLoading, isAuthenticated, user: user?.email });
+
   // Inicializar searchResults con todos los libros cuando se abre el modal
   useEffect(() => {
     if (searchModalOpen) {

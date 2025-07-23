@@ -975,48 +975,42 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
   children, 
   initialState: customInitialState 
 }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
   const [state, dispatch] = useReducer(appReducer, initialState);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Cambiar a false para evitar loading infinito
 
-  // Cargar estado inicial
+  // Cargar estado inicial - versión simplificada
   useEffect(() => {
-    const initializeState = async () => {
-      if (isAuthenticated && user) {
+    console.log('AppStateContext: Starting initialization', { authLoading, isAuthenticated, user: user?.email });
+    
+    // Cargar inmediatamente desde localStorage como fallback
+    const savedState = loadStateFromStorage();
+    if (savedState) {
+      console.log('AppStateContext: Loading from localStorage');
+      dispatch({ type: 'IMPORT_DATA', payload: savedState });
+    }
+    
+    // Si está autenticado, intentar cargar desde Firebase
+    if (isAuthenticated && user && !authLoading) {
+      const loadFromFirebase = async () => {
         try {
-          // Intentar cargar desde Firebase
+          console.log('AppStateContext: Loading from Firebase');
           const firebaseState = await loadStateFromFirebase();
           if (firebaseState) {
+            console.log('AppStateContext: Firebase state loaded, updating');
             dispatch({ type: 'IMPORT_DATA', payload: firebaseState });
           }
         } catch (error) {
-          console.error('Error loading from Firebase, falling back to localStorage:', error);
-          // Fallback a localStorage
-          const savedState = loadStateFromStorage();
-          if (savedState) {
-            dispatch({ type: 'IMPORT_DATA', payload: savedState });
-          }
+          console.error('AppStateContext: Error loading from Firebase:', error);
         }
-      } else if (!isAuthenticated) {
-        // Si no está autenticado, cargar desde localStorage
-        const savedState = loadStateFromStorage();
-        if (savedState) {
-          dispatch({ type: 'IMPORT_DATA', payload: savedState });
-        }
-      }
-      setIsInitialized(true);
-      setIsLoading(false);
-    };
-
-    if (!isLoading) {
-      initializeState();
+      };
+      loadFromFirebase();
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, authLoading, dispatch]);
 
   // Guardar estado en Firebase cuando esté autenticado
   useEffect(() => {
-    if (isAuthenticated && user && isInitialized) {
+    if (isAuthenticated && user && !isLoading) {
       const saveToFirebase = async () => {
         try {
           await DatabaseService.saveAppState(state);
@@ -1026,14 +1020,14 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
       };
       saveToFirebase();
     }
-  }, [state, isAuthenticated, user, isInitialized]);
+  }, [state, isAuthenticated, user, isLoading]);
 
   // Fallback a localStorage cuando no esté autenticado
   useEffect(() => {
-    if (!isAuthenticated && isInitialized) {
+    if (!isAuthenticated && !isLoading) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
-  }, [state, isAuthenticated, isInitialized]);
+  }, [state, isAuthenticated, isLoading]);
 
   if (isLoading) {
     return (
