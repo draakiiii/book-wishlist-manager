@@ -269,7 +269,8 @@ function appReducer(state: AppState, action: Action): AppState {
         historialEstados: [{
           estado: action.payload.estado,
           fecha: Date.now()
-        }]
+        }],
+        lecturas: [] // Inicializar array de lecturas vacío
       };
       
       let nuevoEstado = { 
@@ -371,11 +372,22 @@ function appReducer(state: AppState, action: Action): AppState {
         ? verificarSagaCompleta(libro.sagaId, state)
         : false;
       
+      // Crear nueva lectura
+      const nuevaLectura: Lectura = {
+        id: Date.now(),
+        fechaInicio: libro.fechaInicio || fecha,
+        fechaFin: fecha,
+        calificacion,
+        reseña: notas,
+        paginasLeidas: libro.paginasLeidas || libro.paginas,
+        notas
+      };
+      
       const libroActualizado: Libro = {
         ...agregarEstadoAlHistorial(libro, 'leido', notas),
         fechaFin: fecha,
-        calificacion: calificacion || libro.calificacion,
-        notas: notas || libro.notas
+        calificacion: calificacion || libro.calificacion, // Mantener calificación más reciente
+        lecturas: [...(libro.lecturas || []), nuevaLectura]
       };
       
       const librosActualizados = state.libros.map(l => 
@@ -690,7 +702,65 @@ function appReducer(state: AppState, action: Action): AppState {
       return state;
     }
 
+    case 'ADD_LECTURA': {
+      const { libroId, lectura } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.id === libroId) {
+          const nuevaLectura = {
+            ...lectura,
+            id: Date.now()
+          };
+          return {
+            ...libro,
+            lecturas: [...libro.lecturas || [], nuevaLectura]
+          };
+        }
+        return libro;
+      });
+      
+      return {
+        ...state,
+        libros: librosActualizados
+      };
+    }
 
+    case 'UPDATE_LECTURA': {
+      const { libroId, lecturaId, updates } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.id === libroId) {
+          return {
+            ...libro,
+            lecturas: libro.lecturas?.map(lectura => 
+              lectura.id === lecturaId ? { ...lectura, ...updates } : lectura
+            ) || []
+          };
+        }
+        return libro;
+      });
+      
+      return {
+        ...state,
+        libros: librosActualizados
+      };
+    }
+
+    case 'DELETE_LECTURA': {
+      const { libroId, lecturaId } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.id === libroId) {
+          return {
+            ...libro,
+            lecturas: libro.lecturas?.filter(lectura => lectura.id !== lecturaId) || []
+          };
+        }
+        return libro;
+      });
+      
+      return {
+        ...state,
+        libros: librosActualizados
+      };
+    }
 
     case 'SET_LAST_BACKUP': {
       return {

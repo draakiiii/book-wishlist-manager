@@ -180,11 +180,11 @@ const ConfigForm: React.FC = () => {
               </label>
               <input
                 type="number"
-                value={config.objetivoLecturaAnual || 12}
+                value={config.objetivoLecturaAnual || 0}
                 onChange={(e) => handleInputChange('objetivoLecturaAnual', parseInt(e.target.value) || 0)}
                 disabled={!isEditing}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
-                min="1"
+                min="0"
               />
             </div>
             
@@ -194,11 +194,11 @@ const ConfigForm: React.FC = () => {
               </label>
               <input
                 type="number"
-                value={config.objetivoPaginasAnual || 4000}
+                value={config.objetivoPaginasAnual || 0}
                 onChange={(e) => handleInputChange('objetivoPaginasAnual', parseInt(e.target.value) || 0)}
                 disabled={!isEditing}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
-                min="1"
+                min="0"
               />
             </div>
           </div>

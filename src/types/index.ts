@@ -1,3 +1,13 @@
+export interface Lectura {
+  id: number;
+  fechaInicio: number;
+  fechaFin: number;
+  calificacion?: number;
+  reseña?: string;
+  paginasLeidas?: number;
+  notas?: string;
+}
+
 export interface Libro {
   id: number;
   titulo: string;
@@ -11,8 +21,8 @@ export interface Libro {
   fechaFin?: number;
   fechaAbandonado?: number;
   fechaCompra?: number;
-  calificacion?: number;
-  notas?: string;
+  calificacion?: number; // Calificación más reciente
+  notas?: string; // Notas generales del libro
   isbn?: string;
   editorial?: string;
   idioma?: string;
@@ -24,6 +34,7 @@ export interface Libro {
   numCalificaciones?: number;
   estado: 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado' | 'prestado';
   historialEstados: EstadoLibro[];
+  lecturas: Lectura[]; // Múltiples lecturas del libro
 
   paginasLeidas?: number;
   formato?: 'fisico' | 'digital' | 'audiolibro';
@@ -183,6 +194,11 @@ export type Action =
   | { type: 'BUY_BOOK'; payload: { id: number; precio?: number; fecha?: number } }
   | { type: 'LOAN_BOOK'; payload: { id: number; prestadoA: string; fecha?: number } }
   | { type: 'RETURN_BOOK'; payload: { id: number; fecha?: number } }
+  
+  // Acciones de lecturas múltiples
+  | { type: 'ADD_LECTURA'; payload: { libroId: number; lectura: Omit<Lectura, 'id'> } }
+  | { type: 'UPDATE_LECTURA'; payload: { libroId: number; lecturaId: number; updates: Partial<Lectura> } }
+  | { type: 'DELETE_LECTURA'; payload: { libroId: number; lecturaId: number } }
   
   // Acciones de sagas
   | { type: 'ADD_SAGA'; payload: { name: string; descripcion?: string; genero?: string; autor?: string } }
