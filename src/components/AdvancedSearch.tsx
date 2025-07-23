@@ -121,8 +121,18 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onClose, isOp
         return false;
       }
 
-      if (filters.estado && filters.estado !== 'todos' && book.estado !== filters.estado) {
-        return false;
+      if (filters.estado && filters.estado !== 'todos') {
+        if (filters.estado === 'prestado') {
+          // Para libros prestados, verificar la propiedad prestado
+          if (!book.prestado) {
+            return false;
+          }
+        } else {
+          // Para otros estados, verificar el estado del libro
+          if (book.estado !== filters.estado) {
+            return false;
+          }
+        }
       }
 
       if (filters.completado !== undefined) {
