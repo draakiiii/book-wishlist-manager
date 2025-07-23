@@ -17,7 +17,8 @@ import {
   ShoppingCart,
   Users,
   X,
-  Share2
+  Share2,
+  Barcode
 } from 'lucide-react';
 import CollapsibleConfig from './components/CollapsibleConfig';
 import CollapsibleSection from './components/CollapsibleSection';
@@ -33,6 +34,7 @@ import AdvancedStatistics from './components/AdvancedStatistics';
 import DataExportImport from './components/DataExportImport';
 import ScanHistory from './components/ScanHistory';
 import ConfigForm from './components/ConfigForm';
+import BulkScanModal from './components/BulkScanModal';
 
 import './App.css';
 
@@ -44,6 +46,7 @@ const AppContent: React.FC = () => {
   const [statisticsModalOpen, setStatisticsModalOpen] = useState(false);
   const [exportImportModalOpen, setExportImportModalOpen] = useState(false);
   const [scanHistoryModalOpen, setScanHistoryModalOpen] = useState(false);
+  const [bulkScanModalOpen, setBulkScanModalOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
   // Inicializar searchResults con todos los libros cuando se abre el modal
@@ -181,6 +184,16 @@ const AppContent: React.FC = () => {
                   title="Historial de Escaneos"
                 >
                   <History className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setBulkScanModalOpen(true)}
+                  className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                  title="Escaneo Múltiple"
+                >
+                  <Barcode className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
                 </motion.button>
               </div>
               
@@ -386,6 +399,16 @@ const AppContent: React.FC = () => {
       <ScanHistory
         isOpen={scanHistoryModalOpen}
         onClose={() => setScanHistoryModalOpen(false)}
+      />
+
+      {/* Bulk Scan Modal */}
+      <BulkScanModal
+        isOpen={bulkScanModalOpen}
+        onClose={() => setBulkScanModalOpen(false)}
+        onBooksAdded={(books) => {
+          // Los libros se agregarán automáticamente a través del contexto
+          setBulkScanModalOpen(false);
+        }}
       />
     </div>
   );
