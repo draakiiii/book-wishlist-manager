@@ -23,9 +23,7 @@ const RatingModal: React.FC<RatingModalProps> = ({
   const [hoverRating, setHoverRating] = useState(0);
   const [review, setReview] = useState(currentReview);
 
-  const handleStarClick = (starRating: number) => {
-    setRating(starRating);
-  };
+
 
   const handleConfirm = () => {
     onConfirm(rating, review);
@@ -83,36 +81,67 @@ const RatingModal: React.FC<RatingModalProps> = ({
           </div>
 
           {/* Stars */}
-          <div className="flex justify-center items-center space-x-2 mb-6">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <motion.button
-                key={star}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => handleStarClick(star)}
-                onMouseEnter={() => setHoverRating(star)}
-                onMouseLeave={() => setHoverRating(0)}
-                className="p-1 transition-colors duration-200"
-              >
-                <Star
-                  className={`h-8 w-8 ${
-                    star <= (hoverRating || rating)
-                      ? 'text-yellow-500 fill-current'
-                      : 'text-slate-300 dark:text-slate-600'
-                  }`}
-                />
-              </motion.button>
-            ))}
+          <div className="flex justify-center items-center space-x-1 mb-6">
+            {[1, 2, 3, 4, 5].map((starIndex) => {
+              const fullStar = starIndex;
+              const halfStar = starIndex - 0.5;
+              const currentRating = hoverRating || rating;
+              
+              return (
+                <div key={starIndex} className="relative flex">
+                  {/* Half Star Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setRating(halfStar)}
+                    onMouseEnter={() => setHoverRating(halfStar)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="absolute left-0 top-0 w-1/2 h-full z-10"
+                  />
+                  
+                  {/* Full Star Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setRating(fullStar)}
+                    onMouseEnter={() => setHoverRating(fullStar)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="absolute right-0 top-0 w-1/2 h-full z-10"
+                  />
+                  
+                  {/* Visual Star */}
+                  <div className="relative">
+                    {/* Background Star (always visible) */}
+                    <Star className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+                    
+                    {/* Filled Star (overlay) */}
+                    <div 
+                      className="absolute top-0 left-0 overflow-hidden"
+                      style={{ 
+                        width: `${Math.min(100, Math.max(0, (currentRating - (starIndex - 1)) * 100))}%` 
+                      }}
+                    >
+                      <Star className="h-8 w-8 text-yellow-500 fill-current" />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Rating Text */}
           <div className="text-center mb-6">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
               {rating === 0 && 'Sin calificar'}
+              {rating === 0.5 && 'Muy malo'}
               {rating === 1 && 'Muy malo'}
+              {rating === 1.5 && 'Muy malo'}
               {rating === 2 && 'Malo'}
+              {rating === 2.5 && 'Malo'}
               {rating === 3 && 'Regular'}
+              {rating === 3.5 && 'Regular'}
               {rating === 4 && 'Bueno'}
+              {rating === 4.5 && 'Muy bueno'}
               {rating === 5 && 'Excelente'}
             </p>
             {rating > 0 && (
