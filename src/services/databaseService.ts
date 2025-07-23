@@ -35,12 +35,41 @@ export class DatabaseService {
     return doc(db, 'users', userId, 'data', 'appState');
   }
 
+  // Función para limpiar valores undefined del estado
+  private static cleanStateForFirebase(state: AppState): any {
+    const cleanObject = (obj: any): any => {
+      if (obj === null || obj === undefined) {
+        return null;
+      }
+      
+      if (Array.isArray(obj)) {
+        return obj.map(cleanObject);
+      }
+      
+      if (typeof obj === 'object') {
+        const cleaned: any = {};
+        for (const [key, value] of Object.entries(obj)) {
+          if (value !== undefined) {
+            cleaned[key] = cleanObject(value);
+          }
+        }
+        return cleaned;
+      }
+      
+      return obj;
+    };
+    
+    return cleanObject(state);
+  }
+
   // Guardar todo el estado de la aplicación
   static async saveAppState(state: AppState): Promise<void> {
     try {
       const userDataRef = this.getUserDataRef();
+      const cleanedState = this.cleanStateForFirebase(state);
+      
       await setDoc(userDataRef, {
-        ...state,
+        ...cleanedState,
         lastUpdated: serverTimestamp(),
         version: '1.0'
       });
@@ -73,8 +102,10 @@ export class DatabaseService {
   static async saveBooks(libros: Libro[]): Promise<void> {
     try {
       const userDataRef = this.getUserDataRef();
+      const cleanedLibros = this.cleanStateForFirebase(libros);
+      
       await updateDoc(userDataRef, {
-        libros,
+        libros: cleanedLibros,
         lastUpdated: serverTimestamp()
       });
     } catch (error) {
@@ -87,8 +118,10 @@ export class DatabaseService {
   static async saveSagas(sagas: Saga[]): Promise<void> {
     try {
       const userDataRef = this.getUserDataRef();
+      const cleanedSagas = this.cleanStateForFirebase(sagas);
+      
       await updateDoc(userDataRef, {
-        sagas,
+        sagas: cleanedSagas,
         lastUpdated: serverTimestamp()
       });
     } catch (error) {
@@ -101,8 +134,10 @@ export class DatabaseService {
   static async saveConfig(config: Configuracion): Promise<void> {
     try {
       const userDataRef = this.getUserDataRef();
+      const cleanedConfig = this.cleanStateForFirebase(config);
+      
       await updateDoc(userDataRef, {
-        config,
+        config: cleanedConfig,
         lastUpdated: serverTimestamp()
       });
     } catch (error) {
@@ -115,8 +150,10 @@ export class DatabaseService {
   static async saveScanHistory(scanHistory: ScanHistory[]): Promise<void> {
     try {
       const userDataRef = this.getUserDataRef();
+      const cleanedScanHistory = this.cleanStateForFirebase(scanHistory);
+      
       await updateDoc(userDataRef, {
-        scanHistory,
+        scanHistory: cleanedScanHistory,
         lastUpdated: serverTimestamp()
       });
     } catch (error) {

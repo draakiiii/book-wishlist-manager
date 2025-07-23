@@ -9,6 +9,7 @@ interface AuthContextType {
   loading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   migrateData: (localStorageData: AppState) => Promise<void>;
@@ -55,6 +56,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      await AuthService.loginWithGoogle();
+      await DatabaseService.updateLastLogin();
+    } catch (error) {
+      console.error('Google login error:', error);
+      throw error;
+    }
+  };
+
   const register = async (email: string, password: string) => {
     try {
       await AuthService.register(email, password);
@@ -90,6 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     isAuthenticated: !!user,
     login,
+    loginWithGoogle,
     register,
     logout,
     migrateData,

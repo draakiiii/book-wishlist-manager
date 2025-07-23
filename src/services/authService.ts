@@ -4,7 +4,9 @@ import {
   signOut, 
   onAuthStateChanged,
   User,
-  UserCredential 
+  UserCredential,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { auth } from './firebase';
 
@@ -31,6 +33,17 @@ export class AuthService {
       return userCredential;
     } catch (error) {
       console.error('Error logging in:', error);
+      throw error;
+    }
+  }
+
+  static async loginWithGoogle(): Promise<UserCredential> {
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      return userCredential;
+    } catch (error) {
+      console.error('Error logging in with Google:', error);
       throw error;
     }
   }
