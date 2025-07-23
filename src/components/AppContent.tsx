@@ -14,20 +14,30 @@ import {
   ShoppingCart,
   Users,
   Share2,
-  User
+  User,
+  Settings,
+  LogOut,
+  Bell,
+  ChevronDown,
+  Camera,
+  FileText,
+  Download,
+  Upload
 } from 'lucide-react';
 import CollapsibleSection from './CollapsibleSection';
 import ProgressBar from './ProgressBar';
 import BookList from './BookList';
 import SagaList from './SagaList';
 import UserProfile from './auth/UserProfile';
+
 import { useAppState } from '../context/FirebaseAppStateContext';
 import { useAuth } from '../context/AuthContext';
 
 const AppContent: React.FC = () => {
   const { state, dispatch, loading, syncStatus } = useAppState();
-  const { currentUser } = useAuth();
+  const { currentUser, signOut } = useAuth();
   const [userProfileOpen, setUserProfileOpen] = useState(false);
+
 
   useEffect(() => {
     // Aplicar el modo oscuro al body
@@ -66,6 +76,14 @@ const AppContent: React.FC = () => {
     dispatch({ type: 'REMOVE_SAGA_NOTIFICATION', payload: { id } });
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   // Show loading screen while data is being loaded
   if (loading) {
     return (
@@ -80,7 +98,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header with user info and sync status */}
+      {/* Header with menu and user info */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -103,12 +121,81 @@ const AppContent: React.FC = () => {
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
+            {/* Menu buttons */}
+            <div className="flex items-center space-x-2">
+              {/* Search */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => alert('Búsqueda avanzada - Funcionalidad en desarrollo')}
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Búsqueda avanzada"
+              >
+                <Search className="h-5 w-5" />
+              </motion.button>
+
+              {/* Statistics */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => alert('Estadísticas avanzadas - Funcionalidad en desarrollo')}
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Estadísticas avanzadas"
+              >
+                <BarChart3 className="h-5 w-5" />
+              </motion.button>
+
+              {/* Export/Import */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => alert('Exportar/Importar datos - Funcionalidad en desarrollo')}
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Exportar/Importar datos"
+              >
+                <Database className="h-5 w-5" />
+              </motion.button>
+
+              {/* Scan History */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => alert('Historial de escaneos - Funcionalidad en desarrollo')}
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Historial de escaneos"
+              >
+                <History className="h-5 w-5" />
+              </motion.button>
+
+              {/* Bulk Scan */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => alert('Escaneo masivo - Funcionalidad en desarrollo')}
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Escaneo masivo"
+              >
+                <Camera className="h-5 w-5" />
+              </motion.button>
+
+              {/* Configuration */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => alert('Configuración - Funcionalidad en desarrollo')}
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Configuración"
+              >
+                <Settings className="h-5 w-5" />
+              </motion.button>
+
               {/* User menu */}
-              <div className="relative">
-                <button
+              <div className="relative ml-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setUserProfileOpen(!userProfileOpen)}
-                  className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="flex items-center space-x-2 p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
                     <User className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
@@ -116,7 +203,8 @@ const AppContent: React.FC = () => {
                   <span className="hidden sm:block text-sm font-medium">
                     {currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Usuario'}
                   </span>
-                </button>
+                  <ChevronDown className="h-4 w-4" />
+                </motion.button>
                 
                 {userProfileOpen && (
                   <div className="absolute right-0 mt-2 w-80 z-50">
@@ -165,51 +253,8 @@ const AppContent: React.FC = () => {
           <ProgressBar />
         </CollapsibleSection>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
-          >
-            <Search className="h-6 w-6 text-indigo-600 dark:text-indigo-400 mb-2" />
-            <h3 className="font-medium text-gray-900 dark:text-white">Buscar Libros</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Encuentra libros en tu biblioteca</p>
-          </motion.div>
-
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
-          >
-            <BarChart3 className="h-6 w-6 text-green-600 dark:text-green-400 mb-2" />
-            <h3 className="font-medium text-gray-900 dark:text-white">Estadísticas</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Ver tu progreso detallado</p>
-          </motion.div>
-
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
-          >
-            <Database className="h-6 w-6 text-blue-600 dark:text-blue-400 mb-2" />
-            <h3 className="font-medium text-gray-900 dark:text-white">Exportar/Importar</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Gestionar tus datos</p>
-          </motion.div>
-
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
-          >
-            <History className="h-6 w-6 text-purple-600 dark:text-purple-400 mb-2" />
-            <h3 className="font-medium text-gray-900 dark:text-white">Historial</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Ver escaneos recientes</p>
-          </motion.div>
-        </div>
-
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-8">
             {/* Currently Reading */}
@@ -325,6 +370,8 @@ const AppContent: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Modals - Placeholder for future implementation */}
     </div>
   );
 };
