@@ -24,7 +24,7 @@ export interface Libro {
   numCalificaciones?: number;
   estado: 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado' | 'prestado';
   historialEstados: EstadoLibro[];
-  tiempoLectura?: number; // en minutos
+
   paginasLeidas?: number;
   formato?: 'fisico' | 'digital' | 'audiolibro';
   ubicacion?: string; // para libros físicos

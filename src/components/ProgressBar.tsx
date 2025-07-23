@@ -10,7 +10,10 @@ const ProgressBar: React.FC = () => {
   // Calcular estadísticas de lectura
   const librosLeidos = libros.filter(libro => libro.estado === 'leido');
   const paginasLeidas = librosLeidos.reduce((total, libro) => total + (libro.paginas || 0), 0);
-  const tiempoTotalLectura = librosLeidos.reduce((total, libro) => total + (libro.tiempoLectura || 0), 0);
+  
+  // Calcular valor total de la colección
+  const valorTotalColeccion = libros.reduce((total, libro) => total + (libro.precio || 0), 0);
+  const valorLibrosComprados = libros.filter(l => l.estado === 'comprado').reduce((total, libro) => total + (libro.precio || 0), 0);
   
   // Objetivos anuales
   const objetivoLibros = config.objetivoLecturaAnual || 12;
@@ -20,17 +23,12 @@ const ProgressBar: React.FC = () => {
   const progresoLibros = Math.min((librosLeidos.length / objetivoLibros) * 100, 100);
   const progresoPaginas = Math.min((paginasLeidas / objetivoPaginas) * 100, 100);
   
-  // Calcular tiempo promedio por libro
-  const tiempoPromedio = librosLeidos.length > 0 ? tiempoTotalLectura / librosLeidos.length : 0;
-  
-  // Formatear tiempo
-  const formatearTiempo = (minutos: number) => {
-    const horas = Math.floor(minutos / 60);
-    const mins = minutos % 60;
-    if (horas > 0) {
-      return `${horas}h ${mins}m`;
-    }
-    return `${mins}m`;
+  // Formatear precio
+  const formatearPrecio = (precio: number) => {
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(precio);
   };
 
   return (
@@ -108,14 +106,14 @@ const ProgressBar: React.FC = () => {
         >
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="p-1.5 sm:p-2 bg-purple-500 rounded-lg">
-              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
             <div>
               <p className="text-xs sm:text-sm font-medium text-purple-700 dark:text-purple-300">
-                Tiempo Promedio
+                Valor Colección
               </p>
               <p className="text-sm sm:text-lg font-bold text-purple-900 dark:text-purple-100">
-                {formatearTiempo(tiempoPromedio)}
+                {formatearPrecio(valorTotalColeccion)}
               </p>
             </div>
           </div>
