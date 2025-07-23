@@ -54,16 +54,19 @@ Una aplicación React TypeScript moderna para gestionar tu biblioteca personal d
       - En "Your apps", crea una nueva app web
       - Copia la configuración
 
-4. **Configura las variables de entorno**
-   
-   Crea un archivo `.env` en la raíz del proyecto:
-   ```env
-   REACT_APP_FIREBASE_API_KEY=tu-api-key
-   REACT_APP_FIREBASE_AUTH_DOMAIN=tu-proyecto.firebaseapp.com
-   REACT_APP_FIREBASE_PROJECT_ID=tu-proyecto-id
-   REACT_APP_FIREBASE_STORAGE_BUCKET=tu-proyecto.appspot.com
-   REACT_APP_FIREBASE_MESSAGING_SENDER_ID=123456789
-   REACT_APP_FIREBASE_APP_ID=tu-app-id
+4. **Configuración de Firebase (Ya configurado)**
+
+   La aplicación ya está configurada con Firebase. Si necesitas cambiar la configuración, edita `src/services/firebase.ts`:
+   ```javascript
+   const firebaseConfig = {
+     apiKey: "AIzaSyCNVULfkfb77peQh7Y_LEguqNOiWSAHF5w",
+     authDomain: "book-manager-1861b.firebaseapp.com",
+     projectId: "book-manager-1861b",
+     storageBucket: "book-manager-1861b.firebasestorage.app",
+     messagingSenderId: "899173432766",
+     appId: "1:899173432766:web:0ce14cfb20f0c2a2d94def",
+     measurementId: "G-WQ0RP6111V"
+   };
    ```
 
 5. **Configura las reglas de Firestore**
@@ -91,16 +94,14 @@ Una aplicación React TypeScript moderna para gestionar tu biblioteca personal d
    npm start
    ```
 
+   La aplicación se abrirá en `http://localhost:3000`
+
 ## 🔧 Configuración de Vercel (Opcional)
 
 Si quieres desplegar en Vercel:
 
 1. **Conecta tu repositorio a Vercel**
-2. **Configura las variables de entorno** en Vercel Dashboard:
-   - Ve a tu proyecto en Vercel
-   - Settings > Environment Variables
-   - Agrega todas las variables de Firebase
-
+2. **No necesitas configurar variables de entorno** (Firebase ya está configurado)
 3. **Deploy automático**
    - Cada push a la rama principal se desplegará automáticamente
 

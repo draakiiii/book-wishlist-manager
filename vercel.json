@@ -3,11 +3,5 @@
   "outputDirectory": "build",
   "framework": "create-react-app",
   "installCommand": "npm install",
-  "devCommand": "npm start",
-  "regions": ["iad1"],
-  "functions": {
-    "build/static/**/*.js": {
-      "maxDuration": 30
-    }
-  }
+  "devCommand": "npm start"
 }

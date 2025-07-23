@@ -3,14 +3,15 @@ import { getAuth, Auth, User, signInWithEmailAndPassword, createUserWithEmailAnd
 import { getFirestore, Firestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, deleteDoc, addDoc, orderBy, limit } from 'firebase/firestore';
 import { getAnalytics, Analytics } from 'firebase/analytics';
 
-// Firebase configuration - Replace with your actual Firebase config
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "your-api-key",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "your-project.firebaseapp.com",
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "your-project-id",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "your-project.appspot.com",
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || "your-app-id"
+  apiKey: "AIzaSyCNVULfkfb77peQh7Y_LEguqNOiWSAHF5w",
+  authDomain: "book-manager-1861b.firebaseapp.com",
+  projectId: "book-manager-1861b",
+  storageBucket: "book-manager-1861b.firebasestorage.app",
+  messagingSenderId: "899173432766",
+  appId: "1:899173432766:web:0ce14cfb20f0c2a2d94def",
+  measurementId: "G-WQ0RP6111V"
 };
 
 // Initialize Firebase
