@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X, Camera, CameraOff, RotateCcw, AlertCircle, CheckCircle, Loader2, Zap } from 'lucide-react';
-import { BrowserMultiFormatReader, Result } from '@zxing/library';
+import { BrowserMultiFormatReader } from '@zxing/library';
 import { useAppState } from '../context/AppStateContext';
 
 interface BarcodeScannerModalProps {
@@ -54,14 +54,20 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     
     try {
       const stream = videoRef.current.srcObject as MediaStream;
-      if (!stream) return;
+      if (!stream) {
+        addFeedback('warning', 'No hay stream de cámara activo');
+        return;
+      }
       
       const track = stream.getVideoTracks()[0];
-      if (!track) return;
+      if (!track) {
+        addFeedback('warning', 'No se pudo acceder a la cámara');
+        return;
+      }
       
       const capabilities = track.getCapabilities();
       if (!capabilities || !('torch' in capabilities)) {
-        addFeedback('warning', 'Esta cámara no soporta linterna');
+        addFeedback('warning', 'Esta cámara no tiene linterna', 2000);
         return;
       }
       
@@ -71,14 +77,15 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       });
       
       setFlashlightEnabled(newFlashlightState);
-      addFeedback('info', newFlashlightState ? 'Linterna activada' : 'Linterna desactivada', 1500);
+      addFeedback('success', newFlashlightState ? '💡 Flash activado' : '💡 Flash desactivado', 1500);
     } catch (error) {
       console.error('Error toggling flashlight:', error);
       addFeedback('error', 'Error al controlar la linterna');
+      setFlashlightEnabled(false); // Reset state on error
     }
   };
 
-  const adjustZoom = async (newZoom: number) => {
+  const adjustZoom = async (delta: number) => {
     if (!videoRef.current) return;
     
     try {
@@ -90,19 +97,35 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       
       const capabilities = track.getCapabilities();
       if (!capabilities || !('zoom' in capabilities)) {
-        addFeedback('warning', 'Esta cámara no soporta zoom digital');
+        if (zoomLevel === 1) { // Only show warning once
+          addFeedback('warning', 'Esta cámara no soporta zoom');
+        }
         return;
       }
       
       const zoomRange = capabilities.zoom as { min: number; max: number };
+      const newZoom = zoomLevel + delta;
       const clampedZoom = Math.max(zoomRange.min, Math.min(zoomRange.max, newZoom));
+      
+      // Don't apply if zoom hasn't changed
+      if (clampedZoom === zoomLevel) {
+        if (clampedZoom >= zoomRange.max) {
+          addFeedback('info', 'Zoom máximo alcanzado', 1000);
+        } else if (clampedZoom <= zoomRange.min) {
+          addFeedback('info', 'Zoom mínimo alcanzado', 1000);
+        }
+        return;
+      }
       
       await track.applyConstraints({
         advanced: [{ zoom: clampedZoom } as any]
       });
       
       setZoomLevel(clampedZoom);
-      addFeedback('info', `Zoom ajustado a ${clampedZoom.toFixed(1)}x`, 1500);
+      // Only show feedback for significant changes
+      if (Math.abs(delta) >= 0.5) {
+        addFeedback('info', `Zoom: ${clampedZoom.toFixed(1)}x`, 1000);
+      }
     } catch (error) {
       console.error('Error adjusting zoom:', error);
       addFeedback('error', 'Error al ajustar el zoom');
@@ -155,14 +178,20 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       const bestCameraIndex = findBestCamera(cameras);
       setCurrentCamera(bestCameraIndex);
 
-      // Request camera permissions with specific device
-      await navigator.mediaDevices.getUserMedia({ 
+      // Request camera permissions and setup video stream
+      const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           deviceId: cameras[bestCameraIndex].deviceId,
           width: { ideal: 1280 },
           height: { ideal: 720 }
         } 
       });
+
+      // Assign stream to video element
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
 
       setIsInitialized(true);
       addFeedback('success', 'Escáner inicializado correctamente', 2000);
@@ -192,21 +221,33 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
   };
 
   const startScanning = async () => {
-    if (!codeReaderRef.current || !videoRef.current || !isInitialized) return;
+    if (!codeReaderRef.current || !videoRef.current || !isInitialized) {
+      addFeedback('error', 'Escáner no inicializado. Reintentando...', 2000);
+      // Try to reinitialize if not ready
+      if (!isInitialized) {
+        await initializeScanner();
+      }
+      return;
+    }
 
     try {
       setIsScanning(true);
       addFeedback('info', 'Iniciando escaneo...', 1500);
       
-      await codeReaderRef.current.decodeFromVideoDevice(
-        availableCameras[currentCamera]?.deviceId || null,
-        videoRef.current,
-        (result: Result | null, error: any) => {
+      // Start continuous scanning
+      const scanFrame = async () => {
+        if (!isScanning || !codeReaderRef.current || !videoRef.current) return;
+        
+        try {
+          const result = await codeReaderRef.current.decodeFromVideoElement(videoRef.current);
           if (result) {
             const scannedCode = result.getText();
             
             // Prevent duplicate scans
-            if (scannedCode === lastScannedCode) return;
+            if (scannedCode === lastScannedCode) {
+              setTimeout(scanFrame, 500);
+              return;
+            }
             
             setLastScannedCode(scannedCode);
             addFeedback('success', `Código detectado: ${scannedCode}`, 2000);
@@ -248,21 +289,29 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
                 onScanSuccess(scannedCode);
                 onClose();
               }, 1500);
+              return;
             } else {
               addFeedback('warning', 'Código detectado pero no es un ISBN válido', 2000);
             }
           }
-          
-          if (error) {
-            // Only log errors that are not "no code found" errors
-            if (error.name !== 'NotFoundException' && 
-                error.name !== 'NoMultiFormatReaderWasFoundException' &&
-                !error.message?.includes('No MultiFormat Readers were able to detect')) {
-              console.error('Scanning error:', error);
-            }
+        } catch (error) {
+          // Only log errors that are not "no code found" errors
+          if (error instanceof Error && 
+              error.name !== 'NotFoundException' && 
+              error.name !== 'NoMultiFormatReaderWasFoundException' &&
+              !error.message?.includes('No MultiFormat Readers were able to detect')) {
+            console.error('Scanning error:', error);
           }
         }
-      );
+        
+        // Continue scanning if still active
+        if (isScanning) {
+          setTimeout(scanFrame, 100);
+        }
+      };
+      
+      // Start the scanning loop
+      scanFrame();
     } catch (error) {
       console.error('Error starting scanner:', error);
       setIsScanning(false);
@@ -289,29 +338,64 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       return;
     }
 
-    const nextCamera = (currentCamera + 1) % availableCameras.length;
-    setCurrentCamera(nextCamera);
-    
-    // Update camera preference in config
-    dispatch({ type: 'SET_CAMERA_PREFERENCE', payload: nextCamera });
-    
-    addFeedback('info', `Cambiando a cámara ${nextCamera + 1}`, 1500);
-    
-    // Restart scanning with new camera
-    if (isScanning) {
+    const wasScanning = isScanning;
+    if (wasScanning) {
       stopScanning();
-      setTimeout(() => {
-        startScanning();
-      }, 500);
+    }
+
+    try {
+      const nextCamera = (currentCamera + 1) % availableCameras.length;
+      
+      // Stop current stream
+      if (videoRef.current && videoRef.current.srcObject) {
+        const currentStream = videoRef.current.srcObject as MediaStream;
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+
+      // Setup new camera
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          deviceId: availableCameras[nextCamera].deviceId,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      });
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+
+      setCurrentCamera(nextCamera);
+      
+      // Update camera preference in config
+      dispatch({ type: 'SET_CAMERA_PREFERENCE', payload: nextCamera });
+      
+      addFeedback('success', `Cámara ${nextCamera + 1} activada`, 1500);
+      
+      // Restart scanning if it was active
+      if (wasScanning) {
+        setTimeout(() => {
+          startScanning();
+        }, 500);
+      }
+    } catch (error) {
+      console.error('Error switching camera:', error);
+      addFeedback('error', 'Error al cambiar de cámara');
     }
   };
 
   const handleCloseModal = async () => {
-    // Turn off flashlight before closing
-    if (flashlightEnabled && videoRef.current) {
+    // Stop scanning first
+    stopScanning();
+
+    // Turn off flashlight and stop video stream
+    if (videoRef.current && videoRef.current.srcObject) {
       try {
         const stream = videoRef.current.srcObject as MediaStream;
-        if (stream) {
+        
+        // Turn off flashlight if enabled
+        if (flashlightEnabled) {
           const track = stream.getVideoTracks()[0];
           if (track) {
             await track.applyConstraints({
@@ -319,13 +403,20 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
             });
           }
         }
+        
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
       } catch (error) {
-        console.error('Error turning off flashlight:', error);
+        console.error('Error cleaning up video stream:', error);
       }
     }
 
-    stopScanning();
+    // Reset states
     setFlashlightEnabled(false);
+    setZoomLevel(1);
+    setIsInitialized(false);
+    
     onClose();
   };
 
@@ -337,12 +428,55 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     };
   }, []);
 
-  // Only start scanning when cameras are available and not already scanning
+  // Separate useEffect for keyboard shortcuts to avoid re-initialization
   useEffect(() => {
-    if (availableCameras.length > 0 && !isScanning && isInitialized) {
-      startScanning();
-    }
-  }, [availableCameras, currentCamera, isInitialized]);
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (isProcessing) return;
+      
+      switch (event.key.toLowerCase()) {
+        case ' ': // Space bar to toggle scanning
+        case 'enter':
+          event.preventDefault();
+          if (isScanning) {
+            stopScanning();
+          } else {
+            startScanning();
+          }
+          break;
+        case 'f': // F for flashlight
+          event.preventDefault();
+          toggleFlashlight();
+          break;
+        case 'c': // C for camera switch
+          event.preventDefault();
+          switchCamera();
+          break;
+        case '+':
+        case '=':
+          event.preventDefault();
+          adjustZoom(0.5);
+          break;
+        case '-':
+        case '_':
+          event.preventDefault();
+          adjustZoom(-0.5);
+          break;
+        case 'escape':
+          event.preventDefault();
+          handleCloseModal();
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [isScanning, isProcessing]);
+
+  // Note: Removed auto-start scanning to allow manual control by user
+  // Previously auto-started scanning when cameras were available
 
   return (
     <motion.div
@@ -388,60 +522,147 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
           {/* Camera Controls */}
           <div className="absolute top-4 right-4 flex flex-col space-y-2">
             {/* Flashlight Button */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
               onClick={toggleFlashlight}
-              className={`p-2 rounded-lg transition-colors duration-200 ${
+              disabled={isProcessing}
+              className={`p-3 rounded-full backdrop-blur-sm transition-all duration-200 ${
                 flashlightEnabled 
-                  ? 'bg-yellow-500 text-white' 
+                  ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/30' 
                   : 'bg-white/20 text-white hover:bg-white/30'
               }`}
             >
-              <Zap className="h-4 w-4" />
-            </button>
+              <Zap className="h-5 w-5" />
+            </motion.button>
+            
+            {/* Camera Switch Button */}
+            {availableCameras.length > 1 && (
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={switchCamera}
+                disabled={isProcessing}
+                className="p-3 rounded-full bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm transition-all duration-200"
+              >
+                <RotateCcw className="h-5 w-5" />
+              </motion.button>
+            )}
           </div>
 
           {/* Zoom Controls */}
           <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-sm rounded-lg p-2">
             <div className="flex flex-col space-y-2">
-              <button
-                onClick={() => adjustZoom(zoomLevel + 0.5)}
-                className="p-1 rounded bg-white/20 text-white hover:bg-white/30"
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => adjustZoom(0.5)}
+                disabled={isProcessing}
+                className="p-2 rounded bg-white/20 text-white hover:bg-white/30 transition-colors duration-200 font-mono font-bold text-lg"
               >
                 +
-              </button>
-              <span className="text-white text-xs text-center">{zoomLevel.toFixed(1)}x</span>
-              <button
-                onClick={() => adjustZoom(zoomLevel - 0.5)}
-                className="p-1 rounded bg-white/20 text-white hover:bg-white/30"
+              </motion.button>
+              <span className="text-white text-xs text-center font-mono bg-black/50 rounded px-2 py-1 min-w-[3rem]">
+                {zoomLevel.toFixed(1)}x
+              </span>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => adjustZoom(-0.5)}
+                disabled={isProcessing}
+                className="p-2 rounded bg-white/20 text-white hover:bg-white/30 transition-colors duration-200 font-mono font-bold text-lg"
               >
                 -
-              </button>
+              </motion.button>
             </div>
           </div>
           
+          {/* Camera Status Indicators */}
+          <div className="absolute top-4 left-4 flex flex-col space-y-2">
+            {/* Camera Info */}
+            {availableCameras.length > 0 && (
+              <div className="bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2">
+                <div className="text-white text-xs">
+                  <div className="font-medium">Cámara {currentCamera + 1}/{availableCameras.length}</div>
+                  <div className="text-slate-300 text-xs truncate max-w-32">
+                    {availableCameras[currentCamera]?.label || 'Sin nombre'}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Flash Status */}
+            {flashlightEnabled && (
+              <div className="bg-yellow-500/90 backdrop-blur-sm rounded-lg px-3 py-2">
+                <div className="text-white text-xs font-medium flex items-center space-x-1">
+                  <Zap className="h-3 w-3" />
+                  <span>Flash ON</span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Scanning Overlay */}
           {isScanning && !isProcessing && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="relative">
                 {/* Scanning Frame */}
-                <div className="w-48 h-32 border-2 border-primary-500 rounded-lg relative">
-                  <div className="absolute -top-1 -left-1 w-4 h-4 border-l-2 border-t-2 border-primary-500"></div>
-                  <div className="absolute -top-1 -right-1 w-4 h-4 border-r-2 border-t-2 border-primary-500"></div>
-                  <div className="absolute -bottom-1 -left-1 w-4 h-4 border-l-2 border-b-2 border-primary-500"></div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 border-r-2 border-b-2 border-primary-500"></div>
+                <div className="w-56 h-36 border-2 border-primary-400 rounded-lg relative shadow-lg">
+                  <div className="absolute -top-1 -left-1 w-6 h-6 border-l-4 border-t-4 border-primary-500 rounded-tl"></div>
+                  <div className="absolute -top-1 -right-1 w-6 h-6 border-r-4 border-t-4 border-primary-500 rounded-tr"></div>
+                  <div className="absolute -bottom-1 -left-1 w-6 h-6 border-l-4 border-b-4 border-primary-500 rounded-bl"></div>
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 border-r-4 border-b-4 border-primary-500 rounded-br"></div>
                   
                   {/* Scanning Line */}
-                  <div className="absolute top-0 left-0 w-full h-0.5 bg-primary-500 animate-pulse"></div>
+                  <motion.div 
+                    className="absolute left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary-400 to-transparent"
+                    animate={{ y: [0, 140, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                  
+                  {/* Center crosshair */}
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border border-primary-400 rounded-full bg-primary-500/20"></div>
+                  </div>
                 </div>
                 
                 {/* Instructions */}
-                <div className="mt-4 text-center">
-                  <p className="text-white text-sm font-medium">
-                    Apunta al código de barras del libro
+                <motion.div 
+                  className="mt-6 text-center"
+                  animate={{ opacity: [0.7, 1, 0.7] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <p className="text-white text-sm font-medium drop-shadow-lg">
+                    📚 Enfoca el código de barras
                   </p>
-                  <p className="text-slate-300 text-xs mt-1">
-                    El código debe estar dentro del marco
+                  <p className="text-slate-300 text-xs mt-1 drop-shadow">
+                    Mantén estable para mejor lectura
                   </p>
+                </motion.div>
+              </div>
+            </div>
+          )}
+
+          {/* Not Scanning Overlay */}
+          {!isScanning && !isProcessing && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <div className="text-center">
+                <Camera className="h-12 w-12 text-white/70 mx-auto mb-4" />
+                <p className="text-white text-lg font-medium mb-2">Escáner Listo</p>
+                <p className="text-slate-300 text-sm">Presiona "Iniciar Escaneo" para comenzar</p>
+                <div className="mt-4 flex items-center justify-center space-x-4 text-white/60 text-xs">
+                  <div className="flex items-center space-x-1">
+                    <Zap className="h-3 w-3" />
+                    <span>Flash</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <RotateCcw className="h-3 w-3" />
+                    <span>Cámara</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span className="font-mono">±</span>
+                    <span>Zoom</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -451,8 +672,9 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
           {isProcessing && (
             <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
               <div className="text-center">
-                <Loader2 className="h-8 w-8 text-primary-500 animate-spin mx-auto mb-2" />
-                <p className="text-white text-sm">Procesando ISBN...</p>
+                <Loader2 className="h-12 w-12 text-primary-500 animate-spin mx-auto mb-4" />
+                <p className="text-white text-lg font-medium">Procesando ISBN...</p>
+                <p className="text-slate-300 text-sm mt-2">Verificando información del libro</p>
               </div>
             </div>
           )}
@@ -461,33 +683,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
         {/* Controls */}
         <div className="p-4 space-y-4">
           {/* Camera Controls */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={switchCamera}
-              disabled={availableCameras.length <= 1 || isProcessing}
-              className="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:bg-slate-50 dark:disabled:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
-            >
-              <RotateCcw className="h-4 w-4" />
-              <span className="text-sm">Cámara</span>
-            </motion.button>
-            
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={toggleFlashlight}
-              disabled={isProcessing}
-              className={`px-3 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 ${
-                flashlightEnabled 
-                  ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-700' 
-                  : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              <Zap className="h-4 w-4" />
-              <span className="text-sm">Linterna</span>
-            </motion.button>
-            
+          <div className="flex justify-center">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -499,17 +695,21 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
                 }
               }}
               disabled={isProcessing}
-              className="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
+              className={`px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 ${
+                isScanning 
+                  ? 'bg-red-500 hover:bg-red-600 text-white' 
+                  : 'bg-primary-500 hover:bg-primary-600 text-white'
+              }`}
             >
               {isScanning ? (
                 <>
-                  <CameraOff className="h-4 w-4" />
-                  <span className="text-sm">Detener</span>
+                  <CameraOff className="h-5 w-5" />
+                  <span>Detener Escaneo</span>
                 </>
               ) : (
                 <>
-                  <Camera className="h-4 w-4" />
-                  <span>Iniciar</span>
+                  <Camera className="h-5 w-5" />
+                  <span>Iniciar Escaneo</span>
                 </>
               )}
             </motion.button>
@@ -546,17 +746,32 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
 
           {/* Instructions */}
           <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
-            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Consejos para escanear:
-            </h4>
-            <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
-              <li>• Asegúrate de tener buena iluminación</li>
-              <li>• Mantén el código de barras estable</li>
-              <li>• El código debe estar dentro del marco rojo</li>
-              <li>• Funciona con códigos ISBN de 10 o 13 dígitos</li>
-              <li>• Si no enfoca bien, cambia de cámara</li>
-              <li>• Mantén una distancia de 10-30 cm del código</li>
-            </ul>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  💡 Consejos para escanear:
+                </h4>
+                <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                  <li>• Buena iluminación es clave</li>
+                  <li>• Mantén el código estable en el marco</li>
+                  <li>• Distancia óptima: 10-30 cm</li>
+                  <li>• Compatible con ISBN 10 y 13 dígitos</li>
+                  <li>• Usa la linterna en lugares oscuros</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  ⌨️ Atajos de teclado:
+                </h4>
+                <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                  <li>• <kbd className="px-1 py-0.5 bg-slate-200 dark:bg-slate-600 rounded text-xs">Espacio</kbd> - Iniciar/Detener</li>
+                  <li>• <kbd className="px-1 py-0.5 bg-slate-200 dark:bg-slate-600 rounded text-xs">F</kbd> - Flash</li>
+                  <li>• <kbd className="px-1 py-0.5 bg-slate-200 dark:bg-slate-600 rounded text-xs">C</kbd> - Cambiar cámara</li>
+                  <li>• <kbd className="px-1 py-0.5 bg-slate-200 dark:bg-slate-600 rounded text-xs">+/-</kbd> - Zoom</li>
+                  <li>• <kbd className="px-1 py-0.5 bg-slate-200 dark:bg-slate-600 rounded text-xs">Esc</kbd> - Cerrar</li>
+                </ul>
+              </div>
+            </div>
           </div>
 
           {/* Camera Info */}
