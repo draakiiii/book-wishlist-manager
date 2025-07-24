@@ -249,6 +249,9 @@ const AppContent: React.FC = () => {
                   <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
                 </motion.button>
                 
+                {/* Botón de Exportar/Importar Datos - DESHABILITADO TEMPORALMENTE */}
+                {/* Para habilitar, descomenta las siguientes líneas: */}
+                {/*
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -258,6 +261,7 @@ const AppContent: React.FC = () => {
                 >
                   <Database className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
                 </motion.button>
+                */}
                 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
