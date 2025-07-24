@@ -1,24 +1,14 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppStateProvider, useAppState } from './context/AppStateContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { motion } from 'framer-motion';
 import { 
   BookOpen, 
-  Heart, 
-  Clock, 
-  Trophy, 
   Settings,
   Search,
   BarChart3,
-  Database,
-  History,
-  Book,
-  CheckCircle,
-  XCircle,
-  ShoppingCart,
   Users,
-  X,
-  Share2
+  X
 } from 'lucide-react';
 import Navigation, { NavigationSection, BooksViewMode } from './components/Navigation';
 import BooksView from './components/BooksView';
@@ -46,7 +36,7 @@ const AppContent: React.FC = () => {
   const [exportImportModalOpen, setExportImportModalOpen] = useState(false);
   const [scanHistoryModalOpen, setScanHistoryModalOpen] = useState(false);
   const [bulkScanModalOpen, setBulkScanModalOpen] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   
   // Estados para navegación
@@ -56,12 +46,7 @@ const AppContent: React.FC = () => {
 
   console.log('AppContent rendered', { authLoading, isAuthenticated, user: user?.email });
 
-  // Inicializar searchResults con todos los libros cuando se abre el modal
-  useEffect(() => {
-    if (searchModalOpen) {
-      setSearchResults(state.libros);
-    }
-  }, [searchModalOpen, state.libros]);
+
 
   useEffect(() => {
     // Aplicar el modo oscuro al body
@@ -136,15 +121,7 @@ const AppContent: React.FC = () => {
     dispatch({ type: 'REMOVE_SAGA_NOTIFICATION', payload: { id } });
   };
 
-  const handleOpenConfig = () => {
-    // En móvil, abrir el sidebar de configuración
-    // En desktop, abrir el modal de configuración
-    if (window.innerWidth < 768) {
-      setConfigSidebarOpen(true);
-    } else {
-      setConfigModalOpen(true);
-    }
-  };
+
 
   // Mostrar loading mientras se autentica
   if (authLoading) {
@@ -386,7 +363,7 @@ const AppContent: React.FC = () => {
       <AdvancedSearch
         isOpen={searchModalOpen}
         onClose={() => setSearchModalOpen(false)}
-        onSearch={setSearchResults}
+        onSearch={() => {}}
       />
 
       {/* Advanced Statistics Modal */}

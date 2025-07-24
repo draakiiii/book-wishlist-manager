@@ -317,10 +317,8 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
           {/* Book Cover */}
           <div className="aspect-[3/4] mb-3">
             <BookCover
-              libro={book}
-              onClick={handleShowDescription}
+              book={book}
               onImageUpdate={handleImageUpdate}
-              showUploadButton={true}
               className="w-full h-full object-cover rounded-lg"
             />
           </div>

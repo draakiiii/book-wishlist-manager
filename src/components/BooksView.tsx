@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Filter,
   Search,
@@ -24,7 +24,7 @@ interface BooksViewProps {
   onViewModeChange: (mode: BooksViewMode) => void;
 }
 
-type SortOption = 'titulo' | 'autor' | 'fechaAnadido' | 'fechaLeido' | 'calificacion' | 'estado';
+type SortOption = 'titulo' | 'autor' | 'fechaAgregado' | 'fechaFin' | 'calificacion' | 'estado';
 type SortDirection = 'asc' | 'desc';
 type FilterState = 'todos' | 'wishlist' | 'tbr' | 'leyendo' | 'leido' | 'abandonado';
 
@@ -32,7 +32,7 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
   const { state, dispatch } = useAppState();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterState, setFilterState] = useState<FilterState>('todos');
-  const [sortBy, setSortBy] = useState<SortOption>('fechaAnadido');
+  const [sortBy, setSortBy] = useState<SortOption>('fechaAgregado');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [showFilters, setShowFilters] = useState(false);
   const [editingBook, setEditingBook] = useState<Libro | null>(null);
@@ -46,7 +46,7 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(libro =>
         libro.titulo.toLowerCase().includes(searchLower) ||
-        libro.autor.toLowerCase().includes(searchLower) ||
+        (libro.autor && libro.autor.toLowerCase().includes(searchLower)) ||
         (libro.genero && libro.genero.toLowerCase().includes(searchLower)) ||
         (libro.editorial && libro.editorial.toLowerCase().includes(searchLower))
       );
@@ -68,16 +68,16 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
           bValue = b.titulo.toLowerCase();
           break;
         case 'autor':
-          aValue = a.autor.toLowerCase();
-          bValue = b.autor.toLowerCase();
+          aValue = (a.autor || '').toLowerCase();
+          bValue = (b.autor || '').toLowerCase();
           break;
-        case 'fechaAnadido':
-          aValue = new Date(a.fechaAnadido || 0);
-          bValue = new Date(b.fechaAnadido || 0);
+        case 'fechaAgregado':
+          aValue = new Date(a.fechaAgregado || 0);
+          bValue = new Date(b.fechaAgregado || 0);
           break;
-        case 'fechaLeido':
-          aValue = a.fechaLeido ? new Date(a.fechaLeido) : new Date(0);
-          bValue = b.fechaLeido ? new Date(b.fechaLeido) : new Date(0);
+        case 'fechaFin':
+          aValue = a.fechaFin ? new Date(a.fechaFin) : new Date(0);
+          bValue = b.fechaFin ? new Date(b.fechaFin) : new Date(0);
           break;
         case 'calificacion':
           aValue = a.calificacion || 0;
@@ -181,15 +181,14 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
       </div>
 
       {/* Panel de filtros y búsqueda */}
-      <AnimatePresence>
-        {showFilters && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="glass-effect rounded-xl p-4 space-y-4"
-          >
+      {showFilters && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.3 }}
+          className="glass-effect rounded-xl p-4 space-y-4"
+        >
             {/* Búsqueda */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
@@ -250,9 +249,10 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
               </label>
               <div className="flex flex-wrap gap-2">
                 {[
-                  { key: 'fechaAnadido', label: 'Fecha Añadido', icon: Calendar },
+                  { key: 'fechaAgregado', label: 'Fecha Añadido', icon: Calendar },
                   { key: 'titulo', label: 'Título', icon: BookOpen },
                   { key: 'autor', label: 'Autor', icon: BookOpen },
+                  { key: 'fechaFin', label: 'Fecha Leído', icon: Calendar },
                   { key: 'calificacion', label: 'Calificación', icon: Star },
                   { key: 'estado', label: 'Estado', icon: BookOpen }
                 ].map(({ key, label, icon: Icon }) => (
@@ -278,7 +278,6 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
 
       {/* Lista/Galería de libros */}
       <div className={`${
@@ -286,49 +285,48 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
           ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4'
           : 'space-y-4'
       }`}>
-        <AnimatePresence>
-          {filteredAndSortedBooks.length > 0 ? (
-            filteredAndSortedBooks.map((libro, index) => (
-              <motion.div
-                key={libro.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <BookCard
-                  book={libro}
-                  onDelete={handleDelete}
-                  onEdit={handleEdit}
-                  variant={viewMode === 'gallery' ? 'compact' : 'full'}
-                />
-              </motion.div>
-            ))
-          ) : (
+        {filteredAndSortedBooks.length > 0 ? (
+          filteredAndSortedBooks.map((libro, index) => (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="col-span-full text-center py-12"
+              key={libro.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
             >
-              <BookOpen className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">
-                No se encontraron libros
-              </h3>
-              <p className="text-slate-500 dark:text-slate-400">
-                {searchTerm || filterState !== 'todos'
-                  ? 'Intenta ajustar los filtros de búsqueda'
-                  : 'Agrega algunos libros a tu biblioteca para comenzar'
-                }
-              </p>
+              <BookCard
+                book={libro}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+                variant={viewMode === 'gallery' ? 'compact' : 'full'}
+              />
             </motion.div>
-          )}
-        </AnimatePresence>
+          ))
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="col-span-full text-center py-12"
+          >
+            <BookOpen className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">
+              No se encontraron libros
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400">
+              {searchTerm || filterState !== 'todos'
+                ? 'Intenta ajustar los filtros de búsqueda'
+                : 'Agrega algunos libros a tu biblioteca para comenzar'
+              }
+            </p>
+          </motion.div>
+        )}
       </div>
 
       {/* Modal de edición */}
       {editingBook && (
         <BookEditModal
+          isOpen={true}
           book={editingBook}
+          listType="todos"
           onClose={() => setEditingBook(null)}
         />
       )}
