@@ -287,6 +287,18 @@ export interface BookData {
   genero?: string;
   formato?: 'fisico' | 'digital' | 'audiolibro';
   precio?: number;
+  
+  // Campos para imágenes de portada (Google Books API)
+  imageLinks?: {
+    smallThumbnail?: string;
+    thumbnail?: string;
+  };
+  
+  // Campos para acceso a vista previa (Google Books API)
+  accessInfo?: {
+    viewability?: 'PARTIAL' | 'ALL_PAGES' | 'NO_PAGES';
+    webReaderLink?: string;
+  };
 }
 
 export interface ExportData {

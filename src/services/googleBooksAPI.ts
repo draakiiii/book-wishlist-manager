@@ -138,7 +138,11 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
             editorial: publisher || undefined,
             descripcion: description || undefined,
             categorias: categories.length > 0 ? categories : undefined,
-            idioma: language || undefined
+            idioma: language || undefined,
+            // Campos para imágenes de portada (Google Books API)
+            imageLinks: book.imageLinks || undefined,
+            // Campos para acceso a vista previa (Google Books API)
+            accessInfo: book.accessInfo || undefined
             // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
           };
           
@@ -307,7 +311,11 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
         editorial: book.publisher || undefined,
         descripcion: book.description || undefined,
         categorias: book.categories?.length > 0 ? book.categories : undefined,
-        idioma: book.language || undefined
+        idioma: book.language || undefined,
+        // Campos para imágenes de portada (Google Books API)
+        imageLinks: book.imageLinks || undefined,
+        // Campos para acceso a vista previa (Google Books API)
+        accessInfo: book.accessInfo || undefined
         // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
     });
@@ -417,7 +425,11 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
         editorial: publisher || undefined,
         descripcion: description || undefined,
         categorias: categories.length > 0 ? categories : undefined,
-        idioma: language || undefined
+        idioma: language || undefined,
+        // Campos para imágenes de portada (Google Books API)
+        imageLinks: book.imageLinks || undefined,
+        // Campos para acceso a vista previa (Google Books API)
+        accessInfo: book.accessInfo || undefined
         // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
     });
