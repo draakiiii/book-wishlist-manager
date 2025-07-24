@@ -173,6 +173,15 @@ export interface Configuracion {
   dineroPorPagina?: number;
   dineroParaComprar?: number;
   costoPorPagina?: number; // Costo por página al comprar libros
+  
+  // Configuración de visibilidad de secciones
+  mostrarSeccionProgreso?: boolean;
+  mostrarSeccionWishlist?: boolean;
+  mostrarSeccionTBR?: boolean;
+  mostrarSeccionLeyendo?: boolean;
+  mostrarSeccionLeidos?: boolean;
+  mostrarSeccionAbandonados?: boolean;
+  mostrarSeccionSagas?: boolean;
 }
 
 export interface AppState {

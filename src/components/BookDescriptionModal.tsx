@@ -161,7 +161,7 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
                     </div>
                     
                     {/* Estado del libro y Read Sample button */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-3">
                       <div className="flex items-center space-x-3">
                         <div className={`px-3 py-1.5 rounded-lg text-sm font-medium ${estadoInfo.bgColor} ${estadoInfo.color}`}>
                           {estadoInfo.label}
@@ -174,10 +174,10 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={handleReadSample}
-                          className="flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm font-medium transition-colors duration-200"
+                          className="flex items-center justify-center space-x-2 px-4 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md w-full sm:w-auto"
                         >
-                          <ExternalLink className="h-4 w-4" />
-                          <span>Leer Muestra</span>
+                          <ExternalLink className="h-4 w-4 flex-shrink-0" />
+                          <span className="whitespace-nowrap">Leer Muestra</span>
                         </motion.button>
                       )}
                     </div>
