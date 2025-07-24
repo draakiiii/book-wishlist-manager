@@ -27,60 +27,87 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   const [inputValue, setInputValue] = useState(value);
   const [suggestions, setSuggestions] = useState<BookData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [debouncedValue, setDebouncedValue] = useState(value);
   const [justSelected, setJustSelected] = useState(false);
-  const [isUserTyping, setIsUserTyping] = useState(false);
-  const [lastTypedValue, setLastTypedValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Referencias para manejo de debounce y cancelación de requests
+  const debounceTimerRef = useRef<NodeJS.Timeout>();
+  const abortControllerRef = useRef<AbortController>();
+  const lastSearchQueryRef = useRef<string>('');
 
   // Sync internal state with prop value
   useEffect(() => {
     setInputValue(value);
-    setDebouncedValue(value);
-    setLastTypedValue(value);
+    lastSearchQueryRef.current = value;
   }, [value]);
 
-  // Debounce the search to avoid too many API calls
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(inputValue);
-    }, 300);
+  // Función para buscar libros con cancelación de requests previos
+  const searchBooks = async (query: string) => {
+    if (disabled || disableAutocomplete || query.trim().length < 2 || justSelected) {
+      setSuggestions([]);
+      setIsOpen(false);
+      return;
+    }
 
-    return () => clearTimeout(timer);
-  }, [inputValue]);
+    // Cancelar request anterior si existe
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
 
-  // Search for books when debounced value changes
-  useEffect(() => {
-    const searchBooks = async () => {
-      if (disabled || disableAutocomplete || debouncedValue.trim().length < 2 || justSelected) {
-        setSuggestions([]);
-        setIsOpen(false);
+    // Crear nuevo AbortController para este request
+    abortControllerRef.current = new AbortController();
+    const currentController = abortControllerRef.current;
+
+    setIsLoading(true);
+    
+    try {
+      // Verificar que este query es el más reciente antes de empezar
+      if (query !== lastSearchQueryRef.current) {
         return;
       }
 
-      // Only search if the user is actively typing and the value has changed
-      if (!isUserTyping || debouncedValue === lastTypedValue) {
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        const results = await searchBooksByTitle(debouncedValue);
+      const results = await searchBooksByTitle(query);
+      
+      // Verificar que el request no fue cancelado y que el query sigue siendo el actual
+      if (!currentController.signal.aborted && query === lastSearchQueryRef.current) {
         setSuggestions(results);
         setIsOpen(results.length > 0);
-      } catch (error) {
+      }
+    } catch (error) {
+      // Solo mostrar error si no fue por cancelación del request
+      if (!currentController.signal.aborted) {
         console.error('Error searching books:', error);
         setSuggestions([]);
         setIsOpen(false);
-      } finally {
+      }
+    } finally {
+      // Solo actualizar loading state si el request no fue cancelado
+      if (!currentController.signal.aborted) {
         setIsLoading(false);
       }
-    };
+    }
+  };
 
-    searchBooks();
-  }, [debouncedValue, disabled, disableAutocomplete, justSelected, isUserTyping, lastTypedValue]);
+  // Función para manejar el debounce de búsqueda
+  const debouncedSearch = (query: string) => {
+    // Limpiar timer anterior si existe
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Actualizar el último query buscado
+    lastSearchQueryRef.current = query;
+
+    // Establecer nuevo timer con timeout más largo para mejor detección
+    debounceTimerRef.current = setTimeout(() => {
+      // Verificar que el query no ha cambiado antes de ejecutar la búsqueda
+      if (query === lastSearchQueryRef.current) {
+        searchBooks(query);
+      }
+    }, 500); // Aumentado de 300ms a 500ms para mejor detección de cuando el usuario termina de escribir
+  };
 
   // Handle click outside
   useEffect(() => {
@@ -92,12 +119,23 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
         !inputRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
-        setIsUserTyping(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Cleanup effect para cancelar requests y timers al desmontar
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   // Handle mobile scroll behavior
@@ -135,10 +173,6 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     setInputValue(newValue);
     onChange(newValue);
     
-    // Mark that user is actively typing
-    setIsUserTyping(true);
-    setLastTypedValue(newValue);
-    
     // Reset justSelected flag when user starts typing manually
     if (justSelected) {
       setJustSelected(false);
@@ -147,17 +181,30 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     // Close autocomplete if disabled
     if (disableAutocomplete) {
       setIsOpen(false);
+      return;
+    }
+
+    // Iniciar búsqueda con debounce solo si no acabamos de seleccionar un libro
+    if (!justSelected) {
+      debouncedSearch(newValue);
     }
   };
 
   const handleBookSelect = (book: BookData) => {
+    // Cancelar cualquier búsqueda en progreso
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
     setInputValue(book.titulo);
-    setDebouncedValue(book.titulo);
-    setLastTypedValue(book.titulo);
+    lastSearchQueryRef.current = book.titulo;
     setJustSelected(true);
-    setIsUserTyping(false);
     onChange(book.titulo);
     setIsOpen(false);
+    setIsLoading(false);
     
     if (onBookSelect) {
       onBookSelect(book);
@@ -172,8 +219,8 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   const handleInputFocus = () => {
     if (disabled || disableAutocomplete || justSelected) return;
     
-    // Only show suggestions if user is actively typing, there's enough text, and there are suggestions
-    if (isUserTyping && inputValue.trim().length >= 2 && suggestions.length > 0) {
+    // Solo mostrar sugerencias si hay texto suficiente y ya tenemos sugerencias cargadas
+    if (inputValue.trim().length >= 2 && suggestions.length > 0) {
       setIsOpen(true);
     }
   };
@@ -186,7 +233,14 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   const handleInputKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       setIsOpen(false);
-      setIsUserTyping(false);
+      // Cancelar búsqueda en progreso
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      setIsLoading(false);
     } else if (e.key === 'Enter' && isOpen && suggestions.length > 0) {
       e.preventDefault();
       handleBookSelect(suggestions[0]);
@@ -284,7 +338,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
               </div>
             )}
             
-            {suggestions.length === 0 && !isLoading && debouncedValue.trim().length >= 2 && isUserTyping && (
+            {suggestions.length === 0 && !isLoading && lastSearchQueryRef.current.trim().length >= 2 && !justSelected && (
               <div className="py-4 px-3 text-center">
                 <BookOpen className="h-8 w-8 text-slate-400 mx-auto mb-2" />
                 <p className="text-sm text-slate-500 dark:text-slate-400">
