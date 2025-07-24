@@ -98,8 +98,8 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   const handleBuyBook = () => {
     if (state.config.sistemaPuntosHabilitado) {
       const puntosNecesarios = state.config.puntosParaComprar || 25;
-      if (state.puntos < puntosNecesarios) {
-        showError('Puntos insuficientes', `Necesitas ${puntosNecesarios} puntos para comprar este libro. Tienes ${state.puntos} puntos.`);
+      if (state.puntosActuales < puntosNecesarios) {
+        showError('Puntos insuficientes', `Necesitas ${puntosNecesarios} puntos para comprar este libro. Tienes ${state.puntosActuales} puntos.`);
         return;
       }
       
