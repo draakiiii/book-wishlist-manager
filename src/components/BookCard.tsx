@@ -301,15 +301,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
       {/* Book Info */}
       <div className="space-y-2 sm:space-y-3">
         {/* Cover Image and Info Layout */}
-        {(() => {
-          console.log('BookCard Debug:', {
-            mostrarPortadas: state.config.mostrarPortadas,
-            portadaUrl: book.portadaUrl,
-            portadaThumbnail: book.portadaThumbnail,
-            titulo: book.titulo
-          });
-          return state.config.mostrarPortadas;
-        })() ? (
+        {state.config.mostrarPortadas ? (
           <div className="flex flex-col sm:flex-row sm:items-start sm:space-x-3">
             {/* Cover Image */}
             <div className="flex justify-center sm:justify-start mb-3 sm:mb-0">

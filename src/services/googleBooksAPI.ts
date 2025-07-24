@@ -132,6 +132,13 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
           // Extract cover images
           let portadaUrl: string | undefined;
           let portadaThumbnail: string | undefined;
+          
+          console.log('Google Books API Debug - Book data:', {
+            title: book.title,
+            hasImageLinks: !!book.imageLinks,
+            imageLinks: book.imageLinks
+          });
+          
           if (book.imageLinks) {
             // Preferir thumbnail para mejor rendimiento, pero usar la imagen completa si está disponible
             portadaThumbnail = book.imageLinks.smallThumbnail || book.imageLinks.thumbnail;
@@ -144,6 +151,13 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
             if (portadaThumbnail && portadaThumbnail.startsWith('http:')) {
               portadaThumbnail = portadaThumbnail.replace('http:', 'https:');
             }
+            
+            console.log('Google Books API Debug - Extracted cover URLs:', {
+              portadaUrl,
+              portadaThumbnail
+            });
+          } else {
+            console.log('Google Books API Debug - No imageLinks found for book:', book.title);
           }
           
           bookData = {
@@ -317,6 +331,23 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
         isbn = isbn13?.identifier || isbn10?.identifier;
       }
       
+      // Extract cover images
+      let portadaUrl: string | undefined;
+      let portadaThumbnail: string | undefined;
+      if (book.imageLinks) {
+        // Preferir thumbnail para mejor rendimiento, pero usar la imagen completa si está disponible
+        portadaThumbnail = book.imageLinks.smallThumbnail || book.imageLinks.thumbnail;
+        portadaUrl = book.imageLinks.thumbnail || book.imageLinks.smallThumbnail;
+        
+        // Convertir URLs HTTP a HTTPS para mejor seguridad
+        if (portadaUrl && portadaUrl.startsWith('http:')) {
+          portadaUrl = portadaUrl.replace('http:', 'https:');
+        }
+        if (portadaThumbnail && portadaThumbnail.startsWith('http:')) {
+          portadaThumbnail = portadaThumbnail.replace('http:', 'https:');
+        }
+      }
+      
       return {
         titulo: title,
         autor: authorName || undefined,
@@ -326,7 +357,9 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
         editorial: book.publisher || undefined,
         descripcion: book.description || undefined,
         categorias: book.categories?.length > 0 ? book.categories : undefined,
-        idioma: book.language || undefined
+        idioma: book.language || undefined,
+        portadaUrl,
+        portadaThumbnail
         // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
     });
@@ -427,6 +460,23 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
         isbn = isbn13?.identifier || isbn10?.identifier;
       }
       
+      // Extract cover images
+      let portadaUrl: string | undefined;
+      let portadaThumbnail: string | undefined;
+      if (book.imageLinks) {
+        // Preferir thumbnail para mejor rendimiento, pero usar la imagen completa si está disponible
+        portadaThumbnail = book.imageLinks.smallThumbnail || book.imageLinks.thumbnail;
+        portadaUrl = book.imageLinks.thumbnail || book.imageLinks.smallThumbnail;
+        
+        // Convertir URLs HTTP a HTTPS para mejor seguridad
+        if (portadaUrl && portadaUrl.startsWith('http:')) {
+          portadaUrl = portadaUrl.replace('http:', 'https:');
+        }
+        if (portadaThumbnail && portadaThumbnail.startsWith('http:')) {
+          portadaThumbnail = portadaThumbnail.replace('http:', 'https:');
+        }
+      }
+      
       return {
         titulo: title,
         autor: author || undefined,
@@ -436,7 +486,9 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
         editorial: publisher || undefined,
         descripcion: description || undefined,
         categorias: categories.length > 0 ? categories : undefined,
-        idioma: language || undefined
+        idioma: language || undefined,
+        portadaUrl,
+        portadaThumbnail
         // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
     });
@@ -455,4 +507,47 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
     }
     return [];
   }
+}; 
+
+// Limpiar caché para forzar nueva búsqueda con portadas
+export const clearAllCaches = () => {
+  bookCache.clear();
+  searchCache.clear();
+  console.log('All caches cleared');
+};
+
+// Función de prueba para diagnosticar problemas con portadas
+export const testBookCoverExtraction = async (isbn: string) => {
+  console.log('=== TESTING BOOK COVER EXTRACTION ===');
+  console.log('ISBN:', isbn);
+  
+  try {
+    const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&langRestrict=es`;
+    console.log('API URL:', url);
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    console.log('API Response:', data);
+    
+    if (data.totalItems > 0) {
+      const book = data.items[0].volumeInfo;
+      console.log('Book volumeInfo:', book);
+      console.log('ImageLinks:', book.imageLinks);
+      
+      if (book.imageLinks) {
+        console.log('✅ ImageLinks found!');
+        console.log('smallThumbnail:', book.imageLinks.smallThumbnail);
+        console.log('thumbnail:', book.imageLinks.thumbnail);
+      } else {
+        console.log('❌ No ImageLinks found');
+      }
+    } else {
+      console.log('❌ No books found for this ISBN');
+    }
+  } catch (error) {
+    console.error('Error testing book cover extraction:', error);
+  }
+  
+  console.log('=== END TEST ===');
 }; 
