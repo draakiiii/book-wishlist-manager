@@ -111,6 +111,7 @@ const TBRForm: React.FC = () => {
       genero: bookData.genero,
       formato: bookData.formato,
       precio: bookData.precio,
+      portada: bookData.portada, // Incluir la portada
       estado: 'tbr',
       historialEstados: [{
         estado: 'tbr',

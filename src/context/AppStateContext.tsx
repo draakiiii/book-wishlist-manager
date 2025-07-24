@@ -24,6 +24,7 @@ const initialState: AppState = {
     zoomLevel: 1,
     datosAnonimos: false,
     compartirEstadisticas: false,
+    mostrarPortadas: true, // Mostrar portadas por defecto
     // Configuración del sistema de puntos/dinero
     sistemaPuntosHabilitado: true,
     modoDinero: false, // false = puntos, true = dinero

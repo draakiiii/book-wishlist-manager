@@ -32,6 +32,7 @@ export interface Libro {
   descripcion?: string;
   categorias?: string[];
   numCalificaciones?: number;
+  portada?: string; // URL de la portada del libro
   estado: 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado' | 'prestado';
   historialEstados: EstadoLibro[];
   lecturas: Lectura[]; // Múltiples lecturas del libro
@@ -151,6 +152,9 @@ export interface Configuracion {
   // Configuración de privacidad
   datosAnonimos?: boolean;
   compartirEstadisticas?: boolean;
+  
+  // Configuración de visualización
+  mostrarPortadas?: boolean; // Mostrar portadas de libros
   
   // Configuración del sistema de puntos/dinero
   sistemaPuntosHabilitado?: boolean;
@@ -275,6 +279,7 @@ export interface BookData {
   genero?: string;
   formato?: 'fisico' | 'digital' | 'audiolibro';
   precio?: number;
+  portada?: string; // URL de la portada del libro
 }
 
 export interface ExportData {

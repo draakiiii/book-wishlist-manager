@@ -510,6 +510,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
         paginas: parseInt(book.paginas) || undefined,
         sagaName: book.sagaName || undefined,
         isbn: book.isbn,
+        portada: book.bookData?.portada, // Incluir la portada si está disponible
         fechaAgregado: Date.now(),
         estado: 'tbr',
         historialEstados: [{

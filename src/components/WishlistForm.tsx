@@ -109,6 +109,7 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ onOpenConfig }) => {
       genero: bookData.genero,
       formato: bookData.formato,
       precio: bookData.precio,
+      portada: bookData.portada, // Incluir la portada
       estado: 'wishlist',
       historialEstados: [{
         estado: 'wishlist',

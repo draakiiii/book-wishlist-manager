@@ -129,6 +129,21 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
           // Extract language
           const language = book.language || '';
           
+          // Extract cover image URL
+          let coverUrl: string | undefined;
+          if (book.imageLinks) {
+            // Preferir thumbnail, luego small, luego medium
+            coverUrl = book.imageLinks.thumbnail || 
+                      book.imageLinks.small || 
+                      book.imageLinks.medium ||
+                      book.imageLinks.smallThumbnail;
+            
+            // Convertir URL de HTTP a HTTPS si es necesario
+            if (coverUrl && coverUrl.startsWith('http:')) {
+              coverUrl = coverUrl.replace('http:', 'https:');
+            }
+          }
+          
           bookData = {
             titulo: title,
             autor: author || undefined,
@@ -138,7 +153,8 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
             editorial: publisher || undefined,
             descripcion: description || undefined,
             categorias: categories.length > 0 ? categories : undefined,
-            idioma: language || undefined
+            idioma: language || undefined,
+            portada: coverUrl
             // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
           };
           
@@ -298,6 +314,21 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
         isbn = isbn13?.identifier || isbn10?.identifier;
       }
       
+      // Extract cover image URL
+      let coverUrl: string | undefined;
+      if (book.imageLinks) {
+        // Preferir thumbnail, luego small, luego medium
+        coverUrl = book.imageLinks.thumbnail || 
+                  book.imageLinks.small || 
+                  book.imageLinks.medium ||
+                  book.imageLinks.smallThumbnail;
+        
+        // Convertir URL de HTTP a HTTPS si es necesario
+        if (coverUrl && coverUrl.startsWith('http:')) {
+          coverUrl = coverUrl.replace('http:', 'https:');
+        }
+      }
+      
       return {
         titulo: title,
         autor: authorName || undefined,
@@ -307,7 +338,8 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
         editorial: book.publisher || undefined,
         descripcion: book.description || undefined,
         categorias: book.categories?.length > 0 ? book.categories : undefined,
-        idioma: book.language || undefined
+        idioma: book.language || undefined,
+        portada: coverUrl
         // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
     });
@@ -408,6 +440,21 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
         isbn = isbn13?.identifier || isbn10?.identifier;
       }
       
+      // Extract cover image URL
+      let coverUrl: string | undefined;
+      if (book.imageLinks) {
+        // Preferir thumbnail, luego small, luego medium
+        coverUrl = book.imageLinks.thumbnail || 
+                  book.imageLinks.small || 
+                  book.imageLinks.medium ||
+                  book.imageLinks.smallThumbnail;
+        
+        // Convertir URL de HTTP a HTTPS si es necesario
+        if (coverUrl && coverUrl.startsWith('http:')) {
+          coverUrl = coverUrl.replace('http:', 'https:');
+        }
+      }
+      
       return {
         titulo: title,
         autor: author || undefined,
@@ -417,7 +464,8 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
         editorial: publisher || undefined,
         descripcion: description || undefined,
         categorias: categories.length > 0 ? categories : undefined,
-        idioma: language || undefined
+        idioma: language || undefined,
+        portada: coverUrl
         // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
     });

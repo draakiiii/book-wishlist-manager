@@ -299,6 +299,23 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
 
       {/* Book Info */}
       <div className="space-y-2 sm:space-y-3">
+        {/* Cover Image */}
+        {state.config.mostrarPortadas && book.portada && (
+          <div className="flex justify-center">
+            <div className="relative w-24 h-32 sm:w-28 sm:h-36 rounded-lg overflow-hidden shadow-md">
+              <img
+                src={book.portada}
+                alt={`Portada de ${book.titulo}`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Ocultar la imagen si falla al cargar
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+          </div>
+        )}
+        
         <div>
           <h3 className="font-semibold text-slate-900 dark:text-white text-base sm:text-lg leading-tight pr-16 sm:pr-20">
             {book.titulo}
