@@ -23,7 +23,7 @@ import {
   Calendar,
   TrendingUp,
   Layout,
-  Widget
+  Settings as Widget
 } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 

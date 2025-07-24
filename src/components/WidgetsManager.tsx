@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { 
-  X, 
-  Plus, 
-  Settings, 
-  Eye, 
-  EyeOff, 
+import {
+  X,
+  Plus,
+  Settings,
+  Eye,
+  EyeOff,
   GripVertical,
   BarChart3,
   Target,
@@ -15,8 +15,7 @@ import {
   Users,
   FileText,
   Trash2,
-  Save,
-  Cancel
+  Save
 } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 import { Widget } from '../types';
@@ -262,7 +261,7 @@ const WidgetsManager: React.FC<WidgetsManagerProps> = ({ isOpen, onClose }) => {
                     onClick={handleCancelEdit}
                     className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
-                    <Cancel className="w-4 h-4" />
+                    <X className="w-4 h-4" />
                     Cancelar
                   </button>
                 </div>

@@ -7,8 +7,7 @@ import {
   Edit, 
   Trash2, 
   Save,
-  Cancel,
-  Compare,
+  BarChart3,
   Check,
   AlertCircle,
   DollarSign,
@@ -330,7 +329,7 @@ const EditionsManager: React.FC<EditionsManagerProps> = ({ isOpen, onClose, libr
                     onClick={handleCancelEdit}
                     className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
-                    <Cancel className="w-4 h-4" />
+                    <X className="w-4 h-4" />
                     Cancelar
                   </button>
                 </div>
@@ -405,7 +404,7 @@ const EditionsManager: React.FC<EditionsManagerProps> = ({ isOpen, onClose, libr
                                 }`}
                                 title="Comparar edición"
                               >
-                                <Compare className="w-4 h-4" />
+                                <BarChart3 className="w-4 h-4" />
                               </button>
                               
                               <button

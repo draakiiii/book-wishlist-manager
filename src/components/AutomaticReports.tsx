@@ -164,8 +164,8 @@ const AutomaticReports: React.FC<AutomaticReportsProps> = ({ isOpen, onClose }) 
       librosLeidos: librosLeidos.length,
       paginasLeidas,
       tiempoLectura: Math.round(tiempoLectura / (1000 * 60 * 60 * 24)), // en días
-      generosMasLeidos,
-      autoresMasLeidos,
+      generosLeidos: generosMasLeidos,
+      autoresLeidos: autoresMasLeidos,
       sagasCompletadas,
       objetivosCumplidos,
       prestamosActivos,
@@ -204,21 +204,21 @@ const AutomaticReports: React.FC<AutomaticReportsProps> = ({ isOpen, onClose }) 
     setCustomEndDate('');
   };
 
-  const handleExportReport = (report: ReporteAutomatico, format: 'json' | 'csv' | 'pdf') => {
+  const handleExportReport = (report: ReporteAutomatico, exportFormat: 'json' | 'csv' | 'pdf') => {
     const reportData = {
       ...report,
       periodoTexto: `${format(new Date(report.periodo.inicio), 'dd/MM/yyyy', { locale: es })} - ${format(new Date(report.periodo.fin), 'dd/MM/yyyy', { locale: es })}`,
       fechaGeneracionTexto: format(new Date(report.fechaGeneracion), 'dd/MM/yyyy HH:mm', { locale: es })
     };
     
-    if (format === 'json') {
+    if (exportFormat === 'json') {
       const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `reporte_${report.tipo}_${format(new Date(report.periodo.inicio), 'yyyy-MM-dd', { locale: es })}.json`;
       link.click();
-    } else if (format === 'csv') {
+    } else if (exportFormat === 'csv') {
       const csvContent = [
         ['Período', reportData.periodoTexto],
         ['Fecha de generación', reportData.fechaGeneracionTexto],
@@ -234,10 +234,10 @@ const AutomaticReports: React.FC<AutomaticReportsProps> = ({ isOpen, onClose }) 
         ['Valor agregado', report.datos.valorAgregado],
         [''],
         ['Géneros más leídos'],
-        ...report.datos.generosMasLeidos.map(g => [g.genero, g.count]),
+        ...report.datos.generosLeidos.map(g => [g.genero, g.count]),
         [''],
         ['Autores más leídos'],
-        ...report.datos.autoresMasLeidos.map(a => [a.autor, a.count])
+        ...report.datos.autoresLeidos.map(a => [a.autor, a.count])
       ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
       
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -248,7 +248,7 @@ const AutomaticReports: React.FC<AutomaticReportsProps> = ({ isOpen, onClose }) 
       link.click();
     }
     
-    dispatch({ type: 'EXPORTAR_REPORTE', payload: { id: report.id, formato: format } });
+    dispatch({ type: 'EXPORTAR_REPORTE', payload: { id: report.id, formato: exportFormat } });
   };
 
   const handleDeleteReport = (reportId: number) => {
@@ -285,7 +285,6 @@ const AutomaticReports: React.FC<AutomaticReportsProps> = ({ isOpen, onClose }) 
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -476,7 +475,6 @@ const AutomaticReports: React.FC<AutomaticReportsProps> = ({ isOpen, onClose }) 
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
   );
 };
 

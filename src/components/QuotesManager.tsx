@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  X, 
-  Plus, 
-  Quote, 
-  Heart, 
+import {
+  X,
+  Plus,
+  Quote,
+  Heart,
   HeartOff,
   Edit,
   Trash2,
@@ -13,7 +13,6 @@ import {
   BookOpen,
   Calendar,
   Save,
-  Cancel,
   Copy,
   Check,
   FileText
@@ -294,7 +293,7 @@ const QuotesManager: React.FC<QuotesManagerProps> = ({ isOpen, onClose, libroId 
                     onClick={handleCancelEdit}
                     className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
-                    <Cancel className="w-4 h-4" />
+                    <X className="w-4 h-4" />
                     Cancelar
                   </button>
                 </div>

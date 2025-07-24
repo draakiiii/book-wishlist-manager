@@ -311,7 +311,7 @@ const AppContent: React.FC = () => {
         <div className="lg:w-64 lg:border-r lg:border-slate-200 dark:lg:border-slate-700">
           <MainNavigation 
             currentSection={currentSection}
-            onSectionChange={setCurrentSection}
+            onNavigate={setCurrentSection}
           />
         </div>
 
