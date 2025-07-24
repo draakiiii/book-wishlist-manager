@@ -30,6 +30,9 @@ const ProgressBar: React.FC = () => {
   // Filtrar libros excluyendo wishlist para estadísticas
   const librosParaEstadisticas = libros.filter(l => l.estado !== 'wishlist');
   
+  // Libros prestados (para mostrar en resumen, pero no como sección separada)
+  const librosPrestados = libros.filter(libro => libro.prestado === true);
+  
   // Calcular valor total de la colección (excluyendo wishlist)
   const librosConPrecio = librosParaEstadisticas.filter(l => l.precio && l.precio > 0);
   const valorTotalColeccion = librosConPrecio.reduce((total, libro) => total + (libro.precio || 0), 0);
