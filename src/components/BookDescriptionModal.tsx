@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, BookOpen, Clock, Star, Plus, Edit, Trash2 } from 'lucide-react';
+import { X, BookOpen, Clock, Star, Plus, Edit, Trash2, ExternalLink } from 'lucide-react';
 import { Libro, EstadoLibro, Lectura } from '../types';
 import { useAppState } from '../context/AppStateContext';
+import { openWebReader } from '../utils/webReader';
+import BookCover from './BookCover';
 
 interface BookDescriptionModalProps {
   book: Libro | null;
@@ -88,6 +90,16 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
     });
   };
 
+  const handleReadSample = () => {
+    if (!book?.webReaderLink) return;
+    
+    // Use the utility function for better mobile support and fallback handling
+    openWebReader(book.webReaderLink, book.titulo);
+  };
+
+  // Check if the read sample button should be visible
+  const canReadSample = book?.viewability === 'PARTIAL' || book?.viewability === 'ALL_PAGES';
+
   if (!book) return null;
 
   const estadoInfo = getEstadoInfo(book.estado);
@@ -111,36 +123,54 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
             >
               {/* Header */}
               <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg">
-                    <BookOpen className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                      {book.titulo}
-                    </h2>
-                    {book.autor && (
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        por {book.autor}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  {/* Estado del libro */}
-                  <div className="flex items-center space-x-2">
-                    <div className={`p-2 rounded-lg bg-slate-100 dark:bg-slate-700 ${estadoInfo.bgColor}`}>
-                      {estadoInfo.label}
+                <div className="flex items-start space-x-4 flex-1">
+                  {/* Book Cover */}
+                  <BookCover book={book} size="large" context="detail" className="flex-shrink-0" />
+                  
+                  {/* Book Info and Actions */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">
+                          {book.titulo}
+                        </h2>
+                        {book.autor && (
+                          <p className="text-base text-slate-600 dark:text-slate-400 mt-1">
+                            por {book.autor}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <button
+                        onClick={onClose}
+                        className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors ml-4"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                    
+                    {/* Estado del libro y Read Sample button */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className={`px-3 py-1.5 rounded-lg text-sm font-medium ${estadoInfo.bgColor} ${estadoInfo.color}`}>
+                          {estadoInfo.label}
+                        </div>
+                      </div>
+                      
+                      {/* Read Sample Button */}
+                      {canReadSample && book.webReaderLink && (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={handleReadSample}
+                          className="flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm font-medium transition-colors duration-200"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          <span>Leer Muestra</span>
+                        </motion.button>
+                      )}
                     </div>
                   </div>
-                  
-                  <button
-                    onClick={onClose}
-                    className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
                 </div>
               </div>
 

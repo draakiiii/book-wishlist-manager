@@ -42,6 +42,12 @@ export interface Libro {
   prestado?: boolean;
   prestadoA?: string;
   fechaPrestamo?: number;
+  // Image URLs for optimized loading
+  smallThumbnail?: string;
+  thumbnail?: string;
+  // Access info for reading samples
+  viewability?: 'NO_PAGES' | 'PARTIAL' | 'ALL_PAGES';
+  webReaderLink?: string;
 }
 
 export interface EstadoLibro {
@@ -275,6 +281,12 @@ export interface BookData {
   genero?: string;
   formato?: 'fisico' | 'digital' | 'audiolibro';
   precio?: number;
+  // Image URLs for optimized loading
+  smallThumbnail?: string;
+  thumbnail?: string;
+  // Access info for reading samples
+  viewability?: 'NO_PAGES' | 'PARTIAL' | 'ALL_PAGES';
+  webReaderLink?: string;
 }
 
 export interface ExportData {

@@ -21,6 +21,7 @@ import {
 import BookDescriptionModal from './BookDescriptionModal';
 import RatingModal from './RatingModal';
 import LoanModal from './LoanModal';
+import BookCover from './BookCover';
 import { useDialog } from '../hooks/useDialog';
 import Dialog from './Dialog';
 import InputModal from './InputModal';
@@ -297,72 +298,77 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
         <span className="capitalize hidden sm:inline">{getTypeLabel()}</span>
       </div>
 
-      {/* Book Info */}
-      <div className="space-y-2 sm:space-y-3">
-        <div>
-          <h3 className="font-semibold text-slate-900 dark:text-white text-base sm:text-lg leading-tight pr-16 sm:pr-20">
-            {book.titulo}
-          </h3>
-          {book.autor && (
-            <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 mt-1">
-              <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="text-xs sm:text-sm truncate">{book.autor}</span>
-            </div>
-          )}
-        </div>
+      {/* Book Content with Cover */}
+      <div className="flex space-x-3 sm:space-x-4">
+        {/* Book Cover */}
+        <BookCover book={book} size="medium" context="list" className="flex-shrink-0" />
+        
+        {/* Book Info */}
+        <div className="flex-1 space-y-2 sm:space-y-3 min-w-0">
+          <div>
+            <h3 className="font-semibold text-slate-900 dark:text-white text-base sm:text-lg leading-tight pr-16 sm:pr-20">
+              {book.titulo}
+            </h3>
+            {book.autor && (
+              <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 mt-1">
+                <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="text-xs sm:text-sm truncate">{book.autor}</span>
+              </div>
+            )}
+          </div>
 
-        {/* Book Details */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-          {book.paginas && (
-            <div className="flex items-center space-x-2">
-              <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-slate-500 flex-shrink-0" />
-              <span className="text-slate-700 dark:text-slate-300">
-                {book.paginas} páginas
-              </span>
-            </div>
-          )}
-          
-          {book.sagaName && (
-            <div className="flex items-center space-x-2">
-              <Star className="h-3 w-3 sm:h-4 sm:w-4 text-amber-500 flex-shrink-0" />
-              <span className="text-slate-700 dark:text-slate-300 truncate">
-                {book.sagaName}
-                {(() => {
-                  const bookNumber = getBookNumberInSaga(book);
-                  return bookNumber ? ` #${bookNumber}` : '';
-                })()}
-              </span>
-            </div>
-          )}
+          {/* Book Details */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+            {book.paginas && (
+              <div className="flex items-center space-x-2">
+                <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-slate-500 flex-shrink-0" />
+                <span className="text-slate-700 dark:text-slate-300">
+                  {book.paginas} páginas
+                </span>
+              </div>
+            )}
+            
+            {book.sagaName && (
+              <div className="flex items-center space-x-2">
+                <Star className="h-3 w-3 sm:h-4 sm:w-4 text-amber-500 flex-shrink-0" />
+                <span className="text-slate-700 dark:text-slate-300 truncate">
+                  {book.sagaName}
+                  {(() => {
+                    const bookNumber = getBookNumberInSaga(book);
+                    return bookNumber ? ` #${bookNumber}` : '';
+                  })()}
+                </span>
+              </div>
+            )}
 
-          {book.calificacion && (
-            <div className="flex items-center space-x-2">
-              <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 flex-shrink-0" />
-              <span className="text-slate-700 dark:text-slate-300">
-                {book.calificacion}/5
-              </span>
-            </div>
-          )}
+            {book.calificacion && (
+              <div className="flex items-center space-x-2">
+                <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 flex-shrink-0" />
+                <span className="text-slate-700 dark:text-slate-300">
+                  {book.calificacion}/5
+                </span>
+              </div>
+            )}
 
-          {book.prestado && book.prestadoA && (
-            <div className="flex items-center space-x-2">
-              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500 flex-shrink-0" />
-              <span className="text-slate-700 dark:text-slate-300 truncate">
-                Prestado a {book.prestadoA}
-              </span>
-            </div>
-          )}
-        </div>
+            {book.prestado && book.prestadoA && (
+              <div className="flex items-center space-x-2">
+                <Users className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500 flex-shrink-0" />
+                <span className="text-slate-700 dark:text-slate-300 truncate">
+                  Prestado a {book.prestadoA}
+                </span>
+              </div>
+            )}
+          </div>
 
-        {/* Actions */}
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ 
-            opacity: showActions ? 1 : 0, 
-            height: showActions ? 'auto' : 0 
-          }}
-          className="flex flex-wrap gap-1 sm:gap-2 pt-2"
-        >
+          {/* Actions */}
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ 
+              opacity: showActions ? 1 : 0, 
+              height: showActions ? 'auto' : 0 
+            }}
+            className="flex flex-wrap gap-1 sm:gap-2 pt-2"
+          >
           {/* TBR Actions */}
           {book.estado === 'tbr' && (
             <motion.button
@@ -513,7 +519,8 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
             <Eye className="h-3 w-3" />
             <span>Visualizar</span>
           </motion.button>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </motion.div>
 

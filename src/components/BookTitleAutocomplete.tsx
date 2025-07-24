@@ -306,9 +306,27 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
                     className="w-full px-3 py-3 text-left hover:bg-warning-50 dark:hover:bg-warning-900/20 transition-colors duration-150 border-b border-slate-100 dark:border-slate-700 last:border-b-0 touch-manipulation"
                   >
                     <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 p-1.5 bg-warning-100 dark:bg-warning-900/30 rounded-lg">
-                        <BookOpen className="h-4 w-4 text-warning-600 dark:text-warning-400" />
+                      {/* Book Cover Thumbnail */}
+                      <div className="flex-shrink-0">
+                        {book.smallThumbnail ? (
+                          <img
+                            src={book.smallThumbnail}
+                            alt={`Portada de ${book.titulo}`}
+                            className="w-8 h-10 object-cover rounded border border-slate-200 dark:border-slate-600"
+                            onError={(e) => {
+                              // Fallback to icon if image fails to load
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const fallback = target.nextElementSibling as HTMLElement;
+                              if (fallback) fallback.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-8 h-10 flex items-center justify-center bg-warning-100 dark:bg-warning-900/30 rounded border border-slate-200 dark:border-slate-600 ${book.smallThumbnail ? 'hidden' : ''}`}>
+                          <BookOpen className="h-4 w-4 text-warning-600 dark:text-warning-400" />
+                        </div>
                       </div>
+                      
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2 mb-1">
                           <h4 className="text-sm font-medium text-slate-900 dark:text-white truncate">

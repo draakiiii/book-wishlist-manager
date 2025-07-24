@@ -75,7 +75,12 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ onOpenConfig }) => {
       numCalificaciones: selectedBookData?.numCalificaciones,
       genero: selectedBookData?.genero,
       formato: selectedBookData?.formato,
-      precio: selectedBookData?.precio
+      precio: selectedBookData?.precio,
+      // Include image URLs and access info
+      smallThumbnail: selectedBookData?.smallThumbnail,
+      thumbnail: selectedBookData?.thumbnail,
+      viewability: selectedBookData?.viewability,
+      webReaderLink: selectedBookData?.webReaderLink
     };
     
     // Verificar si es un duplicado
@@ -109,6 +114,11 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ onOpenConfig }) => {
       genero: bookData.genero,
       formato: bookData.formato,
       precio: bookData.precio,
+      // Include image URLs and access info
+      smallThumbnail: bookData.smallThumbnail,
+      thumbnail: bookData.thumbnail,
+      viewability: bookData.viewability,
+      webReaderLink: bookData.webReaderLink,
       estado: 'wishlist',
       historialEstados: [{
         estado: 'wishlist',
