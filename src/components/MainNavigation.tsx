@@ -152,6 +152,51 @@ const MainNavigation: React.FC<MainNavigationProps> = ({ onNavigate, currentSect
     }
   };
 
+  const handleSubmenuClick = (parentId: string, subItemId: string) => {
+    // Mapear submenús a secciones principales
+    const sectionMapping: { [key: string]: string } = {
+      // Libros
+      'all-books': 'books',
+      'add-book': 'books', 
+      'search-books': 'books',
+      'scan-book': 'books',
+      // Sagas
+      'all-sagas': 'sagas',
+      'add-saga': 'sagas',
+      'edit-sagas': 'sagas',
+      // Préstamos
+      'current-loans': 'loans',
+      'loan-history': 'loans',
+      'lend-book': 'loans',
+      // Citas
+      'all-quotes': 'quotes',
+      'favorite-quotes': 'quotes',
+      'add-quote': 'quotes',
+      // Reportes
+      'automatic-reports': 'reports',
+      'monthly-reports': 'reports',
+      'export-data': 'reports',
+      // Vistas
+      'gallery-view': 'views',
+      'grid-view': 'views',
+      'list-view': 'views',
+      'layout-manager': 'views',
+      // Widgets
+      'widgets-manager': 'widgets',
+      'add-widget': 'widgets',
+      // Compartir
+      'share-review': 'sharing',
+      'social-sharing': 'sharing',
+      // Objetivos
+      'reading-goals': 'goals',
+      'progress-tracking': 'goals'
+    };
+    
+    const targetSection = sectionMapping[subItemId] || parentId;
+    onNavigate(targetSection);
+    setShowSubmenu(null);
+  };
+
   const getStats = () => {
     const totalBooks = state.libros.length;
     const readBooks = state.libros.filter(book => book.estado === 'leido').length;
@@ -229,7 +274,7 @@ const MainNavigation: React.FC<MainNavigationProps> = ({ onNavigate, currentSect
                         {item.submenu.map((subItem) => (
                           <button
                             key={subItem.id}
-                            onClick={() => onNavigate(subItem.id)}
+                            onClick={() => handleSubmenuClick(item.id, subItem.id)}
                             className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors duration-200"
                           >
                             <subItem.icon className="w-4 h-4" />
@@ -288,7 +333,7 @@ const MainNavigation: React.FC<MainNavigationProps> = ({ onNavigate, currentSect
                       {item.submenu.map((subItem) => (
                         <button
                           key={subItem.id}
-                          onClick={() => onNavigate(subItem.id)}
+                          onClick={() => handleSubmenuClick(item.id, subItem.id)}
                           className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors duration-200"
                         >
                           <subItem.icon className="w-4 h-4" />
