@@ -168,7 +168,6 @@ const LoanHistoryModal: React.FC<LoanHistoryModalProps> = ({ isOpen, onClose }) 
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -368,7 +367,6 @@ const LoanHistoryModal: React.FC<LoanHistoryModalProps> = ({ isOpen, onClose }) 
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
   );
 };
 

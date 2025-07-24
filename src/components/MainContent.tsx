@@ -576,10 +576,10 @@ const MainContent: React.FC<MainContentProps> = ({ currentSection, onOpenModal }
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-lg">
               <h3 className="text-lg font-semibold mb-4">Metas de Lectura</h3>
-              <div className="space-y-2">
-                <p>Libros objetivo: {state.config.metaLibros || 'No establecida'}</p>
-                <p>Páginas objetivo: {state.config.metaPaginas || 'No establecida'}</p>
-              </div>
+                                   <div className="space-y-2">
+                       <p>Libros objetivo: {state.config.objetivoLecturaAnual || 'No establecida'}</p>
+                       <p>Páginas objetivo: No configurada</p>
+                     </div>
             </div>
           </div>
         </div>
@@ -608,12 +608,40 @@ const MainContent: React.FC<MainContentProps> = ({ currentSection, onOpenModal }
         isOpen={modals.shareReview}
         onClose={() => closeModal('shareReview')}
         resena={selectedBook ? {
+          id: selectedBook.id,
+          libroId: selectedBook.id,
           titulo: selectedBook.titulo,
-          autor: selectedBook.autor,
-          calificacion: selectedBook.calificacion,
-          reseña: selectedBook.reseña,
-          fecha: Date.now()
-        } : null}
+          autor: selectedBook.autor || 'Autor desconocido',
+          calificacion: selectedBook.calificacion || 0,
+          reseña: selectedBook.reseña || 'Sin reseña',
+          fecha: Date.now(),
+          citas: [],
+          etiquetas: [],
+          publica: true,
+          redesSociales: {
+            twitter: false,
+            facebook: false,
+            instagram: false,
+            goodreads: false
+          }
+        } : {
+          id: 0,
+          libroId: 0,
+          titulo: '',
+          autor: '',
+          calificacion: 0,
+          reseña: '',
+          fecha: Date.now(),
+          citas: [],
+          etiquetas: [],
+          publica: true,
+          redesSociales: {
+            twitter: false,
+            facebook: false,
+            instagram: false,
+            goodreads: false
+          }
+        }}
         onShare={(redes) => {
           console.log('Compartiendo en:', redes);
           closeModal('shareReview');
@@ -652,11 +680,18 @@ const MainContent: React.FC<MainContentProps> = ({ currentSection, onOpenModal }
         libroId={selectedBook?.id}
       />
 
-      <GalleryView
-        isOpen={modals.galleryView}
-        onClose={() => closeModal('galleryView')}
-        libros={state.libros}
-      />
+      {modals.galleryView && (
+        <GalleryView
+          libros={state.libros}
+          onBookClick={(libro) => {
+            console.log('Libro clickeado:', libro);
+            closeModal('galleryView');
+          }}
+          onBookAction={(libro, action) => {
+            console.log('Acción en libro:', action, libro);
+          }}
+        />
+      )}
 
       <SagaEditor
         isOpen={modals.sagaEditor}

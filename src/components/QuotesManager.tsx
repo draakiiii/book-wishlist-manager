@@ -175,7 +175,6 @@ const QuotesManager: React.FC<QuotesManagerProps> = ({ isOpen, onClose, libroId 
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -483,7 +482,6 @@ const QuotesManager: React.FC<QuotesManagerProps> = ({ isOpen, onClose, libroId 
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
   );
 };
 

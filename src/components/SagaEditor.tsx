@@ -33,16 +33,17 @@ const SagaEditor: React.FC<SagaEditorProps> = ({ isOpen, onClose, sagaId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingSaga, setEditingSaga] = useState<Saga | null>(sagaId ? state.sagas.find(s => s.id === sagaId) || null : null);
   const [newSaga, setNewSaga] = useState<Partial<Saga> | null>(sagaId ? null : {
-    nombre: '',
+    name: '',
     descripcion: '',
     genero: '',
     autor: '',
-    totalLibros: 0,
+    count: 0,
     libros: [],
-    fechaInicio: Date.now(),
+    fechaCreacion: Date.now(),
     fechaCompletado: undefined,
     isComplete: false,
-    notas: ''
+    notas: '',
+    estado: 'activa'
   });
 
   const availableBooks = useMemo(() => {
@@ -69,20 +70,21 @@ const SagaEditor: React.FC<SagaEditorProps> = ({ isOpen, onClose, sagaId }) => {
       });
       setEditingSaga(null);
       onClose();
-    } else if (newSaga && newSaga.nombre) {
+    } else if (newSaga && newSaga.name) {
       // Crear nueva saga
       const saga: Saga = {
         id: Date.now(),
-        nombre: newSaga.nombre,
+        name: newSaga.name,
         descripcion: newSaga.descripcion || '',
         genero: newSaga.genero || '',
         autor: newSaga.autor || '',
-        totalLibros: newSaga.totalLibros || 0,
+        count: newSaga.count || 0,
         libros: newSaga.libros || [],
-        fechaInicio: newSaga.fechaInicio || Date.now(),
+        fechaCreacion: newSaga.fechaCreacion || Date.now(),
         fechaCompletado: newSaga.fechaCompletado,
         isComplete: newSaga.isComplete || false,
-        notas: newSaga.notas || ''
+        notas: newSaga.notas || '',
+        estado: 'activa'
       };
       
       dispatch({
@@ -174,7 +176,6 @@ const SagaEditor: React.FC<SagaEditorProps> = ({ isOpen, onClose, sagaId }) => {
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -193,7 +194,7 @@ const SagaEditor: React.FC<SagaEditorProps> = ({ isOpen, onClose, sagaId }) => {
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <BookMarked className="w-5 h-5" />
-              {editingSaga ? `Editar Saga: ${editingSaga.nombre}` : 'Crear Nueva Saga'}
+              {editingSaga ? `Editar Saga: ${editingSaga.name}` : 'Crear Nueva Saga'}
             </h2>
             <button
               onClick={onClose}
@@ -219,12 +220,12 @@ const SagaEditor: React.FC<SagaEditorProps> = ({ isOpen, onClose, sagaId }) => {
                     </label>
                     <input
                       type="text"
-                      value={currentSaga?.nombre || ''}
+                      value={currentSaga?.name || ''}
                       onChange={(e) => {
                         if (editingSaga) {
-                          setEditingSaga(prev => prev ? { ...prev, nombre: e.target.value } : null);
-                        } else if (newSaga) {
-                          setNewSaga(prev => prev ? { ...prev, nombre: e.target.value } : null);
+                          setEditingSaga(prev => prev ? { ...prev, name: e.target.value } : null);
+                                                  } else if (newSaga) {
+                            setNewSaga(prev => prev ? { ...prev, name: e.target.value } : null);
                         }
                       }}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
@@ -506,7 +507,6 @@ const SagaEditor: React.FC<SagaEditorProps> = ({ isOpen, onClose, sagaId }) => {
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
   );
 };
 

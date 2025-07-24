@@ -170,7 +170,6 @@ const WidgetsManager: React.FC<WidgetsManagerProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -455,7 +454,6 @@ const WidgetsManager: React.FC<WidgetsManagerProps> = ({ isOpen, onClose }) => {
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
   );
 };
 

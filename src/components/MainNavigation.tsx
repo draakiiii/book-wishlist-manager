@@ -219,7 +219,6 @@ const MainNavigation: React.FC<MainNavigationProps> = ({ onNavigate, currentSect
 
                 {/* Submenu */}
                 {item.submenu && showSubmenu === item.id && (
-                  <AnimatePresence>
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -239,7 +238,6 @@ const MainNavigation: React.FC<MainNavigationProps> = ({ onNavigate, currentSect
                         ))}
                       </div>
                     </motion.div>
-                  </AnimatePresence>
                 )}
               </div>
             ))}
@@ -260,8 +258,7 @@ const MainNavigation: React.FC<MainNavigationProps> = ({ onNavigate, currentSect
       </div>
 
       {/* Mobile Navigation */}
-      <AnimatePresence>
-        {currentSection === 'mobile-menu' && (
+      {currentSection === 'mobile-menu' && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -305,7 +302,6 @@ const MainNavigation: React.FC<MainNavigationProps> = ({ onNavigate, currentSect
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
     </div>
   );
 };

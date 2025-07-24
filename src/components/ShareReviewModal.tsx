@@ -115,7 +115,6 @@ const ShareReviewModal: React.FC<ShareReviewModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -270,7 +269,6 @@ const ShareReviewModal: React.FC<ShareReviewModalProps> = ({
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
   );
 };
 
