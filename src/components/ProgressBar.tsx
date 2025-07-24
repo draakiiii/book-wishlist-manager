@@ -65,41 +65,12 @@ const ProgressBar: React.FC = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Sistema de Puntos - MÁS VISIBLE */}
-      {config.sistemaPuntosHabilitado && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 dark:from-yellow-600 dark:via-yellow-700 dark:to-orange-700 rounded-xl p-4 sm:p-6 border-2 border-yellow-300 dark:border-yellow-600 shadow-lg"
-        >
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg sm:text-xl font-bold text-white flex items-center space-x-2">
-              <Trophy className="h-6 w-6" />
-              <span>Sistema de Puntos</span>
-            </h3>
-            <div className="bg-white/20 rounded-full px-4 py-2">
-              <span className="text-xl sm:text-2xl font-bold text-white">
-                {state.puntosActuales} pts
-              </span>
-            </div>
-          </div>
-          
-          <div className="mt-4 p-3 bg-white/10 rounded-lg">
-            <div className="text-sm text-white/90 text-center">
-              <Star className="h-4 w-4 inline mr-1" />
-              Necesitas <strong>{config.puntosParaComprar || 25} puntos</strong> para comprar un libro de tu wishlist
-            </div>
-          </div>
-        </motion.div>
-      )}
-
       {/* Progress Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.1 }}
           className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-xl p-3 sm:p-4 border border-primary-200 dark:border-primary-700"
         >
           <div className="flex items-center space-x-2 sm:space-x-3">
@@ -119,12 +90,12 @@ const ProgressBar: React.FC = () => {
 
         {/* Solo mostrar objetivo anual si está configurado mayor que 0 */}
         {objetivoLibros > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-gradient-to-br from-secondary-50 to-secondary-100 dark:from-secondary-900/20 dark:to-secondary-800/20 rounded-xl p-3 sm:p-4 border border-secondary-200 dark:border-secondary-700"
-          >
+                  <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-gradient-to-br from-secondary-50 to-secondary-100 dark:from-secondary-900/20 dark:to-secondary-800/20 rounded-xl p-3 sm:p-4 border border-secondary-200 dark:border-secondary-700"
+        >
             <div className="flex items-center space-x-2 sm:space-x-3">
               <div className="p-1.5 sm:p-2 bg-secondary-500 rounded-lg">
                 <Target className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
@@ -144,7 +115,7 @@ const ProgressBar: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: objetivoLibros > 0 ? 0.4 : 0.3 }}
+          transition={{ delay: objetivoLibros > 0 ? 0.3 : 0.2 }}
           className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-3 sm:p-4 border border-green-200 dark:border-green-700"
         >
           <div className="flex items-center space-x-2 sm:space-x-3">
@@ -165,7 +136,7 @@ const ProgressBar: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: objetivoLibros > 0 ? 0.5 : 0.4 }}
+          transition={{ delay: objetivoLibros > 0 ? 0.4 : 0.3 }}
           className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-3 sm:p-4 border border-purple-200 dark:border-purple-700"
         >
           <div className="flex items-center space-x-2 sm:space-x-3">
