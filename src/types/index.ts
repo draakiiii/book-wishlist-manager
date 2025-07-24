@@ -238,7 +238,7 @@ export type Action =
   | { type: 'CLEAR_SEARCH_HISTORY' }
   
   // Acciones de datos
-  | { type: 'IMPORT_DATA'; payload: { libros: Libro[]; sagas: Saga[]; config?: Configuracion; scanHistory?: ScanHistory[]; searchHistory?: string[]; lastBackup?: number; puntosActuales?: number; puntosGanados?: number; librosCompradosConPuntos?: number } }
+  | { type: 'IMPORT_DATA'; payload: { libros: Libro[]; sagas: Saga[]; config?: Configuracion; scanHistory?: ScanHistory[]; searchHistory?: string[]; lastBackup?: number; puntosActuales?: number; puntosGanados?: number; librosCompradosConPuntos?: number; dineroActual?: number; dineroGanado?: number; librosCompradosConDinero?: number } }
   | { type: 'EXPORT_DATA' }
   | { type: 'SET_LAST_BACKUP'; payload: number }
   
