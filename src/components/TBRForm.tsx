@@ -145,6 +145,15 @@ const TBRForm: React.FC = () => {
   };
 
   const handleBookSelect = (bookData: BookData) => {
+    // Debug logs
+    console.log('📚 TBRForm: handleBookSelect called with:', {
+      bookData,
+      imageLinks: bookData.imageLinks,
+      accessInfo: bookData.accessInfo,
+      hasImageLinks: !!bookData.imageLinks,
+      hasAccessInfo: !!bookData.accessInfo
+    });
+    
     setSelectedBookData(bookData);
     setTitulo(bookData.titulo);
     setAutor(bookData.autor || '');
@@ -174,7 +183,13 @@ const TBRForm: React.FC = () => {
       const bookData = await fetchBookData(result);
       
       if (bookData) {
-        console.log('Book data received:', bookData);
+        console.log('📚 TBRForm: Book data received from API:', {
+          bookData,
+          imageLinks: bookData.imageLinks,
+          accessInfo: bookData.accessInfo,
+          hasImageLinks: !!bookData.imageLinks,
+          hasAccessInfo: !!bookData.accessInfo
+        });
         setSelectedBookData(bookData);
         setTitulo(bookData.titulo);
         setAutor(bookData.autor || '');

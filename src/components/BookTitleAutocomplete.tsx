@@ -191,6 +191,15 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   };
 
   const handleBookSelect = (book: BookData) => {
+    // Debug logs
+    console.log('📚 BookTitleAutocomplete: Book selected:', {
+      book,
+      imageLinks: book.imageLinks,
+      accessInfo: book.accessInfo,
+      hasImageLinks: !!book.imageLinks,
+      hasAccessInfo: !!book.accessInfo
+    });
+
     // Cancelar cualquier búsqueda en progreso
     if (debounceTimerRef.current) {
       window.clearTimeout(debounceTimerRef.current);

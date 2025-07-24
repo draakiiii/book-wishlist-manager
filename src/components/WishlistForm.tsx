@@ -142,6 +142,15 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ onOpenConfig }) => {
   };
 
   const handleBookSelect = (bookData: BookData) => {
+    // Debug logs
+    console.log('📚 WishlistForm: handleBookSelect called with:', {
+      bookData,
+      imageLinks: bookData.imageLinks,
+      accessInfo: bookData.accessInfo,
+      hasImageLinks: !!bookData.imageLinks,
+      hasAccessInfo: !!bookData.accessInfo
+    });
+    
     setSelectedBookData(bookData);
     setTitulo(bookData.titulo);
     setAutor(bookData.autor || '');
@@ -171,7 +180,13 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ onOpenConfig }) => {
       const bookData = await fetchBookData(result);
       
       if (bookData) {
-        console.log('Book data received:', bookData);
+        console.log('📚 WishlistForm: Book data received from API:', {
+          bookData,
+          imageLinks: bookData.imageLinks,
+          accessInfo: bookData.accessInfo,
+          hasImageLinks: !!bookData.imageLinks,
+          hasAccessInfo: !!bookData.accessInfo
+        });
         setSelectedBookData(bookData);
         setTitulo(bookData.titulo);
         setAutor(bookData.autor || '');
