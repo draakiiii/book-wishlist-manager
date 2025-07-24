@@ -24,12 +24,19 @@ const initialState: AppState = {
     zoomLevel: 1,
     datosAnonimos: false,
     compartirEstadisticas: false,
-    // Configuración del sistema de puntos
+    // Configuración del sistema de puntos/dinero
     sistemaPuntosHabilitado: true,
+    modoDinero: false, // false = puntos, true = dinero
     puntosPorLibro: 10,
     puntosPorSaga: 50,
     puntosPorPagina: 1,
-    puntosParaComprar: 25
+    puntosParaComprar: 25,
+    // Configuración del sistema de dinero
+    dineroPorLibro: 5.0,
+    dineroPorSaga: 25.0,
+    dineroPorPagina: 0.5,
+    dineroParaComprar: 15.0,
+    costoPorPagina: 0.25 // $0.25 por página al comprar libros
   },
   libros: [],
   sagas: [],
@@ -37,10 +44,14 @@ const initialState: AppState = {
   darkMode: getInitialTheme(),
   scanHistory: [],
   searchHistory: [],
-  // Sistema de puntos
+  // Sistema de puntos/dinero
   puntosActuales: 0,
   puntosGanados: 0,
   librosCompradosConPuntos: 0,
+  // Sistema de dinero
+  dineroActual: 0,
+  dineroGanado: 0,
+  librosCompradosConDinero: 0,
 };
 
 async function loadStateFromFirebase(): Promise<AppState | null> {
@@ -65,10 +76,14 @@ async function loadStateFromFirebase(): Promise<AppState | null> {
         sagas: firebaseState.sagas || [],
         scanHistory: firebaseState.scanHistory || [],
         searchHistory: firebaseState.searchHistory || [],
-        // Sistema de puntos
+        // Sistema de puntos/dinero
         puntosActuales: firebaseState.puntosActuales || 0,
         puntosGanados: firebaseState.puntosGanados || 0,
         librosCompradosConPuntos: firebaseState.librosCompradosConPuntos || 0,
+        // Sistema de dinero
+        dineroActual: firebaseState.dineroActual || 0,
+        dineroGanado: firebaseState.dineroGanado || 0,
+        librosCompradosConDinero: firebaseState.librosCompradosConDinero || 0,
       };
       
       console.log('loadStateFromFirebase: Complete state after merge:', {
@@ -107,10 +122,14 @@ function loadStateFromStorage(): AppState | null {
         sagas: parsedState.sagas || [],
         scanHistory: parsedState.scanHistory || [],
         searchHistory: parsedState.searchHistory || [],
-        // Sistema de puntos
+        // Sistema de puntos/dinero
         puntosActuales: parsedState.puntosActuales || 0,
         puntosGanados: parsedState.puntosGanados || 0,
         librosCompradosConPuntos: parsedState.librosCompradosConPuntos || 0,
+        // Sistema de dinero
+        dineroActual: parsedState.dineroActual || 0,
+        dineroGanado: parsedState.dineroGanado || 0,
+        librosCompradosConDinero: parsedState.librosCompradosConDinero || 0,
       };
       
       return completeState;
@@ -518,32 +537,61 @@ function appReducer(state: AppState, action: Action): AppState {
         }
       }
       
-      // Sistema de puntos - otorgar puntos por completar libro
+      // Sistema de puntos/dinero - otorgar puntos/dinero por completar libro
       let estadoFinal = estadoConSagas;
       if (estadoFinal.config.sistemaPuntosHabilitado) {
-        let puntosGanados = 0;
-        const puntosPorLibro = estadoFinal.config.puntosPorLibro || 10;
-        const puntosPorPagina = estadoFinal.config.puntosPorPagina || 1;
-        
-        // Puntos por completar el libro
-        puntosGanados += puntosPorLibro;
-        
-        // Puntos por páginas leídas
-        const paginasLeidas = libro.paginasLeidas || libro.paginas || 0;
-        puntosGanados += paginasLeidas * puntosPorPagina;
-        
-        // Puntos por completar saga (si es el caso)
-        if (sagaAhoraCompleta && !sagaPreviaCompleta) {
-          const puntosPorSaga = estadoFinal.config.puntosPorSaga || 50;
-          puntosGanados += puntosPorSaga;
-        }
-        
-        if (puntosGanados > 0) {
-          estadoFinal = {
-            ...estadoFinal,
-            puntosActuales: estadoFinal.puntosActuales + puntosGanados,
-            puntosGanados: estadoFinal.puntosGanados + puntosGanados
-          };
+        if (estadoFinal.config.modoDinero) {
+          // Modo dinero
+          let dineroGanado = 0;
+          const dineroPorLibro = estadoFinal.config.dineroPorLibro || 5.0;
+          const dineroPorPagina = estadoFinal.config.dineroPorPagina || 0.5;
+          
+          // Dinero por completar el libro
+          dineroGanado += dineroPorLibro;
+          
+          // Dinero por páginas leídas
+          const paginasLeidas = libro.paginasLeidas || libro.paginas || 0;
+          dineroGanado += paginasLeidas * dineroPorPagina;
+          
+          // Dinero por completar saga (si es el caso)
+          if (sagaAhoraCompleta && !sagaPreviaCompleta) {
+            const dineroPorSaga = estadoFinal.config.dineroPorSaga || 25.0;
+            dineroGanado += dineroPorSaga;
+          }
+          
+          if (dineroGanado > 0) {
+            estadoFinal = {
+              ...estadoFinal,
+              dineroActual: estadoFinal.dineroActual + dineroGanado,
+              dineroGanado: estadoFinal.dineroGanado + dineroGanado
+            };
+          }
+        } else {
+          // Modo puntos
+          let puntosGanados = 0;
+          const puntosPorLibro = estadoFinal.config.puntosPorLibro || 10;
+          const puntosPorPagina = estadoFinal.config.puntosPorPagina || 1;
+          
+          // Puntos por completar el libro
+          puntosGanados += puntosPorLibro;
+          
+          // Puntos por páginas leídas
+          const paginasLeidas = libro.paginasLeidas || libro.paginas || 0;
+          puntosGanados += paginasLeidas * puntosPorPagina;
+          
+          // Puntos por completar saga (si es el caso)
+          if (sagaAhoraCompleta && !sagaPreviaCompleta) {
+            const puntosPorSaga = estadoFinal.config.puntosPorSaga || 50;
+            puntosGanados += puntosPorSaga;
+          }
+          
+          if (puntosGanados > 0) {
+            estadoFinal = {
+              ...estadoFinal,
+              puntosActuales: estadoFinal.puntosActuales + puntosGanados,
+              puntosGanados: estadoFinal.puntosGanados + puntosGanados
+            };
+          }
         }
       }
       
@@ -792,7 +840,7 @@ function appReducer(state: AppState, action: Action): AppState {
     }
 
     case 'IMPORT_DATA': {
-      const { libros, sagas, config, scanHistory, searchHistory, lastBackup, puntosActuales, puntosGanados, librosCompradosConPuntos } = action.payload;
+      const { libros, sagas, config, scanHistory, searchHistory, lastBackup, puntosActuales, puntosGanados, librosCompradosConPuntos, dineroActual, dineroGanado, librosCompradosConDinero } = action.payload;
       
       let newState = { ...state };
       
@@ -820,16 +868,26 @@ function appReducer(state: AppState, action: Action): AppState {
         newState.lastBackup = lastBackup;
       }
       
-      // Sistema de puntos
-      if (puntosActuales !== undefined) {
-        newState.puntosActuales = puntosActuales;
-      }
-      if (puntosGanados !== undefined) {
-        newState.puntosGanados = puntosGanados;
-      }
-      if (librosCompradosConPuntos !== undefined) {
-        newState.librosCompradosConPuntos = librosCompradosConPuntos;
-      }
+              // Sistema de puntos/dinero
+        if (puntosActuales !== undefined) {
+          newState.puntosActuales = puntosActuales;
+        }
+        if (puntosGanados !== undefined) {
+          newState.puntosGanados = puntosGanados;
+        }
+        if (librosCompradosConPuntos !== undefined) {
+          newState.librosCompradosConPuntos = librosCompradosConPuntos;
+        }
+        // Sistema de dinero
+        if (dineroActual !== undefined) {
+          newState.dineroActual = dineroActual;
+        }
+        if (dineroGanado !== undefined) {
+          newState.dineroGanado = dineroGanado;
+        }
+        if (librosCompradosConDinero !== undefined) {
+          newState.librosCompradosConDinero = librosCompradosConDinero;
+        }
       
       return actualizarContadoresSagas(newState);
     }
@@ -962,6 +1020,78 @@ function appReducer(state: AppState, action: Action): AppState {
         puntosActuales: 0,
         puntosGanados: 0,
         librosCompradosConPuntos: 0
+      };
+    }
+
+    // Acciones del sistema de dinero
+    case 'GANAR_DINERO': {
+      const { cantidad, motivo } = action.payload;
+      return {
+        ...state,
+        dineroActual: state.dineroActual + cantidad,
+        dineroGanado: state.dineroGanado + cantidad
+      };
+    }
+
+    case 'GASTAR_DINERO': {
+      const { cantidad, motivo } = action.payload;
+      return {
+        ...state,
+        dineroActual: Math.max(0, state.dineroActual - cantidad)
+      };
+    }
+
+    case 'COMPRAR_LIBRO_CON_DINERO': {
+      const { libroId } = action.payload;
+      const libro = state.libros.find(l => l.id === libroId);
+      
+      if (!libro || !state.config.sistemaPuntosHabilitado || !state.config.modoDinero) {
+        return state;
+      }
+
+      // Calcular costo basado en páginas del libro
+      const paginas = libro.paginas || 0;
+      const costoPorPagina = state.config.costoPorPagina || 0.25;
+      const costoTotal = paginas * costoPorPagina;
+
+      if (costoTotal <= 0) {
+        return state; // No se puede comprar un libro sin páginas
+      }
+
+      if (state.dineroActual < costoTotal) {
+        return state;
+      }
+
+      // Cambiar el estado del libro de 'wishlist' a 'tbr' (comprado y listo para leer)
+      const librosActualizados = state.libros.map(l => 
+        l.id === libroId ? agregarEstadoAlHistorial(l, 'tbr', `Comprado con $${costoTotal.toFixed(2)} (${paginas} páginas × $${costoPorPagina.toFixed(2)}/página)`) : l
+      );
+
+      return {
+        ...state,
+        libros: librosActualizados,
+        dineroActual: state.dineroActual - costoTotal,
+        librosCompradosConDinero: state.librosCompradosConDinero + 1
+      };
+    }
+
+    case 'RESETEAR_DINERO': {
+      return {
+        ...state,
+        dineroActual: 0,
+        dineroGanado: 0,
+        librosCompradosConDinero: 0
+      };
+    }
+
+    case 'CAMBIAR_MODO_SISTEMA': {
+      const { modoDinero } = action.payload;
+      return {
+        ...state,
+        config: {
+          ...state.config,
+          modoDinero
+        }
       };
     }
 

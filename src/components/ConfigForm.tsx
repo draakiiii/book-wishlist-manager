@@ -345,7 +345,7 @@ const ConfigForm: React.FC = () => {
               <Trophy className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
             </div>
             <h3 className="text-sm font-medium text-slate-900 dark:text-white">
-              Sistema de Puntos
+              Sistema de Puntos/Dinero
             </h3>
           </div>
           
@@ -372,8 +372,40 @@ const ConfigForm: React.FC = () => {
               </label>
             </div>
             
-            {/* Configuración de puntos */}
+            {/* Modo del sistema */}
             {config.sistemaPuntosHabilitado && (
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Modo del sistema
+                  </p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    Cambia entre sistema de puntos o dinero
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className={`text-xs ${!config.modoDinero ? 'text-yellow-600 dark:text-yellow-400 font-medium' : 'text-slate-500 dark:text-slate-400'}`}>
+                    Puntos
+                  </span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={config.modoDinero || false}
+                      onChange={(e) => handleBooleanChange('modoDinero', e.target.checked)}
+                      disabled={!isEditing}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-green-600 disabled:opacity-50"></div>
+                  </label>
+                  <span className={`text-xs ${config.modoDinero ? 'text-green-600 dark:text-green-400 font-medium' : 'text-slate-500 dark:text-slate-400'}`}>
+                    Dinero
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Configuración de puntos */}
+            {config.sistemaPuntosHabilitado && !config.modoDinero && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -427,6 +459,71 @@ const ConfigForm: React.FC = () => {
                     onChange={(e) => handleInputChange('puntosParaComprar', parseInt(e.target.value) || 0)}
                     disabled={!isEditing}
                     className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
+                    min="0"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Configuración de dinero */}
+            {config.sistemaPuntosHabilitado && config.modoDinero && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Dinero por libro completado ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={config.dineroPorLibro || 5.0}
+                    onChange={(e) => handleInputChange('dineroPorLibro', parseFloat(e.target.value) || 0)}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
+                    min="0"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Dinero por saga completada ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={config.dineroPorSaga || 25.0}
+                    onChange={(e) => handleInputChange('dineroPorSaga', parseFloat(e.target.value) || 0)}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
+                    min="0"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Dinero por página leída ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={config.dineroPorPagina || 0.5}
+                    onChange={(e) => handleInputChange('dineroPorPagina', parseFloat(e.target.value) || 0)}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
+                    min="0"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Costo por página al comprar ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={config.costoPorPagina || 0.25}
+                    onChange={(e) => handleInputChange('costoPorPagina', parseFloat(e.target.value) || 0)}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
                     min="0"
                   />
                 </div>

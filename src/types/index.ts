@@ -152,12 +152,19 @@ export interface Configuracion {
   datosAnonimos?: boolean;
   compartirEstadisticas?: boolean;
   
-  // Configuración del sistema de puntos
+  // Configuración del sistema de puntos/dinero
   sistemaPuntosHabilitado?: boolean;
+  modoDinero?: boolean; // true = dinero, false = puntos
   puntosPorLibro?: number;
   puntosPorSaga?: number;
   puntosPorPagina?: number;
   puntosParaComprar?: number;
+  // Configuración del sistema de dinero
+  dineroPorLibro?: number;
+  dineroPorSaga?: number;
+  dineroPorPagina?: number;
+  dineroParaComprar?: number;
+  costoPorPagina?: number; // Costo por página al comprar libros
 }
 
 export interface AppState {
@@ -174,10 +181,14 @@ export interface AppState {
     averageRenderTime: number;
     memoryUsage?: number;
   };
-  // Sistema de puntos
+  // Sistema de puntos/dinero
   puntosActuales: number;
   puntosGanados: number;
   librosCompradosConPuntos: number;
+  // Sistema de dinero
+  dineroActual: number;
+  dineroGanado: number;
+  librosCompradosConDinero: number;
   // Mantener compatibilidad con versiones anteriores
   progreso?: number;
   compraDesbloqueada?: boolean;
@@ -228,15 +239,20 @@ export type Action =
   | { type: 'CLEAR_SEARCH_HISTORY' }
   
   // Acciones de datos
-  | { type: 'IMPORT_DATA'; payload: { libros: Libro[]; sagas: Saga[]; config?: Configuracion; scanHistory?: ScanHistory[]; searchHistory?: string[]; lastBackup?: number; puntosActuales?: number; puntosGanados?: number; librosCompradosConPuntos?: number } }
+  | { type: 'IMPORT_DATA'; payload: { libros: Libro[]; sagas: Saga[]; config?: Configuracion; scanHistory?: ScanHistory[]; searchHistory?: string[]; lastBackup?: number; puntosActuales?: number; puntosGanados?: number; librosCompradosConPuntos?: number; dineroActual?: number; dineroGanado?: number; librosCompradosConDinero?: number } }
   | { type: 'EXPORT_DATA' }
   | { type: 'SET_LAST_BACKUP'; payload: number }
   
-  // Acciones del sistema de puntos
+  // Acciones del sistema de puntos/dinero
   | { type: 'GANAR_PUNTOS'; payload: { cantidad: number; motivo: string } }
   | { type: 'GASTAR_PUNTOS'; payload: { cantidad: number; motivo: string } }
   | { type: 'COMPRAR_LIBRO_CON_PUNTOS'; payload: { libroId: number } }
   | { type: 'RESETEAR_PUNTOS' }
+  | { type: 'GANAR_DINERO'; payload: { cantidad: number; motivo: string } }
+  | { type: 'GASTAR_DINERO'; payload: { cantidad: number; motivo: string } }
+  | { type: 'COMPRAR_LIBRO_CON_DINERO'; payload: { libroId: number } }
+  | { type: 'RESETEAR_DINERO' }
+  | { type: 'CAMBIAR_MODO_SISTEMA'; payload: { modoDinero: boolean } }
   
   // Acciones de compatibilidad (para migración)
   | { type: 'MIGRATE_FROM_OLD_VERSION'; payload: any };
@@ -271,8 +287,11 @@ export interface ExportData {
   searchHistory: string[];
   lastBackup?: number;
   statistics?: Statistics;
-  // Sistema de puntos
+  // Sistema de puntos/dinero
   puntosActuales?: number;
   puntosGanados?: number;
   librosCompradosConPuntos?: number;
+  dineroActual?: number;
+  dineroGanado?: number;
+  librosCompradosConDinero?: number;
 } 

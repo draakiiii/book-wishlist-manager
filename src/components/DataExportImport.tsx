@@ -51,9 +51,12 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
         searchHistory: state.searchHistory,
         lastBackup: state.lastBackup,
         // Sistema de puntos
-        puntosActuales: state.puntosActuales,
-        puntosGanados: state.puntosGanados,
-        librosCompradosConPuntos: state.librosCompradosConPuntos,
+            puntosActuales: state.puntosActuales,
+    puntosGanados: state.puntosGanados,
+    librosCompradosConPuntos: state.librosCompradosConPuntos,
+    dineroActual: state.dineroActual,
+    dineroGanado: state.dineroGanado,
+    librosCompradosConDinero: state.librosCompradosConDinero,
       };
 
       const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss', { locale: es });
@@ -180,9 +183,12 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
           sagas, 
           config,
           // Sistema de puntos
-          puntosActuales: parsedData.puntosActuales || 0,
-          puntosGanados: parsedData.puntosGanados || 0,
-          librosCompradosConPuntos: parsedData.librosCompradosConPuntos || 0,
+                  puntosActuales: parsedData.puntosActuales || 0,
+        puntosGanados: parsedData.puntosGanados || 0,
+        librosCompradosConPuntos: parsedData.librosCompradosConPuntos || 0,
+        dineroActual: parsedData.dineroActual || 0,
+        dineroGanado: parsedData.dineroGanado || 0,
+        librosCompradosConDinero: parsedData.librosCompradosConDinero || 0,
         } 
       });
 
@@ -401,16 +407,28 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
               {state.config.sistemaPuntosHabilitado && (
                 <>
                   <div>
-                    <span className="text-slate-600 dark:text-slate-400">Puntos Actuales:</span>
-                    <span className="ml-2 font-medium text-slate-900 dark:text-white">{state.puntosActuales}</span>
+                    <span className="text-slate-600 dark:text-slate-400">
+                      {state.config.modoDinero ? 'Dinero Actual:' : 'Puntos Actuales:'}
+                    </span>
+                    <span className="ml-2 font-medium text-slate-900 dark:text-white">
+                      {state.config.modoDinero ? `$${state.dineroActual.toFixed(2)}` : state.puntosActuales}
+                    </span>
                   </div>
                   <div>
-                    <span className="text-slate-600 dark:text-slate-400">Puntos Ganados:</span>
-                    <span className="ml-2 font-medium text-slate-900 dark:text-white">{state.puntosGanados}</span>
+                    <span className="text-slate-600 dark:text-slate-400">
+                      {state.config.modoDinero ? 'Dinero Ganado:' : 'Puntos Ganados:'}
+                    </span>
+                    <span className="ml-2 font-medium text-slate-900 dark:text-white">
+                      {state.config.modoDinero ? `$${state.dineroGanado.toFixed(2)}` : state.puntosGanados}
+                    </span>
                   </div>
                   <div>
-                    <span className="text-slate-600 dark:text-slate-400">Libros Comprados con Puntos:</span>
-                    <span className="ml-2 font-medium text-slate-900 dark:text-white">{state.librosCompradosConPuntos}</span>
+                    <span className="text-slate-600 dark:text-slate-400">
+                      {state.config.modoDinero ? 'Libros Comprados con Dinero:' : 'Libros Comprados con Puntos:'}
+                    </span>
+                    <span className="ml-2 font-medium text-slate-900 dark:text-white">
+                      {state.config.modoDinero ? state.librosCompradosConDinero : state.librosCompradosConPuntos}
+                    </span>
                   </div>
                 </>
               )}
