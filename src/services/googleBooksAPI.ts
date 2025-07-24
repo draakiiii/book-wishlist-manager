@@ -87,6 +87,7 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
         
         if (data.totalItems > 0) {
           const book = data.items[0].volumeInfo;
+          const accessInfo = data.items[0].accessInfo;
           
           // Extract and clean the title
           let title = book.title || '';
@@ -142,7 +143,7 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
             // Campos para imágenes de portada (Google Books API)
             imageLinks: book.imageLinks || undefined,
             // Campos para acceso a vista previa (Google Books API)
-            accessInfo: book.accessInfo || undefined
+            accessInfo: accessInfo || undefined
             // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
           };
           
@@ -269,6 +270,7 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
 
     const results = data.items.map((item: any) => {
       const book = item.volumeInfo;
+      const accessInfo = item.accessInfo;
       
       let title = book.title || '';
       if (book.subtitle) {
@@ -315,7 +317,7 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
         // Campos para imágenes de portada (Google Books API)
         imageLinks: book.imageLinks || undefined,
         // Campos para acceso a vista previa (Google Books API)
-        accessInfo: book.accessInfo || undefined
+        accessInfo: accessInfo || undefined
         // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
     });
@@ -366,6 +368,7 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
 
     const results = data.items.map((item: any) => {
       const book = item.volumeInfo;
+      const accessInfo = item.accessInfo;
       
       // Extract and clean the title
       let title = book.title || '';
@@ -429,7 +432,7 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
         // Campos para imágenes de portada (Google Books API)
         imageLinks: book.imageLinks || undefined,
         // Campos para acceso a vista previa (Google Books API)
-        accessInfo: book.accessInfo || undefined
+        accessInfo: accessInfo || undefined
         // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
     });

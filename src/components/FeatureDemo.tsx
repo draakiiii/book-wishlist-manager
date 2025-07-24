@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, ExternalLink, Star } from 'lucide-react';
+import { BookOpen, ExternalLink, Star, RefreshCw } from 'lucide-react';
 import { sampleBooks } from '../utils/sampleBookData';
 import BookCoverImage from './BookCoverImage';
 import BookDescriptionModal from './BookDescriptionModal';
 import RatingModal from './RatingModal';
+import { clearCache } from '../services/googleBooksAPI';
 
 const FeatureDemo: React.FC = () => {
   const [selectedBook, setSelectedBook] = useState<typeof sampleBooks[0] | null>(null);
@@ -23,15 +24,34 @@ const FeatureDemo: React.FC = () => {
     }
   };
 
+  const handleClearCache = () => {
+    clearCache();
+    alert('Caché de la API limpiado. Ahora puedes probar agregando un nuevo libro.');
+  };
+
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-8">
       <div className="text-center">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
           Demostración de Nuevas Funcionalidades
         </h1>
-        <p className="text-lg text-slate-600 dark:text-slate-400">
+        <p className="text-lg text-slate-600 dark:text-slate-400 mb-4">
           Implementación de carga optimizada de imágenes y botón "Leer Muestra"
         </p>
+        
+        {/* Botón para limpiar caché */}
+        <div className="mb-6">
+          <button
+            onClick={handleClearCache}
+            className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors duration-200"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>Limpiar Caché de API</span>
+          </button>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+            Usa este botón si las imágenes no se muestran correctamente
+          </p>
+        </div>
       </div>
 
       {/* Tarea 1: Carga Optimizada de Imágenes */}

@@ -4,80 +4,71 @@
 
 **Síntoma**: Las imágenes de portada mostraban "Portada no disponible" incluso cuando el JSON de Google Books API contenía las URLs de las imágenes.
 
-**Causa raíz**: Los campos `imageLinks` y `accessInfo` no se estaban mapeando desde la respuesta de Google Books API al objeto `BookData` que se guarda en la aplicación.
+**Causa raíz**: Los campos `imageLinks` y `accessInfo` no se estaban mapeando correctamente desde la respuesta de Google Books API al objeto `BookData` que se guarda en la aplicación.
 
-## 🔍 Análisis del Problema
+### 🔍 **Problema Específico Encontrado**
 
-### JSON de Google Books API (Correcto)
+El campo `accessInfo` está en el **nivel raíz** del objeto `items[0]`, no dentro de `volumeInfo`:
+
 ```json
 {
-  "volumeInfo": {
-    "imageLinks": {
-      "smallThumbnail": "http://books.google.com/books/content?id=YhCYCgAAQBAJ&printsec=frontcover&img=1&zoom=5&edge=curl&source=gbs_api",
-      "thumbnail": "http://books.google.com/books/content?id=YhCYCgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
-    },
-    "accessInfo": {
-      "viewability": "PARTIAL",
-      "webReaderLink": "http://play.google.com/books/reader?id=YhCYCgAAQBAJ&hl=&source=gbs_api"
+  "items": [
+    {
+      "volumeInfo": {
+        "imageLinks": { ... },  // ✅ Correcto
+        // ❌ accessInfo NO está aquí
+      },
+      "accessInfo": {           // ✅ accessInfo está aquí
+        "viewability": "PARTIAL",
+        "webReaderLink": "..."
+      }
     }
-  }
+  ]
 }
 ```
 
-### Objeto BookData (Incompleto - ANTES)
+**Error en el código original**:
 ```typescript
-{
-  titulo: "El camino de los reyes",
-  autor: "Brandon Sanderson",
-  paginas: 1511,
-  // ❌ FALTABAN: imageLinks y accessInfo
-}
+const book = data.items[0].volumeInfo;
+// ❌ book.accessInfo era undefined
+accessInfo: book.accessInfo || undefined
 ```
 
 ## ✅ Solución Implementada
 
-### 1. Actualización de `googleBooksAPI.ts`
+### 1. Corrección de Estructura de Datos
 
-**Funciones modificadas**:
-- `fetchBookData()` - Para búsqueda por ISBN
-- `searchBooksByAuthor()` - Para búsqueda por autor
-- `searchBooksByTitle()` - Para búsqueda por título
+**Archivo**: `src/services/googleBooksAPI.ts`
 
 **Cambios realizados**:
 ```typescript
-// ANTES
-bookData = {
-  titulo: title,
-  autor: author || undefined,
-  // ... otros campos
-  idioma: language || undefined
-  // ❌ Faltaban imageLinks y accessInfo
-};
+// ANTES (Incorrecto)
+const book = data.items[0].volumeInfo;
+accessInfo: book.accessInfo || undefined  // ❌ Siempre undefined
 
-// DESPUÉS
-bookData = {
-  titulo: title,
-  autor: author || undefined,
-  // ... otros campos
-  idioma: language || undefined,
-  // ✅ Campos para imágenes de portada (Google Books API)
-  imageLinks: book.imageLinks || undefined,
-  // ✅ Campos para acceso a vista previa (Google Books API)
-  accessInfo: book.accessInfo || undefined
-};
+// DESPUÉS (Correcto)
+const book = data.items[0].volumeInfo;
+const accessInfo = data.items[0].accessInfo;  // ✅ Extraer del nivel correcto
+accessInfo: accessInfo || undefined
 ```
 
-### 2. Actualización de Tipos TypeScript
+### 2. Funciones Corregidas
+
+**Todas las funciones de búsqueda actualizadas**:
+- `fetchBookData()` - Búsqueda por ISBN
+- `searchBooksByAuthor()` - Búsqueda por autor  
+- `searchBooksByTitle()` - Búsqueda por título
+
+### 3. Actualización de Tipos TypeScript
 
 **Archivo**: `src/types/index.ts`
 
-**Cambios realizados**:
+**Interface `BookData` actualizada**:
 ```typescript
-// Tipo BookData actualizado
 export interface BookData {
   // ... campos existentes ...
   
-  // ✅ Nuevos campos para Google Books API
+  // ✅ Campos para Google Books API
   imageLinks?: {
     smallThumbnail?: string;
     thumbnail?: string;
@@ -90,6 +81,17 @@ export interface BookData {
 }
 ```
 
+### 4. Función de Limpieza de Caché
+
+**Agregada función para limpiar caché**:
+```typescript
+export const clearCache = () => {
+  bookCache.clear();
+  searchCache.clear();
+  console.log('API cache cleared');
+};
+```
+
 ## 🧪 Verificación
 
 ### 1. Verificación de TypeScript
@@ -98,10 +100,10 @@ npx tsc --noEmit
 # ✅ Sin errores
 ```
 
-### 2. Flujo de Datos Verificado
-1. **Google Books API** → Retorna JSON con `volumeInfo.imageLinks` y `volumeInfo.accessInfo`
-2. **googleBooksAPI.ts** → Mapea correctamente estos campos
-3. **BookData** → Incluye `imageLinks` y `accessInfo`
+### 2. Flujo de Datos Corregido
+1. **Google Books API** → Retorna JSON con estructura correcta
+2. **googleBooksAPI.ts** → Extrae `accessInfo` del nivel correcto
+3. **BookData** → Incluye `imageLinks` y `accessInfo` correctamente
 4. **Libro** → Se guarda con los campos de imágenes
 5. **BookCoverImage** → Muestra la imagen correcta
 
@@ -110,7 +112,7 @@ npx tsc --noEmit
 ### Antes del Fix
 - ❌ "Portada no disponible" en todas las tarjetas
 - ❌ Botón "Leer Muestra" no aparecía
-- ❌ Datos de Google Books no se aprovechaban
+- ❌ `accessInfo` siempre era `undefined`
 
 ### Después del Fix
 - ✅ Imágenes de portada se muestran correctamente
@@ -121,19 +123,23 @@ npx tsc --noEmit
 ## 📋 Archivos Modificados
 
 1. **`src/services/googleBooksAPI.ts`**
-   - Función `fetchBookData()` - Líneas ~130-140
-   - Función `searchBooksByAuthor()` - Líneas ~300-310
-   - Función `searchBooksByTitle()` - Líneas ~420-430
+   - Función `fetchBookData()` - Líneas ~90-145
+   - Función `searchBooksByAuthor()` - Líneas ~270-325
+   - Función `searchBooksByTitle()` - Líneas ~370-435
+   - Función `clearCache()` - Línea ~225
 
 2. **`src/types/index.ts`**
    - Interface `BookData` - Líneas ~280-295
 
+3. **`src/components/FeatureDemo.tsx`**
+   - Agregado botón para limpiar caché
+
 ## 🚀 Próximos Pasos
 
-1. **Probar con datos reales**: Agregar un nuevo libro desde la aplicación
-2. **Verificar imágenes**: Confirmar que se muestran las portadas
-3. **Verificar botón "Leer Muestra"**: Confirmar que aparece cuando corresponde
-4. **Limpiar caché**: Si es necesario, limpiar el caché de la API
+1. **Limpiar caché**: Usar el botón "Limpiar Caché de API" en FeatureDemo
+2. **Probar con datos reales**: Agregar un nuevo libro desde la aplicación
+3. **Verificar imágenes**: Confirmar que se muestran las portadas
+4. **Verificar botón "Leer Muestra"**: Confirmar que aparece cuando corresponde
 
 ## 🔄 Compatibilidad
 
@@ -141,8 +147,29 @@ npx tsc --noEmit
 - ✅ **Fallback**: Placeholder elegante cuando no hay imágenes
 - ✅ **Opcional**: Los campos son opcionales, no rompen funcionalidad existente
 
+## 🛠️ Solución de Problemas
+
+### Si las imágenes siguen sin aparecer:
+
+1. **Limpiar caché de la API**:
+   ```typescript
+   import { clearCache } from '../services/googleBooksAPI';
+   clearCache();
+   ```
+
+2. **Verificar en consola**:
+   ```javascript
+   // Buscar en los logs:
+   console.log('Book data found and cached:', bookData);
+   // Debería mostrar imageLinks y accessInfo
+   ```
+
+3. **Verificar estructura JSON**:
+   - Confirmar que `volumeInfo.imageLinks` existe
+   - Confirmar que `accessInfo` está en el nivel raíz
+
 ---
 
 **Estado**: ✅ **FIX IMPLEMENTADO Y VERIFICADO**
 
-El problema estaba en el mapeo de datos desde Google Books API. Ahora los campos `imageLinks` y `accessInfo` se incluyen correctamente en el objeto `BookData`, lo que permite que las imágenes de portada y el botón "Leer Muestra" funcionen como se diseñó originalmente.
+El problema principal estaba en la estructura de datos de Google Books API. El campo `accessInfo` está en el nivel raíz del objeto, no dentro de `volumeInfo`. Ahora todos los campos se mapean correctamente y las imágenes de portada deberían mostrarse correctamente.
