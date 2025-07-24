@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, BookOpen, Clock, Star, Plus, Edit, Trash2, ExternalLink } from 'lucide-react';
-import { Libro, EstadoLibro, Lectura } from '../types';
+import { X, BookOpen, Clock, Star, Plus, Trash2, ExternalLink } from 'lucide-react';
+import { Libro, Lectura } from '../types';
 import { useAppState } from '../context/AppStateContext';
 import { openWebReader } from '../utils/webReader';
 import BookCover from './BookCover';
+import { getLanguageName } from '../utils/languageUtils';
 
 interface BookDescriptionModalProps {
   book: Libro | null;
@@ -202,7 +203,7 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
                   {book.editorial && (
                     <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                       <div className="p-1.5 bg-slate-100 dark:bg-slate-600 rounded">
-                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Edit</span>
+                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Editorial</span>
                       </div>
                       <p className="text-sm font-medium text-slate-900 dark:text-white">{book.editorial}</p>
                     </div>
@@ -214,7 +215,7 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
                       <div className="p-1.5 bg-slate-100 dark:bg-slate-600 rounded">
                         <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Idioma</span>
                       </div>
-                      <p className="text-sm font-medium text-slate-900 dark:text-white">{book.idioma}</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">{getLanguageName(book.idioma)}</p>
                     </div>
                   )}
 
