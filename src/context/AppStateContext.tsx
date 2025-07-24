@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode, useEffect, useState } from 'react';
-import { AppState, Action, Libro, ScanHistory, Statistics, Saga, EstadoLibro, Lectura } from '../types';
+import { AppState, Action, Libro, ScanHistory, Statistics, Saga, EstadoLibro, Lectura, Widget } from '../types';
 import { getInitialTheme, persistThemePreference } from '../utils/themeConfig';
 import DatabaseService from '../services/databaseService';
 import { useAuth } from './AuthContext';
@@ -495,7 +495,8 @@ function appReducer(state: AppState, action: Action): AppState {
             name: nuevoLibro.sagaName.trim(),
             count: 1,
             isComplete: false,
-            libros: [nuevoLibro.id]
+            libros: [nuevoLibro.id],
+            estado: 'activa' as const
           };
           nuevoEstado = {
             ...nuevoEstado,
@@ -535,7 +536,8 @@ function appReducer(state: AppState, action: Action): AppState {
             name: updates.sagaName.trim(),
             count: 0,
             isComplete: false,
-            libros: []
+            libros: [],
+            estado: 'activa' as const
           };
           nuevoEstado = {
             ...nuevoEstado,
@@ -805,7 +807,8 @@ function appReducer(state: AppState, action: Action): AppState {
         libros: [],
         descripcion: action.payload.descripcion,
         genero: action.payload.genero,
-        autor: action.payload.autor
+        autor: action.payload.autor,
+        estado: 'activa' as const
       };
       
       return {
@@ -1402,7 +1405,7 @@ function appReducer(state: AppState, action: Action): AppState {
       const widgetsOrdenados = orden.map((id, index) => {
         const widget = state.widgets.find(w => w.id === id);
         return widget ? { ...widget, orden: index + 1 } : null;
-      }).filter(Boolean);
+      }).filter((widget): widget is Widget => widget !== null);
       return { ...state, widgets: widgetsOrdenados };
     }
 

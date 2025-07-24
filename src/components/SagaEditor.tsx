@@ -489,7 +489,7 @@ const SagaEditor: React.FC<SagaEditorProps> = ({ isOpen, onClose, sagaId }) => {
             <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={handleSaveSaga}
-                disabled={!currentSaga?.nombre}
+                disabled={!currentSaga?.name}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Save className="w-4 h-4" />
