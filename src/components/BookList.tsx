@@ -3,7 +3,7 @@ import { Libro, BookListType } from '../types';
 import BookCard from './BookCard';
 import BookEditModal from './BookEditModal';
 import { motion } from 'framer-motion';
-import { BookOpen, Inbox } from 'lucide-react';
+import { BookOpen, Inbox, Grid3X3, List } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 
 interface BookListProps {
@@ -15,6 +15,7 @@ interface BookListProps {
 const BookList: React.FC<BookListProps> = ({ books, type, emptyMessage }) => {
   const { dispatch } = useAppState();
   const [editingBook, setEditingBook] = useState<Libro | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const handleDelete = (id: number) => {
     dispatch({ type: 'DELETE_BOOK', payload: id });
@@ -81,16 +82,47 @@ const BookList: React.FC<BookListProps> = ({ books, type, emptyMessage }) => {
             {books.length} {books.length === 1 ? 'libro' : 'libros'}
           </span>
         </div>
+
+        {/* View Mode Toggle - Desktop Only */}
+        <div className="hidden lg:flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-2 rounded-md transition-colors duration-200 ${
+              viewMode === 'grid'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+            title="Vista de cuadrícula"
+          >
+            <Grid3X3 className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-2 rounded-md transition-colors duration-200 ${
+              viewMode === 'list'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+            title="Vista de lista"
+          >
+            <List className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
-      {/* Books Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      {/* Books Grid/List */}
+      <div className={
+        viewMode === 'grid' 
+          ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4"
+          : "space-y-3 sm:space-y-4"
+      }>
         {books.map((book, index) => (
           <motion.div
             key={book.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
+            transition={{ delay: index * 0.05 }}
+            className={viewMode === 'list' ? 'w-full' : ''}
           >
             <BookCard
               book={book}

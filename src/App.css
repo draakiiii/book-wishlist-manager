@@ -126,4 +126,280 @@
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
+}
+
+/* Mejoras específicas para móvil */
+@media (max-width: 768px) {
+  /* Mejorar la experiencia táctil */
+  button, 
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Mejorar el espaciado en móvil */
+  .mobile-spacing {
+    padding: 1rem;
+  }
+
+  /* Optimizar el tamaño de texto en móvil */
+  .mobile-text {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  /* Mejorar la legibilidad en móvil */
+  .mobile-readable {
+    font-size: 1rem;
+    line-height: 1.5;
+    letter-spacing: 0.025em;
+  }
+
+  /* Optimizar las tarjetas para móvil */
+  .mobile-card {
+    border-radius: 0.75rem;
+    padding: 1rem;
+  }
+
+  /* Mejorar los botones de acción en móvil */
+  .mobile-action-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+  }
+
+  /* Optimizar el grid para móvil */
+  .mobile-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  /* Mejorar la navegación móvil */
+  .mobile-nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  .dark .mobile-nav {
+    background: rgba(30, 41, 59, 0.8);
+  }
+
+  /* Optimizar los modales para móvil */
+  .mobile-modal {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+    border-radius: 1rem;
+  }
+
+  /* Mejorar el menú móvil */
+  .mobile-menu {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .mobile-menu {
+    background: rgba(30, 41, 59, 0.95);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Mejoras específicas para desktop */
+@media (min-width: 1024px) {
+  /* Optimizar el layout para desktop */
+  .desktop-layout {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  /* Mejorar las tarjetas en desktop */
+  .desktop-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .desktop-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Optimizar el grid para desktop */
+  .desktop-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  /* Mejorar la navegación desktop */
+  .desktop-nav {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.8);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .desktop-nav {
+    background: rgba(30, 41, 59, 0.8);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Optimizar los modales para desktop */
+  .desktop-modal {
+    max-width: 600px;
+    margin: 2rem auto;
+    border-radius: 1.5rem;
+  }
+}
+
+/* Mejoras para el sistema de puntos */
+.points-system {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fbbf24 100%);
+  border: 2px solid #f59e0b;
+  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.3);
+}
+
+.dark .points-system {
+  background: linear-gradient(135deg, rgba(120, 53, 15, 0.3) 0%, rgba(146, 64, 14, 0.4) 50%, rgba(180, 83, 9, 0.5) 100%);
+  border-color: #f59e0b;
+  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.2);
+}
+
+/* Mejoras para las animaciones de entrada */
+.entrance-animation {
+  animation: entranceSlide 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes entranceSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mejoras para los estados de hover y focus */
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* Mejoras para los botones de acción */
+.action-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.action-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.action-button:hover::before {
+  left: 100%;
+}
+
+/* Mejoras para el modo oscuro específicas */
+.dark .glass-effect {
+  background: rgba(30, 41, 59, 0.9);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.dark .card-hover:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+/* Mejoras para la accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mejoras para el contraste en modo oscuro */
+.dark .text-slate-600 {
+  color: #94a3b8;
+}
+
+.dark .text-slate-400 {
+  color: #cbd5e1;
+}
+
+/* Mejoras para los bordes en modo oscuro */
+.dark .border-slate-200 {
+  border-color: #334155;
+}
+
+.dark .border-slate-300 {
+  border-color: #475569;
+}
+
+/* Mejoras para los fondos en modo oscuro */
+.dark .bg-slate-50 {
+  background-color: #1e293b;
+}
+
+.dark .bg-slate-100 {
+  background-color: #334155;
+}
+
+/* Mejoras para el sistema de puntos en modo oscuro */
+.dark .points-highlight {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(251, 191, 36, 0.3) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+/* Mejoras para la responsividad general */
+.responsive-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-container {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-container {
+    padding: 0 2rem;
+  }
+}
+
+/* Mejoras para el scroll suave */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Mejoras para el focus visible */
+.focus-visible:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
+.dark .focus-visible:focus {
+  outline-color: #60a5fa;
 } 

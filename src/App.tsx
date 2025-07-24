@@ -18,7 +18,12 @@ import {
   ShoppingCart,
   Users,
   X,
-  Share2
+  Share2,
+  Menu,
+  Home,
+  Library,
+  Target,
+  Award
 } from 'lucide-react';
 import CollapsibleConfig from './components/CollapsibleConfig';
 import CollapsibleSection from './components/CollapsibleSection';
@@ -51,7 +56,8 @@ const AppContent: React.FC = () => {
   const [scanHistoryModalOpen, setScanHistoryModalOpen] = useState(false);
   const [bulkScanModalOpen, setBulkScanModalOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
-
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('progress');
 
   console.log('AppContent rendered', { authLoading, isAuthenticated, user: user?.email });
 
@@ -136,8 +142,6 @@ const AppContent: React.FC = () => {
     }
   };
 
-
-
   // Filtrar libros por estado
   const librosTBR = state.libros.filter(libro => libro.estado === 'tbr');
   const librosLeyendo = state.libros.filter(libro => libro.estado === 'leyendo');
@@ -191,6 +195,424 @@ const AppContent: React.FC = () => {
     );
   }
 
+  // Componente de navegación móvil
+  const MobileNavigation = () => (
+    <div className="lg:hidden">
+      {/* Mobile Header */}
+      <motion.header 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="sticky top-0 z-50 glass-effect border-b border-white/20"
+      >
+        <div className="px-4">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+              >
+                <Menu className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+              </button>
+              <div className="p-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg">
+                <BookOpen className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex flex-col">
+                <h1 className="text-lg font-display font-bold gradient-text">
+                  Mi Biblioteca
+                </h1>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSearchModalOpen(true)}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                title="Búsqueda"
+              >
+                <Search className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setStatisticsModalOpen(true)}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                title="Estadísticas"
+              >
+                <BarChart3 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+              </motion.button>
+              
+              <button
+                onClick={() => setConfigSidebarOpen(true)}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                title="Configuración"
+              >
+                <Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.header>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="lg:hidden bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-lg"
+        >
+          <div className="px-4 py-2">
+            <div className="grid grid-cols-4 gap-2">
+              <button
+                onClick={() => { setActiveSection('progress'); setMobileMenuOpen(false); }}
+                className={`flex flex-col items-center p-3 rounded-lg transition-colors duration-200 ${
+                  activeSection === 'progress' 
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' 
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                <Target className="h-5 w-5 mb-1" />
+                <span className="text-xs font-medium">Objetivos</span>
+              </button>
+              
+              <button
+                onClick={() => { setActiveSection('wishlist'); setMobileMenuOpen(false); }}
+                className={`flex flex-col items-center p-3 rounded-lg transition-colors duration-200 ${
+                  activeSection === 'wishlist' 
+                    ? 'bg-secondary-100 dark:bg-secondary-900/30 text-secondary-700 dark:text-secondary-300' 
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                <Heart className="h-5 w-5 mb-1" />
+                <span className="text-xs font-medium">Deseos</span>
+              </button>
+              
+              <button
+                onClick={() => { setActiveSection('tbr'); setMobileMenuOpen(false); }}
+                className={`flex flex-col items-center p-3 rounded-lg transition-colors duration-200 ${
+                  activeSection === 'tbr' 
+                    ? 'bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300' 
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                <Clock className="h-5 w-5 mb-1" />
+                <span className="text-xs font-medium">TBR</span>
+              </button>
+              
+              <button
+                onClick={() => { setActiveSection('library'); setMobileMenuOpen(false); }}
+                className={`flex flex-col items-center p-3 rounded-lg transition-colors duration-200 ${
+                  activeSection === 'library' 
+                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' 
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                <Library className="h-5 w-5 mb-1" />
+                <span className="text-xs font-medium">Biblioteca</span>
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+
+  // Componente de navegación desktop
+  const DesktopNavigation = () => (
+    <motion.header 
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="hidden lg:block sticky top-0 z-50 glass-effect border-b border-white/20"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg">
+              <BookOpen className="h-6 w-6 text-white" />
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-xl font-display font-bold gradient-text">
+                Mi Biblioteca
+              </h1>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setSearchModalOpen(true)}
+              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+              title="Búsqueda Avanzada"
+            >
+              <Search className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setStatisticsModalOpen(true)}
+              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+              title="Estadísticas Avanzadas"
+            >
+              <BarChart3 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+            </motion.button>
+            
+            <button
+              onClick={() => setConfigModalOpen(true)}
+              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+              title="Configuración"
+            >
+              <Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+            </button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogout}
+              className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors duration-200"
+              title={`Cerrar sesión (${user?.email})`}
+            >
+              <Users className="h-5 w-5 text-red-600 dark:text-red-400" />
+            </motion.button>
+          </div>
+        </div>
+      </div>
+    </motion.header>
+  );
+
+  // Componente de contenido móvil
+  const MobileContent = () => {
+    const renderSection = () => {
+      switch (activeSection) {
+        case 'progress':
+          return (
+            <div className="space-y-4">
+              <CollapsibleSection
+                title="Objetivos de Lectura"
+                icon={<Trophy className="h-5 w-5" />}
+                iconBgColor="bg-success-100 dark:bg-success-900/30"
+                iconColor="text-success-600 dark:text-success-400"
+              >
+                <ProgressBar />
+              </CollapsibleSection>
+            </div>
+          );
+        case 'wishlist':
+          return (
+            <div className="space-y-4">
+              <CollapsibleSection
+                title="Lista de Deseos"
+                icon={<Heart className="h-5 w-5" />}
+                iconBgColor="bg-secondary-100 dark:bg-secondary-900/30"
+                iconColor="text-secondary-600 dark:text-secondary-400"
+              >
+                <WishlistForm />
+                <div className="mt-4">
+                  <BookList 
+                    books={librosWishlist}
+                    type="wishlist"
+                    emptyMessage="Tu lista de deseos está vacía."
+                  />
+                </div>
+              </CollapsibleSection>
+            </div>
+          );
+        case 'tbr':
+          return (
+            <div className="space-y-4">
+              <CollapsibleSection
+                title="Pila de Lectura (TBR)"
+                icon={<Clock className="h-5 w-5" />}
+                iconBgColor="bg-warning-100 dark:bg-warning-900/30"
+                iconColor="text-warning-600 dark:text-warning-400"
+              >
+                <TBRForm />
+                <div className="mt-4">
+                  <BookList 
+                    books={librosTBR}
+                    type="tbr"
+                    emptyMessage="Tu pila está vacía."
+                  />
+                </div>
+              </CollapsibleSection>
+            </div>
+          );
+        case 'library':
+          return (
+            <div className="space-y-4">
+              <CollapsibleSection
+                title="Leyendo Actualmente"
+                icon={<BookOpen className="h-5 w-5" />}
+                iconBgColor="bg-primary-100 dark:bg-primary-900/30"
+                iconColor="text-primary-600 dark:text-primary-400"
+              >
+                <BookList 
+                  books={librosLeyendo}
+                  type="leyendo"
+                  emptyMessage="No estás leyendo ningún libro actualmente."
+                />
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="Libros Leídos"
+                icon={<CheckCircle className="h-5 w-5" />}
+                iconBgColor="bg-green-100 dark:bg-green-900/30"
+                iconColor="text-green-600 dark:text-green-400"
+              >
+                <BookList 
+                  books={librosLeidos}
+                  type="leido"
+                  emptyMessage="Aún no has terminado ningún libro."
+                />
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="Libros Abandonados"
+                icon={<XCircle className="h-5 w-5" />}
+                iconBgColor="bg-red-100 dark:bg-red-900/30"
+                iconColor="text-red-600 dark:text-red-400"
+              >
+                <BookList 
+                  books={librosAbandonados}
+                  type="abandonado"
+                  emptyMessage="No has abandonado ningún libro."
+                />
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="Mis Sagas"
+                icon={<Award className="h-5 w-5" />}
+                iconBgColor="bg-purple-100 dark:bg-purple-900/30"
+                iconColor="text-purple-600 dark:text-purple-400"
+              >
+                <SagaList />
+              </CollapsibleSection>
+            </div>
+          );
+        default:
+          return null;
+      }
+    };
+
+    return (
+      <main className="px-4 py-4">
+        {renderSection()}
+      </main>
+    );
+  };
+
+  // Componente de contenido desktop
+  const DesktopContent = () => (
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+        {/* Configuration Section - Desktop Collapsible */}
+        <div className="hidden lg:block">
+          <CollapsibleConfig />
+        </div>
+
+        {/* Progress Section */}
+        <CollapsibleSection
+          title="Objetivos de Lectura"
+          icon={<Trophy className="h-5 w-5" />}
+          iconBgColor="bg-success-100 dark:bg-success-900/30"
+          iconColor="text-success-600 dark:text-success-400"
+        >
+          <ProgressBar />
+        </CollapsibleSection>
+
+        {/* Wishlist Section */}
+        <CollapsibleSection
+          title="Lista de Deseos"
+          icon={<Heart className="h-5 w-5" />}
+          iconBgColor="bg-secondary-100 dark:bg-secondary-900/30"
+          iconColor="text-secondary-600 dark:text-secondary-400"
+        >
+          <WishlistForm />
+          <div className="mt-4 sm:mt-6">
+            <BookList 
+              books={librosWishlist}
+              type="wishlist"
+              emptyMessage="Tu lista de deseos está vacía."
+            />
+          </div>
+        </CollapsibleSection>
+
+        {/* TBR Section */}
+        <CollapsibleSection
+          title="Pila de Lectura (TBR)"
+          icon={<Clock className="h-5 w-5" />}
+          iconBgColor="bg-warning-100 dark:bg-warning-900/30"
+          iconColor="text-warning-600 dark:text-warning-400"
+        >
+          <TBRForm />
+          <div className="mt-4 sm:mt-6">
+            <BookList 
+              books={librosTBR}
+              type="tbr"
+              emptyMessage="Tu pila está vacía."
+            />
+          </div>
+        </CollapsibleSection>
+
+        {/* Currently Reading Section */}
+        <CollapsibleSection
+          title="Leyendo Actualmente"
+          icon={<BookOpen className="h-5 w-5" />}
+          iconBgColor="bg-primary-100 dark:bg-primary-900/30"
+          iconColor="text-primary-600 dark:text-primary-400"
+        >
+          <BookList 
+            books={librosLeyendo}
+            type="leyendo"
+            emptyMessage="No estás leyendo ningún libro actualmente."
+          />
+        </CollapsibleSection>
+
+        {/* Completed Books Section */}
+        <CollapsibleSection
+          title="Libros Leídos"
+          icon={<CheckCircle className="h-5 w-5" />}
+          iconBgColor="bg-green-100 dark:bg-green-900/30"
+          iconColor="text-green-600 dark:text-green-400"
+        >
+          <BookList 
+            books={librosLeidos}
+            type="leido"
+            emptyMessage="Aún no has terminado ningún libro."
+          />
+        </CollapsibleSection>
+
+        {/* Abandoned Books Section */}
+        <CollapsibleSection
+          title="Libros Abandonados"
+          icon={<XCircle className="h-5 w-5" />}
+          iconBgColor="bg-red-100 dark:bg-red-900/30"
+          iconColor="text-red-600 dark:text-red-400"
+        >
+          <BookList 
+            books={librosAbandonados}
+            type="abandonado"
+            emptyMessage="No has abandonado ningún libro."
+          />
+        </CollapsibleSection>
+
+        {/* Sagas Section */}
+        <CollapsibleSection
+          title="Mis Sagas"
+          icon={<Award className="h-5 w-5" />}
+          iconBgColor="bg-purple-100 dark:bg-purple-900/30"
+          iconColor="text-purple-600 dark:text-purple-400"
+        >
+          <SagaList />
+        </CollapsibleSection>
+      </div>
+    </main>
+  );
+
   return (
     <div className="theme-transition min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
       {/* Notificaciones de saga completada */}
@@ -202,217 +624,21 @@ const AppContent: React.FC = () => {
         />
       ))}
       
-      {/* Header */}
-      <motion.header 
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="sticky top-0 z-50 glass-effect border-b border-white/20"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg">
-                <BookOpen className="h-6 w-6 text-white" />
-              </div>
-              <div className="flex flex-col">
-                <h1 className="text-lg sm:text-xl font-display font-bold gradient-text">
-                  Mi Biblioteca
-                </h1>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-1 sm:space-x-2">
-              {/* Search and Statistics buttons - visible on all screens */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSearchModalOpen(true)}
-                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
-                title="Búsqueda Avanzada"
-              >
-                <Search className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-              </motion.button>
-              
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setStatisticsModalOpen(true)}
-                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
-                title="Estadísticas Avanzadas"
-              >
-                <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-              </motion.button>
-              
-              {/* Botón de Exportar/Importar Datos - DESHABILITADO TEMPORALMENTE */}
-              {/* Para habilitar, descomenta las siguientes líneas: */}
-              {/*
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setExportImportModalOpen(true)}
-                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
-                title="Exportar/Importar Datos"
-              >
-                <Database className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-              </motion.button>
-              */}
-              
-              {/* Historial de Escaneos - DESHABILITADO TEMPORALMENTE */}
-              {/*
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setScanHistoryModalOpen(true)}
-                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
-                title="Historial de Escaneos"
-              >
-                <History className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-              </motion.button>
-              */}
-              
-              {/* Settings button */}
-              <button
-                onClick={() => setConfigSidebarOpen(true)}
-                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 lg:hidden"
-                title="Configuración"
-                data-mobile-config="true"
-              >
-                <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-              </button>
-              
-              {/* Desktop Settings button - opens modal */}
-              <button
-                onClick={() => setConfigModalOpen(true)}
-                className="hidden lg:flex p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
-                title="Configuración"
-                data-desktop-config="true"
-              >
-                <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-              </button>
+      {/* Mobile Navigation */}
+      <MobileNavigation />
+      
+      {/* Desktop Navigation */}
+      <DesktopNavigation />
 
-              {/* Logout Button */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleLogout}
-                className="p-1.5 md:p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors duration-200"
-                title={`Cerrar sesión (${user?.email})`}
-              >
-                <Users className="h-4 w-4 md:h-5 md:w-5 text-red-600 dark:text-red-400" />
-              </motion.button>
-            </div>
-          </div>
-        </div>
-      </motion.header>
+      {/* Mobile Content */}
+      <div className="lg:hidden">
+        <MobileContent />
+      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="space-y-4 sm:space-y-6 lg:space-y-8">
-            
-            {/* Configuration Section - Desktop Collapsible */}
-            <div className="hidden lg:block">
-              <CollapsibleConfig />
-            </div>
-
-            {/* Progress Section */}
-            <CollapsibleSection
-              title="Objetivos de Lectura"
-              icon={<Trophy className="h-5 w-5" />}
-              iconBgColor="bg-success-100 dark:bg-success-900/30"
-              iconColor="text-success-600 dark:text-success-400"
-            >
-              <ProgressBar />
-            </CollapsibleSection>
-
-            {/* Wishlist Section */}
-            <CollapsibleSection
-              title="Lista de Deseos"
-              icon={<Heart className="h-5 w-5" />}
-              iconBgColor="bg-secondary-100 dark:bg-secondary-900/30"
-              iconColor="text-secondary-600 dark:text-secondary-400"
-            >
-              <WishlistForm />
-              <div className="mt-4 sm:mt-6">
-                <BookList 
-                  books={librosWishlist}
-                  type="wishlist"
-                  emptyMessage="Tu lista de deseos está vacía."
-                />
-              </div>
-            </CollapsibleSection>
-
-            {/* TBR Section */}
-            <CollapsibleSection
-              title="Pila de Lectura (TBR)"
-              icon={<Clock className="h-5 w-5" />}
-              iconBgColor="bg-warning-100 dark:bg-warning-900/30"
-              iconColor="text-warning-600 dark:text-warning-400"
-            >
-              <TBRForm />
-              <div className="mt-4 sm:mt-6">
-                <BookList 
-                  books={librosTBR}
-                  type="tbr"
-                  emptyMessage="Tu pila está vacía."
-                />
-              </div>
-            </CollapsibleSection>
-
-            {/* Currently Reading Section */}
-            <CollapsibleSection
-              title="Leyendo Actualmente"
-              icon={<BookOpen className="h-5 w-5" />}
-              iconBgColor="bg-primary-100 dark:bg-primary-900/30"
-              iconColor="text-primary-600 dark:text-primary-400"
-            >
-              <BookList 
-                books={librosLeyendo}
-                type="leyendo"
-                emptyMessage="No estás leyendo ningún libro actualmente."
-              />
-            </CollapsibleSection>
-
-            {/* Completed Books Section */}
-            <CollapsibleSection
-              title="Libros Leídos"
-              icon={<CheckCircle className="h-5 w-5" />}
-              iconBgColor="bg-green-100 dark:bg-green-900/30"
-              iconColor="text-green-600 dark:text-green-400"
-            >
-              <BookList 
-                books={librosLeidos}
-                type="leido"
-                emptyMessage="Aún no has terminado ningún libro."
-              />
-            </CollapsibleSection>
-
-            {/* Abandoned Books Section */}
-            <CollapsibleSection
-              title="Libros Abandonados"
-              icon={<XCircle className="h-5 w-5" />}
-              iconBgColor="bg-red-100 dark:bg-red-900/30"
-              iconColor="text-red-600 dark:text-red-400"
-            >
-              <BookList 
-                books={librosAbandonados}
-                type="abandonado"
-                emptyMessage="No has abandonado ningún libro."
-              />
-            </CollapsibleSection>
-
-
-
-            {/* Sagas Section */}
-            <CollapsibleSection
-              title="Mis Sagas"
-              icon={<Trophy className="h-5 w-5" />}
-              iconBgColor="bg-purple-100 dark:bg-purple-900/30"
-              iconColor="text-purple-600 dark:text-purple-400"
-            >
-              <SagaList />
-            </CollapsibleSection>
-        </div>
-      </main>
+      {/* Desktop Content */}
+      <div className="hidden lg:block">
+        <DesktopContent />
+      </div>
       
       {/* Mobile Configuration Sidebar */}
       <Sidebar 
@@ -494,8 +720,6 @@ const AppContent: React.FC = () => {
           setBulkScanModalOpen(false);
         }}
       />
-
-
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Target, BookOpen, TrendingUp, Calendar, Trophy } from 'lucide-react';
+import { Target, BookOpen, TrendingUp, Calendar, Trophy, Award, Star, Coins } from 'lucide-react';
 
 const ProgressBar: React.FC = () => {
   const { state } = useAppState();
@@ -67,12 +67,84 @@ const ProgressBar: React.FC = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Progress Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* Sistema de Puntos - Destacado en la parte superior */}
+      {config.sistemaPuntosHabilitado && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
+          className="bg-gradient-to-br from-yellow-50 via-orange-50 to-amber-50 dark:from-yellow-900/20 dark:via-orange-900/20 dark:to-amber-900/20 rounded-2xl p-4 sm:p-6 border-2 border-yellow-200 dark:border-yellow-700 shadow-lg"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl">
+                <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg sm:text-xl font-bold text-yellow-900 dark:text-yellow-100">
+                  Sistema de Puntos
+                </h3>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  Gana puntos leyendo y compra libros
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl sm:text-3xl font-bold text-yellow-900 dark:text-yellow-100">
+                {state.puntosActuales}
+              </div>
+              <div className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-300">
+                puntos disponibles
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-3 text-center">
+              <div className="text-lg sm:text-xl font-bold text-yellow-900 dark:text-yellow-100">
+                {state.puntosGanados}
+              </div>
+              <div className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-300">
+                Puntos ganados
+              </div>
+            </div>
+            
+            <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-3 text-center">
+              <div className="text-lg sm:text-xl font-bold text-yellow-900 dark:text-yellow-100">
+                {state.librosCompradosConPuntos}
+              </div>
+              <div className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-300">
+                Libros comprados
+              </div>
+            </div>
+            
+            <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-3 text-center">
+              <div className="text-lg sm:text-xl font-bold text-yellow-900 dark:text-yellow-100">
+                {config.puntosParaComprar || 25}
+              </div>
+              <div className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-300">
+                Puntos necesarios
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl">
+            <div className="flex items-center space-x-2">
+              <Star className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                Necesitas {config.puntosParaComprar || 25} puntos para comprar un libro de tu wishlist
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Progress Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: config.sistemaPuntosHabilitado ? 0.2 : 0.1 }}
           className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-xl p-3 sm:p-4 border border-primary-200 dark:border-primary-700"
         >
           <div className="flex items-center space-x-2 sm:space-x-3">
@@ -95,7 +167,7 @@ const ProgressBar: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: config.sistemaPuntosHabilitado ? 0.3 : 0.2 }}
             className="bg-gradient-to-br from-secondary-50 to-secondary-100 dark:from-secondary-900/20 dark:to-secondary-800/20 rounded-xl p-3 sm:p-4 border border-secondary-200 dark:border-secondary-700"
           >
             <div className="flex items-center space-x-2 sm:space-x-3">
@@ -117,7 +189,7 @@ const ProgressBar: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: objetivoLibros > 0 ? 0.3 : 0.2 }}
+          transition={{ delay: config.sistemaPuntosHabilitado ? (objetivoLibros > 0 ? 0.4 : 0.3) : (objetivoLibros > 0 ? 0.3 : 0.2) }}
           className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-3 sm:p-4 border border-green-200 dark:border-green-700"
         >
           <div className="flex items-center space-x-2 sm:space-x-3">
@@ -128,7 +200,7 @@ const ProgressBar: React.FC = () => {
               <p className="text-xs sm:text-sm font-medium text-green-700 dark:text-green-300">
                 Páginas Leídas
               </p>
-              <p className="text-xl sm:text-2xl font-bold text-green-900 dark:text-green-100">
+              <p className="text-lg sm:text-xl font-bold text-green-900 dark:text-green-100">
                 {paginasLeidas.toLocaleString()}
               </p>
             </div>
@@ -138,12 +210,12 @@ const ProgressBar: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: objetivoLibros > 0 ? 0.4 : 0.3 }}
+          transition={{ delay: config.sistemaPuntosHabilitado ? (objetivoLibros > 0 ? 0.5 : 0.4) : (objetivoLibros > 0 ? 0.4 : 0.3) }}
           className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-3 sm:p-4 border border-purple-200 dark:border-purple-700"
         >
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="p-1.5 sm:p-2 bg-purple-500 rounded-lg">
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              <Award className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
             <div>
               <p className="text-xs sm:text-sm font-medium text-purple-700 dark:text-purple-300">
@@ -162,7 +234,7 @@ const ProgressBar: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: config.sistemaPuntosHabilitado ? 0.6 : 0.5 }}
           className="space-y-4"
         >
           {/* Libros Progress - Solo si hay objetivo de libros */}
@@ -243,13 +315,14 @@ const ProgressBar: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
+        transition={{ delay: config.sistemaPuntosHabilitado ? 0.7 : 0.6 }}
         className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-slate-700"
       >
-        <h4 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2 sm:mb-3">
-          Estadísticas de Lectura
+        <h4 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2 sm:mb-3 flex items-center space-x-2">
+          <BookOpen className="h-4 w-4" />
+          <span>Estadísticas de Lectura</span>
         </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 text-xs sm:text-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 text-xs sm:text-sm">
           <div className="flex justify-between">
             <span className="text-slate-600 dark:text-slate-400">Total libros:</span>
             <span className="font-medium text-slate-900 dark:text-slate-100">
@@ -268,46 +341,14 @@ const ProgressBar: React.FC = () => {
               {librosParaEstadisticas.filter(l => l.estado === 'leyendo').length}
             </span>
           </div>
+          <div className="flex justify-between">
+            <span className="text-slate-600 dark:text-slate-400">Prestados:</span>
+            <span className="font-medium text-slate-900 dark:text-slate-100">
+              {librosPrestados.length}
+            </span>
+          </div>
         </div>
       </motion.div>
-
-      {/* Sistema de Puntos */}
-      {config.sistemaPuntosHabilitado && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl p-3 sm:p-4 border border-yellow-200 dark:border-yellow-700"
-        >
-          <h4 className="text-xs sm:text-sm font-semibold text-yellow-900 dark:text-yellow-100 mb-2 sm:mb-3 flex items-center space-x-2">
-            <Trophy className="h-4 w-4" />
-            <span>Sistema de Puntos</span>
-          </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-xs sm:text-sm">
-            <div className="flex justify-between">
-              <span className="text-yellow-700 dark:text-yellow-300">Puntos actuales:</span>
-              <span className="font-bold text-yellow-900 dark:text-yellow-100">
-                {state.puntosActuales}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-yellow-700 dark:text-yellow-300">Puntos ganados:</span>
-              <span className="font-medium text-yellow-900 dark:text-yellow-100">
-                {state.puntosGanados}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-yellow-700 dark:text-yellow-300">Libros comprados:</span>
-              <span className="font-medium text-yellow-900 dark:text-yellow-100">
-                {state.librosCompradosConPuntos}
-              </span>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-yellow-600 dark:text-yellow-400">
-            Necesitas {config.puntosParaComprar || 25} puntos para comprar un libro de tu wishlist
-          </div>
-        </motion.div>
-      )}
     </div>
   );
 };
