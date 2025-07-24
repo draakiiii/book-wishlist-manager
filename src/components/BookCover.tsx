@@ -1,4 +1,5 @@
-import React, { useState, Fragment } from 'react';
+import React, { useState, Fragment, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { BookOpen, Eye, Upload, X } from 'lucide-react';
 import { Libro } from '../types';
 
@@ -94,6 +95,109 @@ const BookCover: React.FC<BookCoverProps> = ({
   const handleViewLarge = () => {
     setShowLargeView(true);
     setShowMenu(false);
+  };
+
+  // Handle keyboard events and body scroll
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (showMenu) {
+          setShowMenu(false);
+        }
+        if (showLargeView) {
+          setShowLargeView(false);
+        }
+      }
+    };
+
+    if (showMenu || showLargeView) {
+      document.addEventListener('keydown', handleKeyDown);
+      // Prevent body scroll when modal is open
+      if (showLargeView) {
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      // Restore body scroll
+      document.body.style.overflow = '';
+    };
+  }, [showMenu, showLargeView]);
+
+  // Large Image Modal Component
+  const LargeImageModal = () => {
+    if (!showLargeView) return null;
+
+    const modalContent = (
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        onClick={() => setShowLargeView(false)}
+        style={{ 
+          opacity: 0,
+          animation: 'fadeIn 0.3s ease-out forwards'
+        }}
+      >
+        <div
+          className="relative max-w-4xl max-h-[95vh] bg-white dark:bg-slate-800 rounded-lg shadow-2xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+          style={{ 
+            opacity: 0,
+            transform: 'scale(0.9)',
+            animation: 'modalAppear 0.3s ease-out forwards'
+          }}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => setShowLargeView(false)}
+            className="absolute top-3 right-3 z-20 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors shadow-lg"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          
+          {/* Large image */}
+          <img
+            src={book.customImage || book.thumbnail || book.smallThumbnail || imageUrl}
+            alt={`Portada de ${book.titulo}`}
+            className="w-full h-full object-contain max-h-[95vh]"
+            style={{ maxWidth: '100%', height: 'auto' }}
+          />
+          
+          {/* Book info overlay */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-6 text-white">
+            <h3 className="text-xl font-bold mb-1">{book.titulo}</h3>
+            {book.autor && (
+              <p className="text-base text-gray-200">{book.autor}</p>
+            )}
+            {book.publicacion && (
+              <p className="text-sm text-gray-300 mt-1">Año: {book.publicacion}</p>
+            )}
+          </div>
+        </div>
+
+        {/* CSS Animations for Modal */}
+        <style>{`
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          
+          @keyframes modalAppear {
+            from { 
+              opacity: 0; 
+              transform: scale(0.9);
+            }
+            to { 
+              opacity: 1; 
+              transform: scale(1);
+            }
+          }
+        `}</style>
+      </div>
+    );
+
+    // Use portal to render modal at document body level
+    return ReactDOM.createPortal(modalContent, document.body);
   };
 
   // Context Menu Component
@@ -224,64 +328,7 @@ const BookCover: React.FC<BookCoverProps> = ({
 
       <ContextMenu hasImage={true} />
 
-      {/* Large Image View Modal */}
-      {showLargeView && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-          onClick={() => setShowLargeView(false)}
-          style={{ 
-            opacity: 0,
-            animation: 'fadeIn 0.3s ease-out forwards'
-          }}
-        >
-          <div
-            className="relative max-w-3xl max-h-[90vh] bg-white dark:bg-slate-800 rounded-lg shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-            style={{ 
-              opacity: 0,
-              transform: 'scale(0.9)',
-              animation: 'modalAppear 0.3s ease-out forwards'
-            }}
-          >
-            {/* Close button */}
-            <button
-              onClick={() => setShowLargeView(false)}
-              className="absolute top-2 right-2 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            
-            {/* Large image */}
-            <img
-              src={book.customImage || book.thumbnail || book.smallThumbnail || imageUrl}
-              alt={`Portada de ${book.titulo}`}
-              className="w-full h-full object-contain max-h-[90vh]"
-            />
-            
-            {/* Book info overlay */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 text-white">
-              <h3 className="text-lg font-semibold">{book.titulo}</h3>
-              {book.autor && (
-                <p className="text-sm text-gray-300">{book.autor}</p>
-              )}
-            </div>
-          </div>
-
-          {/* CSS Animations for Modal */}
-          <style>{`
-            @keyframes modalAppear {
-              from { 
-                opacity: 0; 
-                transform: scale(0.9);
-              }
-              to { 
-                opacity: 1; 
-                transform: scale(1);
-              }
-            }
-          `}</style>
-        </div>
-      )}
+      <LargeImageModal />
     </div>
   );
 };
