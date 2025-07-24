@@ -112,10 +112,9 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
           `¿Estás seguro de que quieres comprar "${book.titulo}" por ${puntosNecesarios} puntos?`,
           () => {
             dispatch({ 
-              type: 'BUY_BOOK_WITH_POINTS', 
+              type: 'COMPRAR_LIBRO_CON_PUNTOS', 
               payload: { 
-                id: book.id,
-                puntosGastados: puntosNecesarios
+                libroId: book.id
               } 
             });
           }
