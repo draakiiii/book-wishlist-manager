@@ -127,7 +127,7 @@ const ConfigForm: React.FC = () => {
           </div>
         </div>
         
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
           {isEditing ? (
             <>
               <motion.button
@@ -145,7 +145,7 @@ const ConfigForm: React.FC = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleSubmit}
-                className="px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
+                className="px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
               >
                 <Save className="h-4 w-4" />
                 <span>Guardar</span>
@@ -176,34 +176,18 @@ const ConfigForm: React.FC = () => {
             </h3>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Libros por año
-              </label>
-              <input
-                type="number"
-                value={config.objetivoLecturaAnual || 0}
-                onChange={(e) => handleInputChange('objetivoLecturaAnual', parseInt(e.target.value) || 0)}
-                disabled={!isEditing}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
-                min="0"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Páginas por año
-              </label>
-              <input
-                type="number"
-                value={config.objetivoPaginasAnual || 0}
-                onChange={(e) => handleInputChange('objetivoPaginasAnual', parseInt(e.target.value) || 0)}
-                disabled={!isEditing}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
-                min="0"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Libros por año
+            </label>
+            <input
+              type="number"
+              value={config.objetivoLecturaAnual || 0}
+              onChange={(e) => handleInputChange('objetivoLecturaAnual', parseInt(e.target.value) || 0)}
+              disabled={!isEditing}
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
+              min="0"
+            />
           </div>
         </div>
 

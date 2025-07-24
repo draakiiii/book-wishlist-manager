@@ -62,17 +62,14 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
         }, 0) / librosConTiempo.length
       : 0;
 
-    // Objetivos de lectura
+    // Objetivos de lectura - solo libros
     const objetivoLibros = state.config.objetivoLecturaAnual || 0;
-    const objetivoPaginas = state.config.objetivoPaginasAnual || 0;
     
     // Calcular progreso de objetivos
     const progresoLibros = objetivoLibros > 0 ? Math.min((librosLeidos / objetivoLibros) * 100, 100) : 0;
-    const progresoPaginas = objetivoPaginas > 0 ? Math.min((paginasLeidas / objetivoPaginas) * 100, 100) : 0;
     
-    // Calcular libros y páginas restantes para completar objetivos
+    // Calcular libros restantes para completar objetivos
     const librosRestantes = Math.max(0, objetivoLibros - librosLeidos);
-    const paginasRestantes = Math.max(0, objetivoPaginas - paginasLeidas);
 
     return {
       totalLibros,
@@ -89,11 +86,8 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
       tiempoPromedio: Math.round(tiempoPromedio),
       // Objetivos
       objetivoLibros,
-      objetivoPaginas,
       progresoLibros,
-      progresoPaginas,
-      librosRestantes,
-      paginasRestantes
+      librosRestantes
     };
   }, [state]);
 
@@ -167,21 +161,6 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-amber-100 text-sm">Páginas Leídas</p>
-                  <p className="text-2xl font-bold">{statistics.paginasLeidas.toLocaleString()}</p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-amber-200" />
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
               className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white"
             >
               <div className="flex items-center justify-between">
@@ -288,28 +267,12 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
                 <Award className="h-5 w-5 text-yellow-600" />
                 <span>Sistema de Puntos</span>
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center">
-                  <p className="text-sm text-yellow-700 dark:text-yellow-300">Puntos Actuales</p>
-                  <p className="text-lg font-semibold text-yellow-900 dark:text-yellow-100">
-                    {state.puntosActuales}
-                  </p>
-                  <p className="text-xs text-yellow-600 dark:text-yellow-400">disponibles</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-yellow-700 dark:text-yellow-300">Puntos Ganados</p>
-                  <p className="text-lg font-semibold text-yellow-900 dark:text-yellow-100">
-                    {state.puntosGanados}
-                  </p>
-                  <p className="text-xs text-yellow-600 dark:text-yellow-400">total</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-yellow-700 dark:text-yellow-300">Libros Comprados</p>
-                  <p className="text-lg font-semibold text-yellow-900 dark:text-yellow-100">
-                    {state.librosCompradosConPuntos}
-                  </p>
-                  <p className="text-xs text-yellow-600 dark:text-yellow-400">con puntos</p>
-                </div>
+              <div className="text-center">
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">Puntos Actuales</p>
+                <p className="text-2xl font-semibold text-yellow-900 dark:text-yellow-100">
+                  {state.puntosActuales}
+                </p>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400">disponibles</p>
               </div>
               <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
                 <p className="text-sm text-yellow-800 dark:text-yellow-200">
@@ -367,7 +330,7 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
           )}
 
           {/* Objetivos de Lectura */}
-          {(statistics.objetivoLibros > 0 || statistics.objetivoPaginas > 0) && (
+          {statistics.objetivoLibros > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -378,65 +341,36 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
                 <Target className="h-5 w-5 text-green-500" />
                 <span>Objetivos de Lectura</span>
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Objetivo de Libros */}
-                {statistics.objetivoLibros > 0 && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        Libros Leídos
-                      </span>
-                      <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                        {statistics.librosLeidos} / {statistics.objetivoLibros}
-                      </span>
-                    </div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2">
-                      <div 
-                        className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${statistics.progresoLibros}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
-                      <span>{statistics.progresoLibros.toFixed(1)}% completado</span>
-                      <span>{statistics.librosRestantes} libros restantes</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Objetivo de Páginas */}
-                {statistics.objetivoPaginas > 0 && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        Páginas Leídas
-                      </span>
-                      <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                        {statistics.paginasLeidas.toLocaleString()} / {statistics.objetivoPaginas.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2">
-                      <div 
-                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${statistics.progresoPaginas}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
-                      <span>{statistics.progresoPaginas.toFixed(1)}% completado</span>
-                      <span>{statistics.paginasRestantes.toLocaleString()} páginas restantes</span>
-                    </div>
-                  </div>
-                )}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Libros Leídos
+                  </span>
+                  <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {statistics.librosLeidos} / {statistics.objetivoLibros}
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2">
+                  <div 
+                    className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${statistics.progresoLibros}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
+                  <span>{statistics.progresoLibros.toFixed(1)}% completado</span>
+                  <span>{statistics.librosRestantes} libros restantes</span>
+                </div>
               </div>
               
               {/* Resumen de objetivos */}
               <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <p className="text-sm text-green-800 dark:text-green-200">
                   <strong>Estado general:</strong> {
-                    statistics.progresoLibros >= 100 && statistics.progresoPaginas >= 100 
-                      ? '¡Todos los objetivos completados! 🎉' 
-                      : statistics.progresoLibros >= 50 || statistics.progresoPaginas >= 50
+                    statistics.progresoLibros >= 100 
+                      ? '¡Objetivo completado! 🎉' 
+                      : statistics.progresoLibros >= 50
                       ? '¡Buen progreso! Sigue así 💪'
-                      : '¡Sigue leyendo para alcanzar tus objetivos! 📚'
+                      : '¡Sigue leyendo para alcanzar tu objetivo! 📚'
                   }
                 </p>
               </div>
@@ -454,18 +388,11 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
               <TrendingUp className="h-5 w-5 text-primary-500" />
               <span>Análisis de Lectura</span>
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="text-center">
                 <p className="text-sm text-slate-600 dark:text-slate-400">Tiempo Promedio</p>
                 <p className="text-lg font-semibold text-slate-900 dark:text-white">
                   {statistics.tiempoPromedio} días
-                </p>
-                <p className="text-xs text-slate-500">por libro</p>
-              </div>
-              <div className="text-center">
-                <p className="text-sm text-slate-600 dark:text-slate-400">Páginas Promedio</p>
-                <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                  {statistics.librosLeidos > 0 ? Math.round(statistics.paginasLeidas / statistics.librosLeidos) : 0}
                 </p>
                 <p className="text-xs text-slate-500">por libro</p>
               </div>
