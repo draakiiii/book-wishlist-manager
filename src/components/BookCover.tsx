@@ -196,12 +196,12 @@ const BookCover: React.FC<BookCoverProps> = ({
 
     const modalContent = (
       <div
-        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
         onClick={() => setShowLargeView(false)}
         style={{ opacity: 0, animation: 'fadeIn 0.3s ease-out forwards' }}
       >
         <div
-          className="relative max-w-5xl max-h-[95vh] bg-white dark:bg-slate-800 rounded-lg shadow-2xl overflow-hidden flex flex-col"
+          className="relative max-w-4xl max-h-[90vh] rounded-lg shadow-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
           style={{ opacity: 0, transform: 'scale(0.9)', animation: 'modalAppear 0.3s ease-out forwards' }}
         >
@@ -213,105 +213,48 @@ const BookCover: React.FC<BookCoverProps> = ({
             <X className="h-5 w-5" />
           </button>
           
-          {/* Main content area - flex layout */}
-          <div className="flex flex-col lg:flex-row min-h-[400px]">
-            {/* Image container */}
-            <div className="flex-1 relative bg-slate-50 dark:bg-slate-700 flex items-center justify-center min-h-[300px] lg:min-h-[500px]">
-              {/* Loading state for large image */}
-              {largeImageLoading && !largeImageError && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-                    <p className="text-slate-600 dark:text-slate-400">Cargando imagen en alta resolución...</p>
-                  </div>
-                </div>
-              )}
-              
-              {/* Error state for large image */}
-              {largeImageError && (
-                <div className="flex items-center justify-center">
-                  <div className="text-center p-8">
-                    <BookOpen className="h-16 w-16 mx-auto text-slate-400 dark:text-slate-500 mb-4" />
-                    <p className="text-slate-600 dark:text-slate-400">Error al cargar la imagen</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Large image */}
-              <img
-                src={getBestQualityImage()}
-                alt={`Portada de ${book.titulo}`}
-                className={`max-w-full max-h-full object-contain ${largeImageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
-                style={{ maxWidth: '100%', maxHeight: '100%' }}
-                onLoad={() => {
-                  setLargeImageLoading(false);
-                  setLargeImageError(false);
-                }}
-                onError={() => {
-                  setLargeImageLoading(false);
-                  setLargeImageError(true);
-                }}
-              />
-            </div>
-            
-            {/* Book info panel - separate from image */}
-            <div className="lg:w-80 flex-shrink-0 bg-white dark:bg-slate-800 p-6 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-700">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{book.titulo}</h3>
-                  {book.autor && (
-                    <p className="text-base text-slate-600 dark:text-slate-300 mb-1">{book.autor}</p>
-                  )}
-                  {book.publicacion && (
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Año de publicación: {book.publicacion}</p>
-                  )}
-                </div>
-                
-                {book.editorial && (
-                  <div>
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Editorial</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">{book.editorial}</p>
-                  </div>
-                )}
-                
-                {book.paginas && (
-                  <div>
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Páginas</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">{book.paginas}</p>
-                  </div>
-                )}
-                
-                {book.isbn && (
-                  <div>
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">ISBN</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 font-mono">{book.isbn}</p>
-                  </div>
-                )}
-                
-                {book.categorias && book.categorias.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Categorías</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {book.categorias.map((categoria, index) => (
-                        <span key={index} className="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded">
-                          {categoria}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Debug info - shows image source type */}
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
-                    <span className="font-medium">Fuente de imagen:</span><br />
-                    {book.customImage ? '📁 Imagen personalizada' : 
-                     book.thumbnail ? '🔍 Alta resolución' : 
-                     book.smallThumbnail ? '📱 Resolución estándar' : '❓ Imagen no disponible'}
-                  </p>
+          {/* Image container - centered and clean */}
+          <div className="relative bg-slate-50 dark:bg-slate-900 flex items-center justify-center min-h-[400px]">
+            {/* Loading state for large image */}
+            {largeImageLoading && !largeImageError && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                  <p className="text-slate-600 dark:text-slate-400">Cargando imagen...</p>
                 </div>
               </div>
-            </div>
+            )}
+            
+            {/* Error state for large image */}
+            {largeImageError && (
+              <div className="flex items-center justify-center p-8">
+                <div className="text-center">
+                  <BookOpen className="h-16 w-16 mx-auto text-slate-400 mb-4" />
+                  <p className="text-slate-600 dark:text-slate-400">Error al cargar la imagen</p>
+                </div>
+              </div>
+            )}
+
+            {/* Large image - clean and centered */}
+            <img
+              src={getBestQualityImage()}
+              alt={`Portada de ${book.titulo}`}
+              className={`max-w-full max-h-[90vh] object-contain rounded-lg ${largeImageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+              style={{ maxWidth: '100%', maxHeight: '90vh' }}
+              onLoad={() => {
+                setLargeImageLoading(false);
+                setLargeImageError(false);
+              }}
+              onError={() => {
+                setLargeImageLoading(false);
+                setLargeImageError(true);
+              }}
+            />
+          </div>
+          
+          {/* Minimal book info - only title, small and subtle */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+            <h3 className="text-white text-lg font-medium text-center truncate">{book.titulo}</h3>
           </div>
         </div>
 
