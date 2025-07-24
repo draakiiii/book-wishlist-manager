@@ -42,14 +42,18 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     setLastTypedValue(value);
   }, [value]);
 
-  // Debounce the search to avoid too many API calls
+  // Debounce the search to detect when user stops typing
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedValue(inputValue);
-    }, 300);
+      // Only trigger search when user stops typing for 500ms
+      if (isUserTyping && inputValue.trim().length >= 2 && !justSelected) {
+        setDebouncedValue(inputValue);
+        setIsUserTyping(false);
+      }
+    }, 500);
 
     return () => clearTimeout(timer);
-  }, [inputValue]);
+  }, [inputValue, isUserTyping, justSelected]);
 
   // Search for books when debounced value changes
   useEffect(() => {
@@ -57,11 +61,6 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
       if (disabled || disableAutocomplete || debouncedValue.trim().length < 2 || justSelected) {
         setSuggestions([]);
         setIsOpen(false);
-        return;
-      }
-
-      // Only search if the user is actively typing and the value has changed
-      if (!isUserTyping || debouncedValue === lastTypedValue) {
         return;
       }
 
@@ -80,7 +79,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     };
 
     searchBooks();
-  }, [debouncedValue, disabled, disableAutocomplete, justSelected, isUserTyping, lastTypedValue]);
+  }, [debouncedValue, disabled, disableAutocomplete, justSelected]);
 
   // Handle click outside
   useEffect(() => {
@@ -172,8 +171,8 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   const handleInputFocus = () => {
     if (disabled || disableAutocomplete || justSelected) return;
     
-    // Only show suggestions if user is actively typing, there's enough text, and there are suggestions
-    if (isUserTyping && inputValue.trim().length >= 2 && suggestions.length > 0) {
+    // Show suggestions if there are any available and enough text
+    if (inputValue.trim().length >= 2 && suggestions.length > 0) {
       setIsOpen(true);
     }
   };
@@ -284,7 +283,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
               </div>
             )}
             
-            {suggestions.length === 0 && !isLoading && debouncedValue.trim().length >= 2 && isUserTyping && (
+            {suggestions.length === 0 && !isLoading && debouncedValue.trim().length >= 2 && !isUserTyping && (
               <div className="py-4 px-3 text-center">
                 <BookOpen className="h-8 w-8 text-slate-400 mx-auto mb-2" />
                 <p className="text-sm text-slate-500 dark:text-slate-400">
