@@ -516,7 +516,19 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
           estado: 'tbr',
           fecha: Date.now()
         }],
-        lecturas: [] // <-- Añadido para cumplir con el tipo Libro
+        lecturas: [],
+        // Include image URLs and access info from bookData if available
+        smallThumbnail: book.bookData?.smallThumbnail,
+        thumbnail: book.bookData?.thumbnail,
+        viewability: book.bookData?.viewability,
+        webReaderLink: book.bookData?.webReaderLink,
+        // Include other book data fields
+        editorial: book.bookData?.editorial,
+        idioma: book.bookData?.idioma,
+        descripcion: book.bookData?.descripcion,
+        categorias: book.bookData?.categorias,
+        publicacion: book.bookData?.publicacion,
+        genero: book.bookData?.genero
       }));
 
     if (booksToAdd.length > 0) {

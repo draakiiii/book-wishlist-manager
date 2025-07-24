@@ -76,7 +76,12 @@ const TBRForm: React.FC = () => {
       numCalificaciones: selectedBookData?.numCalificaciones,
       genero: selectedBookData?.genero,
       formato: selectedBookData?.formato,
-      precio: selectedBookData?.precio
+      precio: selectedBookData?.precio,
+      // Include image URLs and access info
+      smallThumbnail: selectedBookData?.smallThumbnail,
+      thumbnail: selectedBookData?.thumbnail,
+      viewability: selectedBookData?.viewability,
+      webReaderLink: selectedBookData?.webReaderLink
     };
     
     // Verificar si es un duplicado
@@ -99,24 +104,26 @@ const TBRForm: React.FC = () => {
       titulo: bookData.titulo,
       autor: bookData.autor,
       paginas: bookData.paginas,
-      sagaName: bookData.sagaName,
-      isbn: bookData.isbn,
-      publicacion: bookData.publicacion,
-      editorial: bookData.editorial,
-      descripcion: bookData.descripcion,
-      categorias: bookData.categorias,
-      idioma: bookData.idioma,
-      calificacion: bookData.calificacion,
-      numCalificaciones: bookData.numCalificaciones,
-      genero: bookData.genero,
-      formato: bookData.formato,
-      precio: bookData.precio,
+      sagaName: sagaName.trim() || bookData.sagaName,
+      fechaAgregado: Date.now(),
       estado: 'tbr',
       historialEstados: [{
         estado: 'tbr',
         fecha: Date.now()
       }],
-      lecturas: []
+      lecturas: [],
+      isbn: bookData.isbn,
+      editorial: bookData.editorial,
+      idioma: bookData.idioma,
+      descripcion: bookData.descripcion,
+      categorias: bookData.categorias,
+      publicacion: bookData.publicacion,
+      genero: bookData.genero,
+      // Preserve image URLs and access info
+      smallThumbnail: bookData.smallThumbnail,
+      thumbnail: bookData.thumbnail,
+      viewability: bookData.viewability,
+      webReaderLink: bookData.webReaderLink
     };
     
     dispatch({ type: 'ADD_BOOK', payload: nuevoLibro });

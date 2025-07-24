@@ -129,6 +129,32 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
           // Extract language
           const language = book.language || '';
           
+          // Extract image URLs
+          let smallThumbnail: string | undefined;
+          let thumbnail: string | undefined;
+          if (book.imageLinks) {
+            smallThumbnail = book.imageLinks.smallThumbnail;
+            thumbnail = book.imageLinks.thumbnail;
+            
+            // Debug logging for image URLs
+            console.log('📸 Image URLs extracted:', {
+              smallThumbnail,
+              thumbnail,
+              rawImageLinks: book.imageLinks
+            });
+          } else {
+            console.log('❌ No imageLinks found in book data');
+          }
+          
+          // Extract access information
+          let viewability: 'NO_PAGES' | 'PARTIAL' | 'ALL_PAGES' | undefined;
+          let webReaderLink: string | undefined;
+          if (data.items[0].accessInfo) {
+            const accessInfo = data.items[0].accessInfo;
+            viewability = accessInfo.viewability;
+            webReaderLink = accessInfo.webReaderLink;
+          }
+          
           bookData = {
             titulo: title,
             autor: author || undefined,
@@ -138,7 +164,11 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
             editorial: publisher || undefined,
             descripcion: description || undefined,
             categorias: categories.length > 0 ? categories : undefined,
-            idioma: language || undefined
+            idioma: language || undefined,
+            smallThumbnail,
+            thumbnail,
+            viewability,
+            webReaderLink
             // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
           };
           
@@ -298,6 +328,22 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
         isbn = isbn13?.identifier || isbn10?.identifier;
       }
       
+      // Extract image URLs
+      let smallThumbnail: string | undefined;
+      let thumbnail: string | undefined;
+      if (book.imageLinks) {
+        smallThumbnail = book.imageLinks.smallThumbnail;
+        thumbnail = book.imageLinks.thumbnail;
+      }
+      
+      // Extract access information
+      let viewability: 'NO_PAGES' | 'PARTIAL' | 'ALL_PAGES' | undefined;
+      let webReaderLink: string | undefined;
+      if (item.accessInfo) {
+        viewability = item.accessInfo.viewability;
+        webReaderLink = item.accessInfo.webReaderLink;
+      }
+      
       return {
         titulo: title,
         autor: authorName || undefined,
@@ -307,7 +353,11 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
         editorial: book.publisher || undefined,
         descripcion: book.description || undefined,
         categorias: book.categories?.length > 0 ? book.categories : undefined,
-        idioma: book.language || undefined
+        idioma: book.language || undefined,
+        smallThumbnail,
+        thumbnail,
+        viewability,
+        webReaderLink
         // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
     });
@@ -408,6 +458,22 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
         isbn = isbn13?.identifier || isbn10?.identifier;
       }
       
+      // Extract image URLs
+      let smallThumbnail: string | undefined;
+      let thumbnail: string | undefined;
+      if (book.imageLinks) {
+        smallThumbnail = book.imageLinks.smallThumbnail;
+        thumbnail = book.imageLinks.thumbnail;
+      }
+      
+      // Extract access information
+      let viewability: 'NO_PAGES' | 'PARTIAL' | 'ALL_PAGES' | undefined;
+      let webReaderLink: string | undefined;
+      if (item.accessInfo) {
+        viewability = item.accessInfo.viewability;
+        webReaderLink = item.accessInfo.webReaderLink;
+      }
+      
       return {
         titulo: title,
         autor: author || undefined,
@@ -417,7 +483,11 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
         editorial: publisher || undefined,
         descripcion: description || undefined,
         categorias: categories.length > 0 ? categories : undefined,
-        idioma: language || undefined
+        idioma: language || undefined,
+        smallThumbnail,
+        thumbnail,
+        viewability,
+        webReaderLink
         // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
     });
