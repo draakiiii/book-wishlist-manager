@@ -35,6 +35,7 @@ import DataExportImport from './components/DataExportImport';
 import ScanHistory from './components/ScanHistory';
 import ConfigForm from './components/ConfigForm';
 import BulkScanModal from './components/BulkScanModal';
+import AdvancedConfigForm from './components/AdvancedConfigForm';
 
 import LoginScreen from './components/LoginScreen';
 
@@ -45,6 +46,7 @@ const AppContent: React.FC = () => {
   const { user, loading: authLoading, isAuthenticated, logout, migrateData, hasMigratedData } = useAuth();
   const [configSidebarOpen, setConfigSidebarOpen] = React.useState(false);
   const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [advancedConfigModalOpen, setAdvancedConfigModalOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [statisticsModalOpen, setStatisticsModalOpen] = useState(false);
   const [exportImportModalOpen, setExportImportModalOpen] = useState(false);
@@ -300,6 +302,17 @@ const AppContent: React.FC = () => {
                 <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
               </button>
 
+              {/* Advanced Configuration button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setAdvancedConfigModalOpen(true)}
+                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
+                title="Configuración Avanzada"
+              >
+                <Settings className="h-4 w-4 md:h-5 md:w-5 text-blue-600 dark:text-blue-400" />
+              </motion.button>
+
               {/* Logout Button */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -482,6 +495,11 @@ const AppContent: React.FC = () => {
             </div>
           </motion.div>
         </motion.div>
+      )}
+
+      {/* Advanced Configuration Modal */}
+      {advancedConfigModalOpen && (
+        <AdvancedConfigForm onClose={() => setAdvancedConfigModalOpen(false)} />
       )}
 
       {/* Advanced Search Modal */}
