@@ -1000,6 +1000,7 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
   const { isAuthenticated, user, loading: authLoading } = useAuth();
   const [state, dispatch] = useReducer(appReducer, initialState);
   const [isLoading, setIsLoading] = useState(false); // Cambiar a false para evitar loading infinito
+  const [isInitialized, setIsInitialized] = useState(false); // Nueva variable para controlar la inicialización
 
   // Cargar estado inicial - versión simplificada
   useEffect(() => {
@@ -1023,6 +1024,7 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
               dispatch({ type: 'IMPORT_DATA', payload: savedState });
             }
           }
+          setIsInitialized(true); // Marcar como inicializado después de cargar
         } catch (error) {
           console.error('AppStateContext: Error loading from Firebase:', error);
           // En caso de error, cargar desde localStorage
@@ -1031,6 +1033,7 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
             console.log('AppStateContext: Loading from localStorage after Firebase error');
             dispatch({ type: 'IMPORT_DATA', payload: savedState });
           }
+          setIsInitialized(true); // Marcar como inicializado incluso si hay error
         }
       };
       loadFromFirebase();
@@ -1041,12 +1044,13 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
         console.log('AppStateContext: Loading from localStorage (not authenticated)');
         dispatch({ type: 'IMPORT_DATA', payload: savedState });
       }
+      setIsInitialized(true); // Marcar como inicializado
     }
   }, [isAuthenticated, user, authLoading, dispatch]);
 
   // Guardar estado en Firebase cuando esté autenticado
   useEffect(() => {
-    if (isAuthenticated && user && !isLoading) {
+    if (isAuthenticated && user && !isLoading && isInitialized) {
       const saveToFirebase = async () => {
         try {
           console.log('AppStateContext: Saving to Firebase', { 
@@ -1062,7 +1066,7 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
       };
       saveToFirebase();
     }
-  }, [state, isAuthenticated, user, isLoading]);
+  }, [state, isAuthenticated, user, isLoading, isInitialized]);
 
   // Fallback a localStorage cuando no esté autenticado
   useEffect(() => {
