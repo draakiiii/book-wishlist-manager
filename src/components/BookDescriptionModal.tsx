@@ -1,6 +1,33 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, BookOpen, Clock, Star, Plus, Edit, Trash2 } from 'lucide-react';
+import { 
+  X, 
+  BookOpen, 
+  Clock, 
+  Star, 
+  Plus, 
+  Edit, 
+  Trash2,
+  Calendar,
+  User,
+  FileText,
+  Globe,
+  Book,
+  Euro,
+  ShoppingCart,
+  ExternalLink,
+  Download,
+  Eye,
+  Headphones,
+  Award,
+  Tag,
+  Info,
+  Monitor,
+  Users,
+  MapPin,
+  CheckCircle,
+  XCircle
+} from 'lucide-react';
 import { Libro, EstadoLibro, Lectura } from '../types';
 import { useAppState } from '../context/AppStateContext';
 
@@ -248,6 +275,230 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
                     </div>
                   )}
                 </div>
+
+                {/* Información adicional de Google Books */}
+                {(book.precioVenta || book.fechaPublicacionFormateada || book.disponibleParaVenta || book.vistaPreviaDisponible || book.disponibleEPUB || book.disponiblePDF || book.disponibleTextoVoz || book.dominioPublico || book.clasificacionMadurez || book.categorias || book.isbn13 || book.isbn10) && (
+                  <div className="space-y-4">
+                    <h4 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center space-x-2">
+                      <Info className="h-5 w-5 text-blue-500" />
+                      <span>Información Adicional</span>
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {/* Información de precios */}
+                      {book.precioVenta && (
+                        <div className="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                          <Euro className="h-4 w-4 text-green-600" />
+                          <div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              {book.precioVenta} {book.moneda}
+                            </p>
+                            {book.precioLista && book.precioLista > book.precioVenta && (
+                              <p className="text-xs text-slate-500 line-through">
+                                {book.precioLista} {book.moneda}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Fecha de publicación detallada */}
+                      {book.fechaPublicacionFormateada && (
+                        <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <Calendar className="h-4 w-4 text-blue-600" />
+                          <div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              Publicación
+                            </p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              {book.fechaPublicacionFormateada}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Disponibilidad para venta */}
+                      {book.disponibleParaVenta && (
+                        <div className="flex items-center space-x-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                          <ShoppingCart className="h-4 w-4 text-emerald-600" />
+                          <div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              Disponible
+                            </p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              Para compra
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Vista previa disponible */}
+                      {book.vistaPreviaDisponible && (
+                        <div className="flex items-center space-x-3 p-3 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg border border-cyan-200 dark:border-cyan-800">
+                          <Eye className="h-4 w-4 text-cyan-600" />
+                          <div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              Vista previa
+                            </p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              Disponible
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Formatos disponibles */}
+                      {(book.disponibleEPUB || book.disponiblePDF) && (
+                        <div className="flex items-center space-x-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                          <Download className="h-4 w-4 text-purple-600" />
+                          <div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              Formatos
+                            </p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              {book.disponibleEPUB && 'EPUB'}
+                              {book.disponibleEPUB && book.disponiblePDF && ' + '}
+                              {book.disponiblePDF && 'PDF'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Texto a voz */}
+                      {book.disponibleTextoVoz && (
+                        <div className="flex items-center space-x-3 p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg border border-pink-200 dark:border-pink-800">
+                          <Headphones className="h-4 w-4 text-pink-600" />
+                          <div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              Audio
+                            </p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              Texto a voz
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Dominio público */}
+                      {book.dominioPublico && (
+                        <div className="flex items-center space-x-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                          <Award className="h-4 w-4 text-yellow-600" />
+                          <div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              Dominio público
+                            </p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              Libre de derechos
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Clasificación de madurez */}
+                      {book.clasificacionMadurez && book.clasificacionMadurez !== 'NOT_MATURE' && (
+                        <div className="flex items-center space-x-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                          <Tag className="h-4 w-4 text-red-600" />
+                          <div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              Clasificación
+                            </p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              {book.clasificacionMadurez === 'MATURE' ? 'Adulto' : book.clasificacionMadurez}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ISBNs adicionales */}
+                      {book.isbn13 && (
+                        <div className="flex items-center space-x-3 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                          <FileText className="h-4 w-4 text-indigo-600" />
+                          <div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              ISBN-13
+                            </p>
+                            <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                              {book.isbn13}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {book.isbn10 && (
+                        <div className="flex items-center space-x-3 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                          <FileText className="h-4 w-4 text-indigo-600" />
+                          <div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              ISBN-10
+                            </p>
+                            <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                              {book.isbn10}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Categorías */}
+                    {book.categorias && book.categorias.length > 0 && (
+                      <div className="space-y-3">
+                        <h5 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                          Categorías
+                        </h5>
+                        <div className="flex flex-wrap gap-2">
+                          {book.categorias.map((categoria, index) => (
+                            <span
+                              key={index}
+                              className="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full text-xs font-medium"
+                            >
+                              {categoria}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Enlaces externos */}
+                    {(book.enlaceVistaPrevia || book.enlaceCompra || book.enlaceInfo) && (
+                      <div className="space-y-3">
+                        <h5 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                          Enlaces Externos
+                        </h5>
+                        <div className="flex flex-wrap gap-2">
+                          {book.enlaceVistaPrevia && (
+                            <button
+                              onClick={() => window.open(book.enlaceVistaPrevia, '_blank')}
+                              className="flex items-center space-x-2 px-3 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-sm font-medium transition-colors"
+                            >
+                              <Eye className="h-4 w-4" />
+                              <span>Vista previa</span>
+                            </button>
+                          )}
+                          
+                          {book.enlaceCompra && (
+                            <button
+                              onClick={() => window.open(book.enlaceCompra, '_blank')}
+                              className="flex items-center space-x-2 px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-medium transition-colors"
+                            >
+                              <ShoppingCart className="h-4 w-4" />
+                              <span>Comprar</span>
+                            </button>
+                          )}
+                          
+                          {book.enlaceInfo && (
+                            <button
+                              onClick={() => window.open(book.enlaceInfo, '_blank')}
+                              className="flex items-center space-x-2 px-3 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors"
+                            >
+                              <Info className="h-4 w-4" />
+                              <span>Más información</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Descripción */}
                 {book.descripcion && (

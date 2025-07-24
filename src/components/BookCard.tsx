@@ -16,7 +16,18 @@ import {
   Edit3,
   Eye,
   XCircle,
-  Users
+  Users,
+  Euro,
+  Globe,
+  ExternalLink,
+  Download,
+  Eye as EyeIcon,
+  Book,
+  Monitor,
+  Headphones,
+  Tag,
+  Award,
+  Info
 } from 'lucide-react';
 import BookDescriptionModal from './BookDescriptionModal';
 import RatingModal from './RatingModal';
@@ -340,6 +351,9 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
               <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 flex-shrink-0" />
               <span className="text-slate-700 dark:text-slate-300">
                 {book.calificacion}/5
+                {book.numCalificaciones && (
+                  <span className="text-slate-500">({book.numCalificaciones})</span>
+                )}
               </span>
             </div>
           )}
@@ -349,6 +363,124 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
               <Users className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500 flex-shrink-0" />
               <span className="text-slate-700 dark:text-slate-300 truncate">
                 Prestado a {book.prestadoA}
+              </span>
+            </div>
+          )}
+
+          {/* Información de precios */}
+          {book.precioVenta && (
+            <div className="flex items-center space-x-2">
+              <Euro className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
+              <span className="text-slate-700 dark:text-slate-300">
+                {book.precioVenta} {book.moneda}
+                {book.precioLista && book.precioLista > book.precioVenta && (
+                  <span className="text-slate-500 line-through ml-1">
+                    {book.precioLista}
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
+
+          {/* Información de publicación */}
+          {book.fechaPublicacionFormateada && (
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500 flex-shrink-0" />
+              <span className="text-slate-700 dark:text-slate-300">
+                {book.fechaPublicacionFormateada}
+              </span>
+            </div>
+          )}
+
+          {/* Información de idioma */}
+          {book.idioma && (
+            <div className="flex items-center space-x-2">
+              <Globe className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-500 flex-shrink-0" />
+              <span className="text-slate-700 dark:text-slate-300 uppercase">
+                {book.idioma}
+              </span>
+            </div>
+          )}
+
+          {/* Información de formato */}
+          {book.formato && (
+            <div className="flex items-center space-x-2">
+              <Book className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500 flex-shrink-0" />
+              <span className="text-slate-700 dark:text-slate-300 capitalize">
+                {book.formato}
+              </span>
+            </div>
+          )}
+
+          {/* Información de disponibilidad */}
+          {book.disponibleParaVenta && (
+            <div className="flex items-center space-x-2">
+              <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
+              <span className="text-slate-700 dark:text-slate-300">
+                Disponible
+              </span>
+            </div>
+          )}
+
+          {/* Información de vista previa */}
+          {book.vistaPreviaDisponible && (
+            <div className="flex items-center space-x-2">
+              <EyeIcon className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500 flex-shrink-0" />
+              <span className="text-slate-700 dark:text-slate-300">
+                Vista previa
+              </span>
+            </div>
+          )}
+
+          {/* Información de formatos disponibles */}
+          {(book.disponibleEPUB || book.disponiblePDF) && (
+            <div className="flex items-center space-x-2">
+              <Download className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500 flex-shrink-0" />
+              <span className="text-slate-700 dark:text-slate-300">
+                {book.disponibleEPUB && 'EPUB'}
+                {book.disponibleEPUB && book.disponiblePDF && ' + '}
+                {book.disponiblePDF && 'PDF'}
+              </span>
+            </div>
+          )}
+
+          {/* Información de texto a voz */}
+          {book.disponibleTextoVoz && (
+            <div className="flex items-center space-x-2">
+              <Headphones className="h-3 w-3 sm:h-4 sm:w-4 text-pink-500 flex-shrink-0" />
+              <span className="text-slate-700 dark:text-slate-300">
+                Audio
+              </span>
+            </div>
+          )}
+
+          {/* Información de dominio público */}
+          {book.dominioPublico && (
+            <div className="flex items-center space-x-2">
+              <Award className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600 flex-shrink-0" />
+              <span className="text-slate-700 dark:text-slate-300">
+                Dominio público
+              </span>
+            </div>
+          )}
+
+          {/* Información de clasificación de madurez */}
+          {book.clasificacionMadurez && book.clasificacionMadurez !== 'NOT_MATURE' && (
+            <div className="flex items-center space-x-2">
+              <Tag className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 flex-shrink-0" />
+              <span className="text-slate-700 dark:text-slate-300">
+                {book.clasificacionMadurez === 'MATURE' ? 'Adulto' : book.clasificacionMadurez}
+              </span>
+            </div>
+          )}
+
+          {/* Información de categorías */}
+          {book.categorias && book.categorias.length > 0 && (
+            <div className="flex items-center space-x-2">
+              <Info className="h-3 w-3 sm:h-4 sm:w-4 text-teal-500 flex-shrink-0" />
+              <span className="text-slate-700 dark:text-slate-300 truncate">
+                {book.categorias[0]}
+                {book.categorias.length > 1 && ` +${book.categorias.length - 1}`}
               </span>
             </div>
           )}
@@ -499,6 +631,52 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
             <Trash2 className="h-3 w-3" />
             <span>Eliminar</span>
           </motion.button>
+
+          {/* External links */}
+          {book.enlaceVistaPrevia && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(book.enlaceVistaPrevia, '_blank');
+              }}
+              className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
+            >
+              <ExternalLink className="h-3 w-3" />
+              <span>Vista previa</span>
+            </motion.button>
+          )}
+
+          {book.enlaceCompra && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(book.enlaceCompra, '_blank');
+              }}
+              className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
+            >
+              <ShoppingCart className="h-3 w-3" />
+              <span>Comprar</span>
+            </motion.button>
+          )}
+
+          {book.enlaceInfo && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(book.enlaceInfo, '_blank');
+              }}
+              className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
+            >
+              <Info className="h-3 w-3" />
+              <span>Más info</span>
+            </motion.button>
+          )}
 
           {/* View button for all books - placed last to be the largest */}
           <motion.button

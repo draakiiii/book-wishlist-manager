@@ -86,48 +86,140 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
         const data = await response.json();
         
         if (data.totalItems > 0) {
-          const book = data.items[0].volumeInfo;
+          const book = data.items[0];
+          const volumeInfo = book.volumeInfo;
+          const saleInfo = book.saleInfo;
+          const accessInfo = book.accessInfo;
+          const searchInfo = book.searchInfo;
           
           // Extract and clean the title
-          let title = book.title || '';
-          if (book.subtitle) {
-            title += `: ${book.subtitle}`;
+          let title = volumeInfo.title || '';
+          if (volumeInfo.subtitle) {
+            title += `: ${volumeInfo.subtitle}`;
           }
           
           // Extract authors
           let author = '';
-          if (book.authors && book.authors.length > 0) {
-            author = book.authors.join(', ');
+          if (volumeInfo.authors && volumeInfo.authors.length > 0) {
+            author = volumeInfo.authors.join(', ');
           }
           
           // Extract page count
           let pages: number | undefined;
-          if (book.pageCount) {
-            pages = book.pageCount;
-          } else if (book.printedPageCount) {
-            pages = book.printedPageCount;
+          if (volumeInfo.pageCount) {
+            pages = volumeInfo.pageCount;
+          } else if (volumeInfo.printedPageCount) {
+            pages = volumeInfo.printedPageCount;
           }
           
           // Extract publication date
           let publicationYear: number | undefined;
-          if (book.publishedDate) {
-            const year = parseInt(book.publishedDate.substring(0, 4));
+          let fechaPublicacion: string | undefined;
+          let fechaPublicacionFormateada: string | undefined;
+          if (volumeInfo.publishedDate) {
+            fechaPublicacion = volumeInfo.publishedDate;
+            const year = parseInt(volumeInfo.publishedDate.substring(0, 4));
             if (!isNaN(year)) {
               publicationYear = year;
+            }
+            // Formatear fecha para mostrar
+            try {
+              const fecha = new Date(volumeInfo.publishedDate);
+              fechaPublicacionFormateada = fecha.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              });
+            } catch (e) {
+              fechaPublicacionFormateada = volumeInfo.publishedDate;
             }
           }
           
           // Extract publisher
-          const publisher = book.publisher || '';
+          const publisher = volumeInfo.publisher || '';
           
           // Extract description
-          const description = book.description || '';
+          const description = volumeInfo.description || '';
           
           // Extract categories/genres
-          const categories = book.categories || [];
+          const categories = volumeInfo.categories || [];
           
           // Extract language
-          const language = book.language || '';
+          const language = volumeInfo.language || '';
+          
+          // Extract ISBNs
+          let isbn13: string | undefined;
+          let isbn10: string | undefined;
+          if (volumeInfo.industryIdentifiers) {
+            const isbn13Obj = volumeInfo.industryIdentifiers.find((id: any) => id.type === 'ISBN_13');
+            const isbn10Obj = volumeInfo.industryIdentifiers.find((id: any) => id.type === 'ISBN_10');
+            isbn13 = isbn13Obj?.identifier;
+            isbn10 = isbn10Obj?.identifier;
+          }
+          
+          // Extract rating information
+          const calificacion = volumeInfo.averageRating;
+          const numCalificaciones = volumeInfo.ratingsCount;
+          
+          // Extract image links
+          const imagenPequena = volumeInfo.imageLinks?.smallThumbnail;
+          const imagenGrande = volumeInfo.imageLinks?.thumbnail;
+          
+          // Extract preview and info links
+          const enlaceVistaPrevia = volumeInfo.previewLink;
+          const enlaceInfo = volumeInfo.infoLink;
+          const enlaceCanonico = volumeInfo.canonicalVolumeLink;
+          
+          // Extract sale information
+          const disponibleParaVenta = saleInfo?.saleability === 'FOR_SALE';
+          const esEbook = saleInfo?.isEbook || false;
+          const enlaceCompra = saleInfo?.buyLink;
+          
+          let precioLista: number | undefined;
+          let precioVenta: number | undefined;
+          let moneda: string | undefined;
+          
+          if (saleInfo?.listPrice) {
+            precioLista = saleInfo.listPrice.amount;
+            moneda = saleInfo.listPrice.currencyCode;
+          }
+          
+          if (saleInfo?.retailPrice) {
+            precioVenta = saleInfo.retailPrice.amount;
+            moneda = saleInfo.retailPrice.currencyCode;
+          }
+          
+          // Extract access information
+          const accesoVistaParcial = accessInfo?.viewability === 'PARTIAL';
+          const disponibleEPUB = accessInfo?.epub?.isAvailable || false;
+          const disponiblePDF = accessInfo?.pdf?.isAvailable || false;
+          const disponibleTextoVoz = accessInfo?.textToSpeechPermission === 'ALLOWED' || accessInfo?.textToSpeechPermission === 'ALLOWED_FOR_ACCESSIBILITY';
+          const dominioPublico = accessInfo?.publicDomain || false;
+          
+          // Extract content information
+          const tipoImpresion = volumeInfo.printType;
+          const modosLectura = volumeInfo.readingModes ? {
+            texto: volumeInfo.readingModes.text,
+            imagen: volumeInfo.readingModes.image
+          } : undefined;
+          
+          const clasificacionMadurez = volumeInfo.maturityRating;
+          
+          // Extract panelization information
+          const contieneBurbujasEPUB = volumeInfo.panelizationSummary?.containsEpubBubbles;
+          const contieneBurbujasImagen = volumeInfo.panelizationSummary?.containsImageBubbles;
+          
+          // Extract search information
+          const fragmentoTexto = searchInfo?.textSnippet;
+          
+          // Extract offers information
+          const ofertas = saleInfo?.offers?.map((offer: any) => ({
+            tipoOferta: offer.finskyOfferType,
+            precioListaMicros: offer.listPrice?.amountInMicros,
+            precioVentaMicros: offer.retailPrice?.amountInMicros,
+            moneda: offer.listPrice?.currencyCode || offer.retailPrice?.currencyCode,
+            regalable: offer.giftable
+          }));
           
           bookData = {
             titulo: title,
@@ -138,8 +230,42 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
             editorial: publisher || undefined,
             descripcion: description || undefined,
             categorias: categories.length > 0 ? categories : undefined,
-            idioma: language || undefined
-            // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
+            idioma: language || undefined,
+            calificacion,
+            numCalificaciones,
+            
+            // Nuevos campos
+            precioLista,
+            precioVenta,
+            moneda,
+            disponibleParaVenta,
+            esEbook,
+            enlaceCompra,
+            fechaPublicacion,
+            fechaPublicacionFormateada,
+            isbn13,
+            isbn10,
+            vistaPreviaDisponible: !!enlaceVistaPrevia,
+            enlaceVistaPrevia,
+            enlaceInfo,
+            enlaceCanonico,
+            accesoVistaParcial,
+            disponibleEPUB,
+            disponiblePDF,
+            disponibleTextoVoz,
+            dominioPublico,
+            imagenPequena,
+            imagenGrande,
+            tipoImpresion,
+            modosLectura,
+            clasificacionMadurez,
+            contieneBurbujasEPUB,
+            contieneBurbujasImagen,
+            fragmentoTexto,
+            etag: book.etag,
+            selfLink: book.selfLink,
+            contentVersion: volumeInfo.contentVersion,
+            ofertas
           };
           
           // Cache the result
@@ -264,51 +390,167 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
     }
 
     const results = data.items.map((item: any) => {
-      const book = item.volumeInfo;
+      const volumeInfo = item.volumeInfo;
+      const saleInfo = item.saleInfo;
+      const accessInfo = item.accessInfo;
+      const searchInfo = item.searchInfo;
       
-      let title = book.title || '';
-      if (book.subtitle) {
-        title += `: ${book.subtitle}`;
+      let title = volumeInfo.title || '';
+      if (volumeInfo.subtitle) {
+        title += `: ${volumeInfo.subtitle}`;
       }
       
       let authorName = '';
-      if (book.authors && book.authors.length > 0) {
-        authorName = book.authors.join(', ');
+      if (volumeInfo.authors && volumeInfo.authors.length > 0) {
+        authorName = volumeInfo.authors.join(', ');
       }
       
       let pages: number | undefined;
-      if (book.pageCount) {
-        pages = book.pageCount;
-      } else if (book.printedPageCount) {
-        pages = book.printedPageCount;
+      if (volumeInfo.pageCount) {
+        pages = volumeInfo.pageCount;
+      } else if (volumeInfo.printedPageCount) {
+        pages = volumeInfo.printedPageCount;
       }
       
       let publicationYear: number | undefined;
-      if (book.publishedDate) {
-        const year = parseInt(book.publishedDate.substring(0, 4));
+      let fechaPublicacion: string | undefined;
+      let fechaPublicacionFormateada: string | undefined;
+      if (volumeInfo.publishedDate) {
+        fechaPublicacion = volumeInfo.publishedDate;
+        const year = parseInt(volumeInfo.publishedDate.substring(0, 4));
         if (!isNaN(year)) {
           publicationYear = year;
         }
+        try {
+          const fecha = new Date(volumeInfo.publishedDate);
+          fechaPublicacionFormateada = fecha.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+        } catch (e) {
+          fechaPublicacionFormateada = volumeInfo.publishedDate;
+        }
       }
       
-      let isbn: string | undefined;
-      if (book.industryIdentifiers) {
-        const isbn13 = book.industryIdentifiers.find((id: any) => id.type === 'ISBN_13');
-        const isbn10 = book.industryIdentifiers.find((id: any) => id.type === 'ISBN_10');
-        isbn = isbn13?.identifier || isbn10?.identifier;
+      let isbn13: string | undefined;
+      let isbn10: string | undefined;
+      if (volumeInfo.industryIdentifiers) {
+        const isbn13Obj = volumeInfo.industryIdentifiers.find((id: any) => id.type === 'ISBN_13');
+        const isbn10Obj = volumeInfo.industryIdentifiers.find((id: any) => id.type === 'ISBN_10');
+        isbn13 = isbn13Obj?.identifier;
+        isbn10 = isbn10Obj?.identifier;
       }
+      
+      // Extract rating information
+      const calificacion = volumeInfo.averageRating;
+      const numCalificaciones = volumeInfo.ratingsCount;
+      
+      // Extract image links
+      const imagenPequena = volumeInfo.imageLinks?.smallThumbnail;
+      const imagenGrande = volumeInfo.imageLinks?.thumbnail;
+      
+      // Extract preview and info links
+      const enlaceVistaPrevia = volumeInfo.previewLink;
+      const enlaceInfo = volumeInfo.infoLink;
+      const enlaceCanonico = volumeInfo.canonicalVolumeLink;
+      
+      // Extract sale information
+      const disponibleParaVenta = saleInfo?.saleability === 'FOR_SALE';
+      const esEbook = saleInfo?.isEbook || false;
+      const enlaceCompra = saleInfo?.buyLink;
+      
+      let precioLista: number | undefined;
+      let precioVenta: number | undefined;
+      let moneda: string | undefined;
+      
+      if (saleInfo?.listPrice) {
+        precioLista = saleInfo.listPrice.amount;
+        moneda = saleInfo.listPrice.currencyCode;
+      }
+      
+      if (saleInfo?.retailPrice) {
+        precioVenta = saleInfo.retailPrice.amount;
+        moneda = saleInfo.retailPrice.currencyCode;
+      }
+      
+      // Extract access information
+      const accesoVistaParcial = accessInfo?.viewability === 'PARTIAL';
+      const disponibleEPUB = accessInfo?.epub?.isAvailable || false;
+      const disponiblePDF = accessInfo?.pdf?.isAvailable || false;
+      const disponibleTextoVoz = accessInfo?.textToSpeechPermission === 'ALLOWED' || accessInfo?.textToSpeechPermission === 'ALLOWED_FOR_ACCESSIBILITY';
+      const dominioPublico = accessInfo?.publicDomain || false;
+      
+      // Extract content information
+      const tipoImpresion = volumeInfo.printType;
+      const modosLectura = volumeInfo.readingModes ? {
+        texto: volumeInfo.readingModes.text,
+        imagen: volumeInfo.readingModes.image
+      } : undefined;
+      
+      const clasificacionMadurez = volumeInfo.maturityRating;
+      
+      // Extract panelization information
+      const contieneBurbujasEPUB = volumeInfo.panelizationSummary?.containsEpubBubbles;
+      const contieneBurbujasImagen = volumeInfo.panelizationSummary?.containsImageBubbles;
+      
+      // Extract search information
+      const fragmentoTexto = searchInfo?.textSnippet;
+      
+      // Extract offers information
+      const ofertas = saleInfo?.offers?.map((offer: any) => ({
+        tipoOferta: offer.finskyOfferType,
+        precioListaMicros: offer.listPrice?.amountInMicros,
+        precioVentaMicros: offer.retailPrice?.amountInMicros,
+        moneda: offer.listPrice?.currencyCode || offer.retailPrice?.currencyCode,
+        regalable: offer.giftable
+      }));
       
       return {
         titulo: title,
         autor: authorName || undefined,
         paginas: pages,
-        isbn: isbn,
+        isbn: isbn13 || isbn10,
         publicacion: publicationYear,
-        editorial: book.publisher || undefined,
-        descripcion: book.description || undefined,
-        categorias: book.categories?.length > 0 ? book.categories : undefined,
-        idioma: book.language || undefined
-        // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
+        editorial: volumeInfo.publisher || undefined,
+        descripcion: volumeInfo.description || undefined,
+        categorias: volumeInfo.categories?.length > 0 ? volumeInfo.categories : undefined,
+        idioma: volumeInfo.language || undefined,
+        calificacion,
+        numCalificaciones,
+        
+        // Nuevos campos
+        precioLista,
+        precioVenta,
+        moneda,
+        disponibleParaVenta,
+        esEbook,
+        enlaceCompra,
+        fechaPublicacion,
+        fechaPublicacionFormateada,
+        isbn13,
+        isbn10,
+        vistaPreviaDisponible: !!enlaceVistaPrevia,
+        enlaceVistaPrevia,
+        enlaceInfo,
+        enlaceCanonico,
+        accesoVistaParcial,
+        disponibleEPUB,
+        disponiblePDF,
+        disponibleTextoVoz,
+        dominioPublico,
+        imagenPequena,
+        imagenGrande,
+        tipoImpresion,
+        modosLectura,
+        clasificacionMadurez,
+        contieneBurbujasEPUB,
+        contieneBurbujasImagen,
+        fragmentoTexto,
+        etag: item.etag,
+        selfLink: item.selfLink,
+        contentVersion: volumeInfo.contentVersion,
+        ofertas
       };
     });
 
@@ -357,68 +599,184 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
     }
 
     const results = data.items.map((item: any) => {
-      const book = item.volumeInfo;
+      const volumeInfo = item.volumeInfo;
+      const saleInfo = item.saleInfo;
+      const accessInfo = item.accessInfo;
+      const searchInfo = item.searchInfo;
       
       // Extract and clean the title
-      let title = book.title || '';
-      if (book.subtitle) {
-        title += `: ${book.subtitle}`;
+      let title = volumeInfo.title || '';
+      if (volumeInfo.subtitle) {
+        title += `: ${volumeInfo.subtitle}`;
       }
       
       // Extract authors
       let author = '';
-      if (book.authors && book.authors.length > 0) {
-        author = book.authors.join(', ');
+      if (volumeInfo.authors && volumeInfo.authors.length > 0) {
+        author = volumeInfo.authors.join(', ');
       }
       
       // Extract page count
       let pages: number | undefined;
-      if (book.pageCount) {
-        pages = book.pageCount;
-      } else if (book.printedPageCount) {
-        pages = book.printedPageCount;
+      if (volumeInfo.pageCount) {
+        pages = volumeInfo.pageCount;
+      } else if (volumeInfo.printedPageCount) {
+        pages = volumeInfo.printedPageCount;
       }
       
       // Extract publication date
       let publicationYear: number | undefined;
-      if (book.publishedDate) {
-        const year = parseInt(book.publishedDate.substring(0, 4));
+      let fechaPublicacion: string | undefined;
+      let fechaPublicacionFormateada: string | undefined;
+      if (volumeInfo.publishedDate) {
+        fechaPublicacion = volumeInfo.publishedDate;
+        const year = parseInt(volumeInfo.publishedDate.substring(0, 4));
         if (!isNaN(year)) {
           publicationYear = year;
+        }
+        try {
+          const fecha = new Date(volumeInfo.publishedDate);
+          fechaPublicacionFormateada = fecha.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+        } catch (e) {
+          fechaPublicacionFormateada = volumeInfo.publishedDate;
         }
       }
       
       // Extract publisher
-      const publisher = book.publisher || '';
+      const publisher = volumeInfo.publisher || '';
       
       // Extract description
-      const description = book.description || '';
+      const description = volumeInfo.description || '';
       
       // Extract categories/genres
-      const categories = book.categories || [];
+      const categories = volumeInfo.categories || [];
       
       // Extract language
-      const language = book.language || '';
+      const language = volumeInfo.language || '';
       
       // Extract ISBN if available
-      let isbn: string | undefined;
-      if (book.industryIdentifiers) {
-        const isbn13 = book.industryIdentifiers.find((id: any) => id.type === 'ISBN_13');
-        const isbn10 = book.industryIdentifiers.find((id: any) => id.type === 'ISBN_10');
-        isbn = isbn13?.identifier || isbn10?.identifier;
+      let isbn13: string | undefined;
+      let isbn10: string | undefined;
+      if (volumeInfo.industryIdentifiers) {
+        const isbn13Obj = volumeInfo.industryIdentifiers.find((id: any) => id.type === 'ISBN_13');
+        const isbn10Obj = volumeInfo.industryIdentifiers.find((id: any) => id.type === 'ISBN_10');
+        isbn13 = isbn13Obj?.identifier;
+        isbn10 = isbn10Obj?.identifier;
       }
+      
+      // Extract rating information
+      const calificacion = volumeInfo.averageRating;
+      const numCalificaciones = volumeInfo.ratingsCount;
+      
+      // Extract image links
+      const imagenPequena = volumeInfo.imageLinks?.smallThumbnail;
+      const imagenGrande = volumeInfo.imageLinks?.thumbnail;
+      
+      // Extract preview and info links
+      const enlaceVistaPrevia = volumeInfo.previewLink;
+      const enlaceInfo = volumeInfo.infoLink;
+      const enlaceCanonico = volumeInfo.canonicalVolumeLink;
+      
+      // Extract sale information
+      const disponibleParaVenta = saleInfo?.saleability === 'FOR_SALE';
+      const esEbook = saleInfo?.isEbook || false;
+      const enlaceCompra = saleInfo?.buyLink;
+      
+      let precioLista: number | undefined;
+      let precioVenta: number | undefined;
+      let moneda: string | undefined;
+      
+      if (saleInfo?.listPrice) {
+        precioLista = saleInfo.listPrice.amount;
+        moneda = saleInfo.listPrice.currencyCode;
+      }
+      
+      if (saleInfo?.retailPrice) {
+        precioVenta = saleInfo.retailPrice.amount;
+        moneda = saleInfo.retailPrice.currencyCode;
+      }
+      
+      // Extract access information
+      const accesoVistaParcial = accessInfo?.viewability === 'PARTIAL';
+      const disponibleEPUB = accessInfo?.epub?.isAvailable || false;
+      const disponiblePDF = accessInfo?.pdf?.isAvailable || false;
+      const disponibleTextoVoz = accessInfo?.textToSpeechPermission === 'ALLOWED' || accessInfo?.textToSpeechPermission === 'ALLOWED_FOR_ACCESSIBILITY';
+      const dominioPublico = accessInfo?.publicDomain || false;
+      
+      // Extract content information
+      const tipoImpresion = volumeInfo.printType;
+      const modosLectura = volumeInfo.readingModes ? {
+        texto: volumeInfo.readingModes.text,
+        imagen: volumeInfo.readingModes.image
+      } : undefined;
+      
+      const clasificacionMadurez = volumeInfo.maturityRating;
+      
+      // Extract panelization information
+      const contieneBurbujasEPUB = volumeInfo.panelizationSummary?.containsEpubBubbles;
+      const contieneBurbujasImagen = volumeInfo.panelizationSummary?.containsImageBubbles;
+      
+      // Extract search information
+      const fragmentoTexto = searchInfo?.textSnippet;
+      
+      // Extract offers information
+      const ofertas = saleInfo?.offers?.map((offer: any) => ({
+        tipoOferta: offer.finskyOfferType,
+        precioListaMicros: offer.listPrice?.amountInMicros,
+        precioVentaMicros: offer.retailPrice?.amountInMicros,
+        moneda: offer.listPrice?.currencyCode || offer.retailPrice?.currencyCode,
+        regalable: offer.giftable
+      }));
       
       return {
         titulo: title,
         autor: author || undefined,
         paginas: pages,
-        isbn: isbn,
+        isbn: isbn13 || isbn10,
         publicacion: publicationYear,
         editorial: publisher || undefined,
         descripcion: description || undefined,
         categorias: categories.length > 0 ? categories : undefined,
-        idioma: language || undefined
-        // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
+        idioma: language || undefined,
+        calificacion,
+        numCalificaciones,
+        
+        // Nuevos campos
+        precioLista,
+        precioVenta,
+        moneda,
+        disponibleParaVenta,
+        esEbook,
+        enlaceCompra,
+        fechaPublicacion,
+        fechaPublicacionFormateada,
+        isbn13,
+        isbn10,
+        vistaPreviaDisponible: !!enlaceVistaPrevia,
+        enlaceVistaPrevia,
+        enlaceInfo,
+        enlaceCanonico,
+        accesoVistaParcial,
+        disponibleEPUB,
+        disponiblePDF,
+        disponibleTextoVoz,
+        dominioPublico,
+        imagenPequena,
+        imagenGrande,
+        tipoImpresion,
+        modosLectura,
+        clasificacionMadurez,
+        contieneBurbujasEPUB,
+        contieneBurbujasImagen,
+        fragmentoTexto,
+        etag: item.etag,
+        selfLink: item.selfLink,
+        contentVersion: volumeInfo.contentVersion,
+        ofertas
       };
     });
 

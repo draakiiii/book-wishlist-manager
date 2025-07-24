@@ -2,6 +2,116 @@
 
 Todos los cambios notables en este proyecto serán documentados en este archivo.
 
+## [8.0.0] - 2024-12-19
+
+### ✨ Nuevas Características - Integración Completa de Google Books API
+
+#### 💰 Información de Precios y Venta
+- **Precios en tiempo real**: Precio de lista y precio de venta con moneda
+- **Indicadores de disponibilidad**: Boolean para libros disponibles para compra
+- **Enlaces de compra directa**: URLs directas a tiendas para comprar libros
+- **Análisis de precios**: Estadísticas de valor total y precio promedio de la biblioteca
+- **Descuentos visuales**: Mostrar precios tachados cuando hay descuentos
+- **Información de ebooks**: Identificación de libros digitales
+
+#### 📅 Información de Publicación Detallada
+- **Fechas completas**: Fecha de publicación en formato YYYY-MM-DD
+- **Fechas formateadas**: Fechas legibles para el usuario (ej: "27 de agosto de 2015")
+- **Múltiples ISBNs**: Soporte completo para ISBN-10 e ISBN-13
+- **Análisis temporal**: Estadísticas de rango de años de publicación
+- **Editoriales detalladas**: Información completa de editoriales
+
+#### 👁️ Información de Vista Previa y Acceso
+- **Vista previa disponible**: Boolean e indicadores visuales
+- **Enlaces externos**: URLs para vista previa, información y enlaces canónicos
+- **Acceso parcial**: Información sobre acceso limitado al contenido
+- **Botones de acción**: Enlaces directos a recursos externos
+- **Indicadores visuales**: Iconos que muestran disponibilidad
+
+#### 📱 Información de Formatos y Acceso
+- **Formatos disponibles**: EPUB, PDF con indicadores visuales
+- **Texto a voz**: Información sobre disponibilidad de audio
+- **Dominio público**: Identificación de libros libres de derechos
+- **Clasificación de madurez**: Información sobre contenido adulto
+- **Modos de lectura**: Información sobre texto e imagen disponibles
+- **Panelización**: Información para cómics y mangas
+
+#### 🖼️ Información de Imágenes
+- **Imágenes de portada**: URLs de imágenes pequeñas y grandes
+- **Optimización visual**: Uso apropiado de imágenes según contexto
+- **Calidad mejorada**: Acceso a imágenes de alta calidad
+
+#### 🏷️ Información de Categorías y Géneros
+- **Categorías múltiples**: Soporte para múltiples categorías por libro
+- **Análisis de categorías**: Estadísticas sobre categorías más populares
+- **Fragmentos de texto**: Información relevante para búsquedas
+- **Géneros detallados**: Información completa de géneros
+
+#### 🎁 Información de Ofertas
+- **Ofertas especiales**: Información detallada de descuentos
+- **Precios dinámicos**: Soporte para precios variables
+- **Información de regalos**: Indicadores de libros regalables
+
+#### 📊 Metadatos Adicionales
+- **Control de caché**: ETags para optimización
+- **Enlaces propios**: URLs canónicas de libros
+- **Versiones de contenido**: Información de versiones
+- **Tipos de impresión**: Información sobre formato físico
+- **Información de cómics**: Detalles específicos para mangas y cómics
+
+### 🎨 Mejoras en la Interfaz de Usuario
+
+#### Tarjetas de Libros Mejoradas
+- **Información de precios**: Visualización de precios y descuentos
+- **Indicadores de formato**: Iconos para EPUB, PDF, Audio
+- **Información de disponibilidad**: Indicadores de vista previa y compra
+- **Categorías visuales**: Mostrar categorías principales
+- **Enlaces externos**: Botones para vista previa, compra e información
+- **Iconos informativos**: Indicadores visuales para cada tipo de información
+
+#### Modal de Descripción Expandido
+- **Sección de información adicional**: Nueva sección con toda la información de Google Books
+- **Enlaces externos**: Botones para acceder a recursos externos
+- **Información detallada**: Precios, formatos, categorías, etc.
+- **Diseño mejorado**: Tarjetas coloridas para diferentes tipos de información
+- **Organización visual**: Información agrupada por categorías
+
+#### Estadísticas Avanzadas de Google Books
+- **Análisis de precios**: Valor total y precio promedio de la biblioteca
+- **Análisis de formatos**: Estadísticas sobre formatos disponibles
+- **Categorías populares**: Top 5 de categorías más frecuentes
+- **Idiomas populares**: Análisis de idiomas en la biblioteca
+- **Editoriales populares**: Top 5 de editoriales más frecuentes
+- **Información temporal**: Rango de años de publicación
+- **Calificaciones**: Promedio de calificaciones de Google Books
+- **Dominio público**: Estadísticas de libros libres de derechos
+
+### 🔧 Mejoras Técnicas
+
+#### Servicio de API Mejorado
+- **Extracción completa de datos**: Todas las funciones actualizadas para extraer toda la información
+- **Caché mejorado**: Almacenamiento de información completa con limpieza automática
+- **Manejo de errores**: Gestión robusta de errores de API
+- **Optimización de rendimiento**: Reducción de llamadas a la API
+
+#### Tipos TypeScript Extendidos
+- **Nuevos campos**: Más de 30 nuevos campos añadidos a las interfaces
+- **Tipos opcionales**: Todos los nuevos campos son opcionales para compatibilidad
+- **Validación mejorada**: Mejor validación de datos de la API
+- **Documentación**: Tipos completamente documentados
+
+#### Compatibilidad
+- **Retrocompatibilidad**: Los libros existentes mantienen su funcionalidad
+- **Migración gradual**: Los nuevos datos se añaden automáticamente
+- **Fallbacks**: La aplicación funciona sin información de Google Books
+- **Valores por defecto**: Se usan valores por defecto cuando no hay datos
+
+### 🐛 Correcciones de Bugs
+- **Optimización de memoria**: Mejor gestión de caché de API
+- **Manejo de errores**: Mejor gestión de errores de red
+- **Validación de datos**: Mejor validación de respuestas de API
+- **Rendimiento**: Optimización de carga de datos
+
 ## [7.0.0] - 2024-07-22
 
 ### ✨ Nuevas Características

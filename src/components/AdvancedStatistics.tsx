@@ -1,21 +1,25 @@
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
+  BarChart3, 
   TrendingUp, 
+  DollarSign, 
   BookOpen, 
-  Clock, 
-  Target, 
+  Download, 
+  Eye, 
+  ShoppingCart, 
   Award,
-  CheckCircle,
-  Heart,
-  X,
-  BarChart3,
-  BookMarked,
-  BookX,
-  ShoppingCart,
-  Share2,
-  Users
+  Tag,
+  Globe,
+  Calendar,
+  Star,
+  Users,
+  FileText,
+  Monitor,
+  Headphones,
+  Info
 } from 'lucide-react';
+import { Libro, Statistics } from '../types';
 import { useAppState } from '../context/AppStateContext';
 
 interface AdvancedStatisticsProps {
@@ -26,7 +30,7 @@ interface AdvancedStatisticsProps {
 const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose }) => {
   const { state } = useAppState();
 
-  const statistics = useMemo(() => {
+  const statistics = useState(() => {
     // Filtrar libros excluyendo wishlist para estadísticas
     const librosParaEstadisticas = state.libros.filter(book => book.estado !== 'wishlist');
     
@@ -71,6 +75,74 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
     // Calcular libros restantes para completar objetivos
     const librosRestantes = Math.max(0, objetivoLibros - librosLeidos);
 
+    // Estadísticas de Google Books API
+    const librosConPrecio = librosParaEstadisticas.filter(book => book.precioVenta);
+    const precioPromedio = librosConPrecio.length > 0 
+      ? librosConPrecio.reduce((sum, book) => sum + (book.precioVenta || 0), 0) / librosConPrecio.length 
+      : 0;
+    
+    const precioTotal = librosConPrecio.reduce((sum, book) => sum + (book.precioVenta || 0), 0);
+    
+    const librosDisponibles = librosParaEstadisticas.filter(book => book.disponibleParaVenta);
+    const librosConVistaPrevia = librosParaEstadisticas.filter(book => book.vistaPreviaDisponible);
+    const librosEPUB = librosParaEstadisticas.filter(book => book.disponibleEPUB);
+    const librosPDF = librosParaEstadisticas.filter(book => book.disponiblePDF);
+    const librosAudio = librosParaEstadisticas.filter(book => book.disponibleTextoVoz);
+    const librosDominioPublico = librosParaEstadisticas.filter(book => book.dominioPublico);
+    
+    // Análisis de categorías
+    const categoriasCount: { [key: string]: number } = {};
+    librosParaEstadisticas.forEach(book => {
+      if (book.categorias) {
+        book.categorias.forEach(categoria => {
+          categoriasCount[categoria] = (categoriasCount[categoria] || 0) + 1;
+        });
+      }
+    });
+    
+    const categoriasMasPopulares = Object.entries(categoriasCount)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([categoria, count]) => ({ categoria, count }));
+    
+    // Análisis de idiomas
+    const idiomasCount: { [key: string]: number } = {};
+    librosParaEstadisticas.forEach(book => {
+      if (book.idioma) {
+        idiomasCount[book.idioma] = (idiomasCount[book.idioma] || 0) + 1;
+      }
+    });
+    
+    const idiomasMasPopulares = Object.entries(idiomasCount)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([idioma, count]) => ({ idioma, count }));
+    
+    // Análisis de calificaciones
+    const librosConCalificacion = librosParaEstadisticas.filter(book => book.calificacion);
+    const calificacionPromedio = librosConCalificacion.length > 0
+      ? librosConCalificacion.reduce((sum, book) => sum + (book.calificacion || 0), 0) / librosConCalificacion.length
+      : 0;
+    
+    // Análisis de fechas de publicación
+    const librosConFecha = librosParaEstadisticas.filter(book => book.publicacion);
+    const añosPublicacion = librosConFecha.map(book => book.publicacion!).sort();
+    const añoMasAntiguo = añosPublicacion.length > 0 ? añosPublicacion[0] : null;
+    const añoMasReciente = añosPublicacion.length > 0 ? añosPublicacion[añosPublicacion.length - 1] : null;
+    
+    // Análisis de editoriales
+    const editorialesCount: { [key: string]: number } = {};
+    librosParaEstadisticas.forEach(book => {
+      if (book.editorial) {
+        editorialesCount[book.editorial] = (editorialesCount[book.editorial] || 0) + 1;
+      }
+    });
+    
+    const editorialesMasPopulares = Object.entries(editorialesCount)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([editorial, count]) => ({ editorial, count }));
+
     return {
       totalLibros,
       librosTBR,
@@ -87,7 +159,22 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
       // Objetivos
       objetivoLibros,
       progresoLibros,
-      librosRestantes
+      librosRestantes,
+      // Estadísticas de Google Books
+      precioPromedio: Math.round(precioPromedio * 100) / 100,
+      precioTotal: Math.round(precioTotal * 100) / 100,
+      librosDisponibles: librosDisponibles.length,
+      librosConVistaPrevia: librosConVistaPrevia.length,
+      librosEPUB: librosEPUB.length,
+      librosPDF: librosPDF.length,
+      librosAudio: librosAudio.length,
+      librosDominioPublico: librosDominioPublico.length,
+      categoriasMasPopulares,
+      idiomasMasPopulares,
+      calificacionPromedio: Math.round(calificacionPromedio * 10) / 10,
+      añoMasAntiguo,
+      añoMasReciente,
+      editorialesMasPopulares
     };
   }, [state]);
 
@@ -418,6 +505,175 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
               </div>
             </div>
           </motion.div>
+
+          {/* Google Books Analytics */}
+          {(statistics.precioTotal > 0 || statistics.librosDisponibles > 0 || statistics.categoriasMasPopulares.length > 0) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.75 }}
+              className="bg-white dark:bg-slate-700 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-600"
+            >
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center space-x-2">
+                <Info className="h-5 w-5 text-blue-500" />
+                <span>Análisis de Google Books</span>
+              </h4>
+              
+              {/* Información de precios */}
+              {statistics.precioTotal > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <DollarSign className="h-6 w-6 text-green-600 mx-auto mb-2" />
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Valor Total</p>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                      {statistics.precioTotal.toFixed(2)} €
+                    </p>
+                  </div>
+                  <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <DollarSign className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Precio Promedio</p>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                      {statistics.precioPromedio.toFixed(2)} €
+                    </p>
+                  </div>
+                  <div className="text-center p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                    <ShoppingCart className="h-6 w-6 text-emerald-600 mx-auto mb-2" />
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Disponibles</p>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                      {statistics.librosDisponibles}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Formatos disponibles */}
+              {(statistics.librosEPUB > 0 || statistics.librosPDF > 0 || statistics.librosAudio > 0) && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  {statistics.librosEPUB > 0 && (
+                    <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                      <Download className="h-6 w-6 text-purple-600 mx-auto mb-2" />
+                      <p className="text-sm text-slate-600 dark:text-slate-400">EPUB</p>
+                      <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                        {statistics.librosEPUB}
+                      </p>
+                    </div>
+                  )}
+                  {statistics.librosPDF > 0 && (
+                    <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                      <FileText className="h-6 w-6 text-red-600 mx-auto mb-2" />
+                      <p className="text-sm text-slate-600 dark:text-slate-400">PDF</p>
+                      <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                        {statistics.librosPDF}
+                      </p>
+                    </div>
+                  )}
+                  {statistics.librosAudio > 0 && (
+                    <div className="text-center p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg">
+                      <Headphones className="h-6 w-6 text-pink-600 mx-auto mb-2" />
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Audio</p>
+                      <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                        {statistics.librosAudio}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Categorías más populares */}
+              {statistics.categoriasMasPopulares.length > 0 && (
+                <div className="mb-6">
+                  <h5 className="text-md font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center space-x-2">
+                    <Tag className="h-4 w-4" />
+                    <span>Categorías Más Populares</span>
+                  </h5>
+                  <div className="space-y-2">
+                    {statistics.categoriasMasPopulares.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{item.categoria}</span>
+                        <span className="text-sm font-semibold text-slate-900 dark:text-white">{item.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Idiomas más populares */}
+              {statistics.idiomasMasPopulares.length > 0 && (
+                <div className="mb-6">
+                  <h5 className="text-md font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center space-x-2">
+                    <Globe className="h-4 w-4" />
+                    <span>Idiomas Más Populares</span>
+                  </h5>
+                  <div className="space-y-2">
+                    {statistics.idiomasMasPopulares.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                        <span className="text-sm text-slate-700 dark:text-slate-300 uppercase">{item.idioma}</span>
+                        <span className="text-sm font-semibold text-slate-900 dark:text-white">{item.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Editoriales más populares */}
+              {statistics.editorialesMasPopulares.length > 0 && (
+                <div className="mb-6">
+                  <h5 className="text-md font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center space-x-2">
+                    <BookOpen className="h-4 w-4" />
+                    <span>Editoriales Más Populares</span>
+                  </h5>
+                  <div className="space-y-2">
+                    {statistics.editorialesMasPopulares.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                        <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{item.editorial}</span>
+                        <span className="text-sm font-semibold text-slate-900 dark:text-white">{item.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Información adicional */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {statistics.calificacionPromedio > 0 && (
+                  <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <Star className="h-6 w-6 text-yellow-600 mx-auto mb-2" />
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Calificación Promedio</p>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                      {statistics.calificacionPromedio}/5
+                    </p>
+                  </div>
+                )}
+                {statistics.librosDominioPublico > 0 && (
+                  <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <Award className="h-6 w-6 text-yellow-600 mx-auto mb-2" />
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Dominio Público</p>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                      {statistics.librosDominioPublico}
+                    </p>
+                  </div>
+                )}
+                {statistics.añoMasAntiguo && statistics.añoMasReciente && (
+                  <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <Calendar className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Rango de Años</p>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                      {statistics.añoMasAntiguo} - {statistics.añoMasReciente}
+                    </p>
+                  </div>
+                )}
+                {statistics.librosConVistaPrevia > 0 && (
+                  <div className="text-center p-3 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg">
+                    <Eye className="h-6 w-6 text-cyan-600 mx-auto mb-2" />
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Con Vista Previa</p>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                      {statistics.librosConVistaPrevia}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
 
           {/* Performance Metrics */}
           {state.performanceMetrics && (

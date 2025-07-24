@@ -42,6 +42,71 @@ export interface Libro {
   prestado?: boolean;
   prestadoA?: string;
   fechaPrestamo?: number;
+  
+  // Nuevos campos de la API de Google Books
+  // Información de precios y venta
+  precioLista?: number;
+  precioVenta?: number;
+  moneda?: string;
+  disponibleParaVenta?: boolean;
+  esEbook?: boolean;
+  enlaceCompra?: string;
+  
+  // Información de publicación detallada
+  fechaPublicacion?: string; // Fecha completa (YYYY-MM-DD)
+  fechaPublicacionFormateada?: string; // Fecha formateada para mostrar
+  
+  // Identificadores de industria
+  isbn13?: string;
+  isbn10?: string;
+  
+  // Información de vista previa y acceso
+  vistaPreviaDisponible?: boolean;
+  enlaceVistaPrevia?: string;
+  enlaceInfo?: string;
+  enlaceCanonico?: string;
+  
+  // Información de acceso y formatos
+  accesoVistaParcial?: boolean;
+  disponibleEPUB?: boolean;
+  disponiblePDF?: boolean;
+  disponibleTextoVoz?: boolean;
+  dominioPublico?: boolean;
+  
+  // Información de imagen
+  imagenPequena?: string;
+  imagenGrande?: string;
+  
+  // Información de contenido
+  tipoImpresion?: string;
+  modosLectura?: {
+    texto?: boolean;
+    imagen?: boolean;
+  };
+  
+  // Información de madurez
+  clasificacionMadurez?: string;
+  
+  // Información de panelización (para cómics/mangas)
+  contieneBurbujasEPUB?: boolean;
+  contieneBurbujasImagen?: boolean;
+  
+  // Información de búsqueda
+  fragmentoTexto?: string;
+  
+  // Metadatos adicionales
+  etag?: string;
+  selfLink?: string;
+  contentVersion?: string;
+  
+  // Información de ofertas (para ebooks)
+  ofertas?: Array<{
+    tipoOferta?: number;
+    precioListaMicros?: number;
+    precioVentaMicros?: number;
+    moneda?: string;
+    regalable?: boolean;
+  }>;
 }
 
 export interface EstadoLibro {
@@ -275,6 +340,71 @@ export interface BookData {
   genero?: string;
   formato?: 'fisico' | 'digital' | 'audiolibro';
   precio?: number;
+  
+  // Nuevos campos de la API de Google Books
+  // Información de precios y venta
+  precioLista?: number;
+  precioVenta?: number;
+  moneda?: string;
+  disponibleParaVenta?: boolean;
+  esEbook?: boolean;
+  enlaceCompra?: string;
+  
+  // Información de publicación detallada
+  fechaPublicacion?: string; // Fecha completa (YYYY-MM-DD)
+  fechaPublicacionFormateada?: string; // Fecha formateada para mostrar
+  
+  // Identificadores de industria
+  isbn13?: string;
+  isbn10?: string;
+  
+  // Información de vista previa y acceso
+  vistaPreviaDisponible?: boolean;
+  enlaceVistaPrevia?: string;
+  enlaceInfo?: string;
+  enlaceCanonico?: string;
+  
+  // Información de acceso y formatos
+  accesoVistaParcial?: boolean;
+  disponibleEPUB?: boolean;
+  disponiblePDF?: boolean;
+  disponibleTextoVoz?: boolean;
+  dominioPublico?: boolean;
+  
+  // Información de imagen
+  imagenPequena?: string;
+  imagenGrande?: string;
+  
+  // Información de contenido
+  tipoImpresion?: string;
+  modosLectura?: {
+    texto?: boolean;
+    imagen?: boolean;
+  };
+  
+  // Información de madurez
+  clasificacionMadurez?: string;
+  
+  // Información de panelización (para cómics/mangas)
+  contieneBurbujasEPUB?: boolean;
+  contieneBurbujasImagen?: boolean;
+  
+  // Información de búsqueda
+  fragmentoTexto?: string;
+  
+  // Metadatos adicionales
+  etag?: string;
+  selfLink?: string;
+  contentVersion?: string;
+  
+  // Información de ofertas (para ebooks)
+  ofertas?: Array<{
+    tipoOferta?: number;
+    precioListaMicros?: number;
+    precioVentaMicros?: number;
+    moneda?: string;
+    regalable?: boolean;
+  }>;
 }
 
 export interface ExportData {
