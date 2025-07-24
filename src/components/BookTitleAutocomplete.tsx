@@ -33,8 +33,8 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Referencias para manejo de debounce y cancelación de requests
-  const debounceTimerRef = useRef<NodeJS.Timeout>();
-  const abortControllerRef = useRef<AbortController>();
+  const debounceTimerRef = useRef<number | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const lastSearchQueryRef = useRef<string>('');
 
   // Sync internal state with prop value
@@ -94,14 +94,14 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   const debouncedSearch = (query: string) => {
     // Limpiar timer anterior si existe
     if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+      window.clearTimeout(debounceTimerRef.current);
     }
 
     // Actualizar el último query buscado
     lastSearchQueryRef.current = query;
 
     // Establecer nuevo timer con timeout más largo para mejor detección
-    debounceTimerRef.current = setTimeout(() => {
+    debounceTimerRef.current = window.setTimeout(() => {
       // Verificar que el query no ha cambiado antes de ejecutar la búsqueda
       if (query === lastSearchQueryRef.current) {
         searchBooks(query);
@@ -130,7 +130,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   useEffect(() => {
     return () => {
       if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
+        window.clearTimeout(debounceTimerRef.current);
       }
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -193,7 +193,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   const handleBookSelect = (book: BookData) => {
     // Cancelar cualquier búsqueda en progreso
     if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+      window.clearTimeout(debounceTimerRef.current);
     }
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -235,7 +235,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
       setIsOpen(false);
       // Cancelar búsqueda en progreso
       if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
+        window.clearTimeout(debounceTimerRef.current);
       }
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
