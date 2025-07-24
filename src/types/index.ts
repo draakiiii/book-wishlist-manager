@@ -282,7 +282,6 @@ export interface Configuracion {
   
   // Configuración de Importación/Exportación
   formatoExportacion?: 'json' | 'csv' | 'excel' | 'pdf';
-  backupAutomatico?: boolean;
   sincronizacionNube?: boolean;
   servicioNube?: 'google-drive' | 'dropbox' | 'onedrive' | 'personal';
   

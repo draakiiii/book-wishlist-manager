@@ -298,7 +298,7 @@ export const applyThemeToDOM = (isDark: boolean, colorScheme: string = 'azul', c
   if (colors) {
     const root = document.documentElement;
     Object.entries(colors).forEach(([key, value]) => {
-      root.style.setProperty(`--color-${key}`, value);
+      root.style.setProperty(`--color-${key}`, String(value));
     });
   }
   
