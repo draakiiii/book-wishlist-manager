@@ -76,7 +76,8 @@ const TBRForm: React.FC = () => {
       numCalificaciones: selectedBookData?.numCalificaciones,
       genero: selectedBookData?.genero,
       formato: selectedBookData?.formato,
-      precio: selectedBookData?.precio
+      precio: selectedBookData?.precio,
+      portada: selectedBookData?.portada // ¡Aquí faltaba la portada!
     };
     
     // Verificar si es un duplicado
@@ -95,6 +96,7 @@ const TBRForm: React.FC = () => {
 
   const addBookToTBR = (bookData: BookData) => {
     console.log('TBRForm - bookData received:', bookData);
+    console.log('TBRForm - bookData.portada:', bookData.portada);
     const nuevoLibro: Libro = {
       id: Date.now(),
       titulo: bookData.titulo,
