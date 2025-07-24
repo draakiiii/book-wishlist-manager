@@ -42,6 +42,18 @@ export interface Libro {
   prestado?: boolean;
   prestadoA?: string;
   fechaPrestamo?: number;
+  
+  // Campos para imágenes de portada (Google Books API)
+  imageLinks?: {
+    smallThumbnail?: string;
+    thumbnail?: string;
+  };
+  
+  // Campos para acceso a vista previa (Google Books API)
+  accessInfo?: {
+    viewability?: 'PARTIAL' | 'ALL_PAGES' | 'NO_PAGES';
+    webReaderLink?: string;
+  };
 }
 
 export interface EstadoLibro {

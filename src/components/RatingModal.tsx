@@ -76,7 +76,7 @@ const RatingModal: React.FC<RatingModalProps> = ({
               {bookTitle}
             </h4>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              ¿Cómo calificarías este libro?
+              ¿Cómo calificarías este libro? (opcional)
             </p>
           </div>
 
@@ -132,7 +132,7 @@ const RatingModal: React.FC<RatingModalProps> = ({
           {/* Rating Text */}
           <div className="text-center mb-6">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              {rating === 0 && 'Sin calificar'}
+              {rating === 0 && 'Sin calificar (opcional)'}
               {rating === 0.5 && 'Muy malo'}
               {rating === 1 && 'Muy malo'}
               {rating === 1.5 && 'Muy malo'}
@@ -178,10 +178,9 @@ const RatingModal: React.FC<RatingModalProps> = ({
             </button>
             <button
               onClick={handleConfirm}
-              disabled={rating === 0}
-              className="flex-1 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium rounded-lg transition-colors duration-200"
             >
-              Confirmar
+              {rating === 0 ? 'Continuar sin puntuar' : 'Confirmar'}
             </button>
           </div>
         </div>

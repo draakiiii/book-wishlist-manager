@@ -24,6 +24,7 @@ import LoanModal from './LoanModal';
 import { useDialog } from '../hooks/useDialog';
 import Dialog from './Dialog';
 import InputModal from './InputModal';
+import BookCoverImage from './BookCoverImage';
 
 interface BookCardProps {
   book: Libro;
@@ -297,19 +298,30 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
         <span className="capitalize hidden sm:inline">{getTypeLabel()}</span>
       </div>
 
-      {/* Book Info */}
-      <div className="space-y-2 sm:space-y-3">
-        <div>
-          <h3 className="font-semibold text-slate-900 dark:text-white text-base sm:text-lg leading-tight pr-16 sm:pr-20">
-            {book.titulo}
-          </h3>
-          {book.autor && (
-            <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 mt-1">
-              <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="text-xs sm:text-sm truncate">{book.autor}</span>
-            </div>
-          )}
+      {/* Book Cover and Info */}
+      <div className="flex space-x-3 sm:space-x-4">
+        {/* Book Cover */}
+        <div className="flex-shrink-0 w-16 h-20 sm:w-20 sm:h-24">
+          <BookCoverImage 
+            book={book} 
+            isDetailView={false}
+            className="w-full h-full object-cover rounded-lg shadow-sm"
+          />
         </div>
+        
+        {/* Book Info */}
+        <div className="flex-1 space-y-2 sm:space-y-3">
+          <div>
+            <h3 className="font-semibold text-slate-900 dark:text-white text-base sm:text-lg leading-tight pr-16 sm:pr-20">
+              {book.titulo}
+            </h3>
+            {book.autor && (
+              <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 mt-1">
+                <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="text-xs sm:text-sm truncate">{book.autor}</span>
+              </div>
+            )}
+          </div>
 
         {/* Book Details */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
@@ -352,6 +364,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
               </span>
             </div>
           )}
+        </div>
         </div>
 
         {/* Actions */}

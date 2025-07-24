@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, BookOpen, Clock, Star, Plus, Edit, Trash2 } from 'lucide-react';
+import { X, BookOpen, Clock, Star, Plus, Edit, Trash2, ExternalLink } from 'lucide-react';
 import { Libro, EstadoLibro, Lectura } from '../types';
 import { useAppState } from '../context/AppStateContext';
+import BookCoverImage from './BookCoverImage';
 
 interface BookDescriptionModalProps {
   book: Libro | null;
@@ -88,6 +89,14 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
     });
   };
 
+  const handleReadSample = () => {
+    if (book?.accessInfo?.webReaderLink) {
+      window.open(book.accessInfo.webReaderLink, '_blank');
+    }
+  };
+
+  const canReadSample = book?.accessInfo?.viewability === 'PARTIAL' || book?.accessInfo?.viewability === 'ALL_PAGES';
+
   if (!book) return null;
 
   const estadoInfo = getEstadoInfo(book.estado);
@@ -146,6 +155,33 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
 
               {/* Content */}
               <div className="p-6 space-y-6">
+                {/* Book Cover and Sample Button */}
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Book Cover */}
+                  <div className="flex-shrink-0 w-48 h-64 mx-auto md:mx-0">
+                    <BookCoverImage 
+                      book={book} 
+                      isDetailView={true}
+                      className="w-full h-full object-cover rounded-lg shadow-lg"
+                    />
+                  </div>
+                  
+                  {/* Sample Button */}
+                  {canReadSample && (
+                    <div className="flex-1 flex items-center justify-center md:justify-start">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleReadSample}
+                        className="flex items-center space-x-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors duration-200 shadow-lg"
+                      >
+                        <ExternalLink className="h-5 w-5" />
+                        <span>Leer Muestra</span>
+                      </motion.button>
+                    </div>
+                  )}
+                </div>
+
                 {/* Basic Info Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {/* Páginas */}
