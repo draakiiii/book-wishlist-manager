@@ -8,7 +8,8 @@ Se ha añadido una nueva funcionalidad de autocompletado para el título del lib
 
 ### 🔍 Búsqueda en Tiempo Real
 - La búsqueda se activa automáticamente cuando el usuario escribe 2 o más caracteres
-- Utiliza debouncing (300ms) para evitar demasiadas llamadas a la API
+- Utiliza debouncing mejorado (500ms) que detecta cuando el usuario termina de escribir
+- Cancelación automática de búsquedas anteriores para evitar resultados fuera de orden
 - Muestra hasta 10 resultados ordenados por relevancia
 
 ### 📚 Información Detallada
@@ -97,7 +98,9 @@ Esta funcionalidad es compatible con:
 ## Notas Técnicas
 
 - Utiliza la API pública de Google Books (no requiere API key)
-- Implementa debouncing para optimizar el rendimiento
+- Implementa debouncing avanzado (500ms) que detecta cuando el usuario termina de escribir
+- Cancelación automática de requests para evitar búsquedas fuera de orden
 - Maneja estados de carga con indicadores visuales
 - Incluye manejo de errores robusto
 - Utiliza Framer Motion para animaciones suaves
+- Previene búsquedas innecesarias cuando se selecciona un libro del autocompletado
