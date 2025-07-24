@@ -23,6 +23,8 @@ const BookCover: React.FC<BookCoverProps> = ({
   const [showMenu, setShowMenu] = useState(false);
   const [showLargeView, setShowLargeView] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [largeImageLoading, setLargeImageLoading] = useState(true);
+  const [largeImageError, setLargeImageError] = useState(false);
 
   // Choose appropriate image URL based on context and size
   // Priority: customImage > API images based on context
@@ -95,6 +97,25 @@ const BookCover: React.FC<BookCoverProps> = ({
   const handleViewLarge = () => {
     setShowLargeView(true);
     setShowMenu(false);
+    // Reset large image states
+    setLargeImageLoading(true);
+    setLargeImageError(false);
+  };
+
+  // Get the best quality image available for the large view modal
+  const getBestQualityImage = () => {
+    // Priority order for large view: customImage > thumbnail > smallThumbnail
+    if (book.customImage) {
+      return book.customImage;
+    }
+    if (book.thumbnail) {
+      return book.thumbnail;
+    }
+    if (book.smallThumbnail) {
+      return book.smallThumbnail;
+    }
+    // Fallback to the current imageUrl (shouldn't happen if we have any image)
+    return imageUrl;
   };
 
   // Handle keyboard events and body scroll
@@ -155,13 +176,44 @@ const BookCover: React.FC<BookCoverProps> = ({
             <X className="h-5 w-5" />
           </button>
           
-          {/* Large image */}
-          <img
-            src={book.customImage || book.thumbnail || book.smallThumbnail || imageUrl}
-            alt={`Portada de ${book.titulo}`}
-            className="w-full h-full object-contain max-h-[95vh]"
-            style={{ maxWidth: '100%', height: 'auto' }}
-          />
+          {/* Large image container */}
+          <div className="relative">
+            {/* Loading state for large image */}
+            {largeImageLoading && !largeImageError && (
+              <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-700">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+                  <p className="text-slate-600 dark:text-slate-400">Cargando imagen en alta resolución...</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Error state for large image */}
+            {largeImageError && (
+              <div className="flex items-center justify-center bg-slate-100 dark:bg-slate-700 min-h-[400px]">
+                <div className="text-center p-8">
+                  <BookOpen className="h-16 w-16 mx-auto text-slate-400 dark:text-slate-500 mb-4" />
+                  <p className="text-slate-600 dark:text-slate-400">Error al cargar la imagen</p>
+                </div>
+              </div>
+            )}
+
+            {/* Large image */}
+            <img
+              src={getBestQualityImage()}
+              alt={`Portada de ${book.titulo}`}
+              className={`w-full h-full object-contain max-h-[95vh] ${largeImageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+              style={{ maxWidth: '100%', height: 'auto' }}
+              onLoad={() => {
+                setLargeImageLoading(false);
+                setLargeImageError(false);
+              }}
+              onError={() => {
+                setLargeImageLoading(false);
+                setLargeImageError(true);
+              }}
+            />
+          </div>
           
           {/* Book info overlay */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-6 text-white">
@@ -172,6 +224,12 @@ const BookCover: React.FC<BookCoverProps> = ({
             {book.publicacion && (
               <p className="text-sm text-gray-300 mt-1">Año: {book.publicacion}</p>
             )}
+            {/* Debug info - shows image source type */}
+            <p className="text-xs text-gray-400 mt-2 opacity-75">
+              {book.customImage ? '📁 Imagen personalizada' : 
+               book.thumbnail ? '🔍 Alta resolución' : 
+               book.smallThumbnail ? '📱 Resolución estándar' : '❓ Imagen no disponible'}
+            </p>
           </div>
         </div>
 
