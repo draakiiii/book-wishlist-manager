@@ -208,6 +208,10 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
     }
   };
 
+  const handleImageUpdate = (bookId: number, imageUrl: string) => {
+    dispatch({ type: 'UPDATE_BOOK_IMAGE', payload: { id: bookId, customImage: imageUrl } });
+  };
+
   const handleShowDescription = () => {
     setShowDescriptionModal(true);
   };
@@ -301,7 +305,13 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
       {/* Book Content with Cover */}
       <div className="flex space-x-3 sm:space-x-4">
         {/* Book Cover */}
-        <BookCover book={book} size="medium" context="list" className="flex-shrink-0" />
+        <BookCover 
+          book={book} 
+          size="medium" 
+          context="list" 
+          className="flex-shrink-0"
+          onImageUpdate={handleImageUpdate}
+        />
         
         {/* Book Info */}
         <div className="flex-1 space-y-2 sm:space-y-3 min-w-0">

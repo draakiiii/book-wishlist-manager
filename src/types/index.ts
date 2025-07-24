@@ -48,6 +48,8 @@ export interface Libro {
   // Access info for reading samples
   viewability?: 'NO_PAGES' | 'PARTIAL' | 'ALL_PAGES';
   webReaderLink?: string;
+  // Custom user-uploaded image (takes priority over API images)
+  customImage?: string;
 }
 
 export interface EstadoLibro {
@@ -214,6 +216,7 @@ export type Action =
   | { type: 'ADD_BOOK'; payload: Libro }
   | { type: 'UPDATE_BOOK'; payload: { id: number; updates: Partial<Libro> } }
   | { type: 'DELETE_BOOK'; payload: number }
+  | { type: 'UPDATE_BOOK_IMAGE'; payload: { id: number; customImage: string } }
   | { type: 'CHANGE_BOOK_STATE'; payload: { id: number; newState: Libro['estado']; notas?: string } }
   | { type: 'START_READING'; payload: { id: number; fecha?: number } }
   | { type: 'FINISH_READING'; payload: { id: number; fecha?: number; calificacion?: number; notas?: string } }

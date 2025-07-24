@@ -97,6 +97,10 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
     openWebReader(book.webReaderLink, book.titulo);
   };
 
+  const handleImageUpdate = (bookId: number, imageUrl: string) => {
+    dispatch({ type: 'UPDATE_BOOK_IMAGE', payload: { id: bookId, customImage: imageUrl } });
+  };
+
   // Check if the read sample button should be visible
   const canReadSample = book?.viewability === 'PARTIAL' || book?.viewability === 'ALL_PAGES';
 
@@ -125,7 +129,13 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
               <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm">
                 <div className="flex items-start space-x-4 flex-1">
                   {/* Book Cover */}
-                  <BookCover book={book} size="large" context="detail" className="flex-shrink-0" />
+                  <BookCover 
+                    book={book} 
+                    size="large" 
+                    context="detail" 
+                    className="flex-shrink-0"
+                    onImageUpdate={handleImageUpdate}
+                  />
                   
                   {/* Book Info and Actions */}
                   <div className="flex-1 min-w-0">

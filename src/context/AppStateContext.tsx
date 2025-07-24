@@ -446,6 +446,16 @@ function appReducer(state: AppState, action: Action): AppState {
       });
     }
 
+    case 'UPDATE_BOOK_IMAGE': {
+      const { id, customImage } = action.payload;
+      return {
+        ...state,
+        libros: state.libros.map(libro => 
+          libro.id === id ? { ...libro, customImage } : libro
+        )
+      };
+    }
+
     case 'DELETE_BOOK': {
       const librosFiltrados = state.libros.filter(libro => libro.id !== action.payload);
       return limpiarSagasHuerfanas({
