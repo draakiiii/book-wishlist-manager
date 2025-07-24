@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Settings, Save, RotateCcw, Camera, CheckCircle, AlertCircle, Loader2, Target, Bell, Trophy, Eye } from 'lucide-react';
+import { Settings, Save, RotateCcw, Camera, CheckCircle, AlertCircle, Loader2, Target, Bell, Trophy, Eye, BookOpen } from 'lucide-react';
 import { useDialog } from '../hooks/useDialog';
 import Dialog from './Dialog';
+import { fetchBookData } from '../services/googleBooksAPI';
 
 const ConfigForm: React.FC = () => {
   const { state, dispatch } = useAppState();
@@ -30,6 +31,48 @@ const ConfigForm: React.FC = () => {
     if (window.confirm('¿Estás seguro de que quieres limpiar las sagas duplicadas? Esto eliminará las sagas vacías y duplicadas.')) {
       dispatch({ type: 'CLEAN_DUPLICATE_SAGAS' });
       showSuccess('Sagas limpiadas', 'Sagas duplicadas limpiadas correctamente.');
+    }
+  };
+
+  const handleUpdateBookCovers = async () => {
+    if (window.confirm('¿Estás seguro de que quieres actualizar las portadas de los libros existentes? Esto puede tomar unos minutos.')) {
+      showSuccess('Actualizando portadas', 'Iniciando actualización de portadas...');
+      
+      try {
+        const librosSinPortada = state.libros.filter(libro => !libro.portada && libro.isbn);
+        console.log('Libros sin portada encontrados:', librosSinPortada.length);
+        
+        if (librosSinPortada.length === 0) {
+          showSuccess('No hay libros para actualizar', 'Todos los libros ya tienen portadas o no tienen ISBN.');
+          return;
+        }
+        
+        let actualizados = 0;
+        for (const libro of librosSinPortada) {
+          try {
+            console.log('Actualizando portada para:', libro.titulo);
+            const bookData = await fetchBookData(libro.isbn!);
+            if (bookData && bookData.portada) {
+              dispatch({
+                type: 'UPDATE_BOOK',
+                payload: {
+                  id: libro.id,
+                  updates: { portada: bookData.portada }
+                }
+              });
+              actualizados++;
+              console.log('Portada actualizada para:', libro.titulo);
+            }
+          } catch (error) {
+            console.error('Error actualizando portada para:', libro.titulo, error);
+          }
+        }
+        
+        showSuccess('Portadas actualizadas', `${actualizados} de ${librosSinPortada.length} libros actualizados con portadas.`);
+      } catch (error) {
+        console.error('Error actualizando portadas:', error);
+        showError('Error', 'Error al actualizar las portadas. Inténtalo de nuevo.');
+      }
     }
   };
 
@@ -588,6 +631,17 @@ const ConfigForm: React.FC = () => {
             >
               <RotateCcw className="h-4 w-4" />
               <span>Limpiar Sagas Duplicadas</span>
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={handleUpdateBookCovers}
+              className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
+            >
+              <BookOpen className="h-4 w-4" />
+              <span>Actualizar Portadas</span>
             </motion.button>
             
             <motion.button

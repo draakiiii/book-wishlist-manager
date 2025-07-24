@@ -132,6 +132,7 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
           // Extract cover image URL
           let coverUrl: string | undefined;
           if (book.imageLinks) {
+            console.log('Image links found:', book.imageLinks);
             // Preferir thumbnail, luego small, luego medium
             coverUrl = book.imageLinks.thumbnail || 
                       book.imageLinks.small || 
@@ -142,6 +143,9 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
             if (coverUrl && coverUrl.startsWith('http:')) {
               coverUrl = coverUrl.replace('http:', 'https:');
             }
+            console.log('Selected cover URL:', coverUrl);
+          } else {
+            console.log('No image links found for book:', book.title);
           }
           
           bookData = {
@@ -157,6 +161,8 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
             portada: coverUrl
             // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
           };
+          
+          console.log('Final bookData with cover:', bookData);
           
           // Cache the result
           (bookData as any).timestamp = Date.now();

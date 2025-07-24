@@ -87,6 +87,8 @@ async function loadStateFromFirebase(): Promise<AppState | null> {
         librosCompradosConDinero: firebaseState.librosCompradosConDinero || 0,
       };
       
+      console.log('loadStateFromFirebase - config loaded:', completeState.config);
+      
       console.log('loadStateFromFirebase: Complete state after merge:', {
         librosCount: completeState.libros.length,
         wishlistCount: completeState.libros.filter(l => l.estado === 'wishlist').length,

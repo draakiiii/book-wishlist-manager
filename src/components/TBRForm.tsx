@@ -94,6 +94,7 @@ const TBRForm: React.FC = () => {
   };
 
   const addBookToTBR = (bookData: BookData) => {
+    console.log('TBRForm - bookData received:', bookData);
     const nuevoLibro: Libro = {
       id: Date.now(),
       titulo: bookData.titulo,
@@ -119,6 +120,8 @@ const TBRForm: React.FC = () => {
       }],
       lecturas: []
     };
+    
+    console.log('TBRForm - nuevoLibro created:', nuevoLibro);
     
     dispatch({ type: 'ADD_BOOK', payload: nuevoLibro });
     
