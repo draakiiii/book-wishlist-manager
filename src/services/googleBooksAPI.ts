@@ -139,10 +139,7 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
                       book.imageLinks.medium ||
                       book.imageLinks.smallThumbnail;
             
-            // Convertir URL de HTTP a HTTPS si es necesario
-            if (coverUrl && coverUrl.startsWith('http:')) {
-              coverUrl = coverUrl.replace('http:', 'https:');
-            }
+            // Las URLs de Google Books funcionan mejor sin conversión HTTPS
             console.log('Selected cover URL:', coverUrl);
           } else {
             console.log('No image links found for book:', book.title);
@@ -329,10 +326,7 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
                   book.imageLinks.medium ||
                   book.imageLinks.smallThumbnail;
         
-        // Convertir URL de HTTP a HTTPS si es necesario
-        if (coverUrl && coverUrl.startsWith('http:')) {
-          coverUrl = coverUrl.replace('http:', 'https:');
-        }
+        // Las URLs de Google Books funcionan mejor sin conversión HTTPS
       }
       
       return {
@@ -479,10 +473,7 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
                   book.imageLinks.medium ||
                   book.imageLinks.smallThumbnail;
         
-        // Convertir URL de HTTP a HTTPS si es necesario
-        if (coverUrl && coverUrl.startsWith('http:')) {
-          coverUrl = coverUrl.replace('http:', 'https:');
-        }
+        // Las URLs de Google Books funcionan mejor sin conversión HTTPS
       }
       
       const result = {

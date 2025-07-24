@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Clock, Search, Camera, Loader2, CheckCircle, AlertCircle, Barcode } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 import { Libro, BookData } from '../types';
-import { fetchBookData, testGoogleBooksAPI } from '../services/googleBooksAPI';
+import { fetchBookData, testGoogleBooksAPI, clearCache } from '../services/googleBooksAPI';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import SagaAutocomplete from './SagaAutocomplete';
 import ISBNInputModal from './ISBNInputModal';
@@ -138,6 +138,9 @@ const TBRForm: React.FC = () => {
 
   const handleBookSelect = async (bookData: BookData) => {
     console.log('Book selected:', bookData);
+    
+    // Clear cache to ensure fresh data
+    clearCache();
     
     // Test the API to see what's happening
     if (bookData.titulo) {
