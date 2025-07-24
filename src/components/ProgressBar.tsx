@@ -124,10 +124,13 @@ const ProgressBar: React.FC = () => {
             </div>
             <div>
               <p className="text-xs sm:text-sm font-medium text-green-700 dark:text-green-300">
-                Puntos
+                {state.config.modoDinero ? 'Dinero' : 'Puntos'}
               </p>
               <p className="text-xl sm:text-2xl font-bold text-green-900 dark:text-green-100">
-                {state.puntosActuales}
+                {state.config.modoDinero 
+                  ? `$${state.dineroActual.toFixed(2)}` 
+                  : state.puntosActuales
+                }
               </p>
             </div>
           </div>

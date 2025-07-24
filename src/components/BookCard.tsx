@@ -101,31 +101,62 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
   };
 
   const handleBuyBook = () => {
-    // Verificar si el sistema de puntos está habilitado
+    // Verificar si el sistema de puntos/dinero está habilitado
     if (state.config.sistemaPuntosHabilitado) {
-      const puntosNecesarios = state.config.puntosParaComprar || 25;
-      
-      if (state.puntosActuales < puntosNecesarios) {
-        showError(
-          'Puntos insuficientes',
-          `Necesitas ${puntosNecesarios} puntos para comprar este libro. Tienes ${state.puntosActuales} puntos.`
+      if (state.config.modoDinero) {
+        // Modo dinero - mostrar modal para ingresar precio
+        setInputModalConfig({
+          title: 'Comprar libro con dinero',
+          message: '¿Cuánto cuesta el libro?',
+          placeholder: '0.00',
+          onConfirm: (precio: string) => {
+            const precioNum = parseFloat(precio);
+            if (isNaN(precioNum) || precioNum <= 0) {
+              showError('Precio inválido', 'Por favor ingresa un precio válido mayor a 0.');
+              return;
+            }
+            
+            if (state.dineroActual < precioNum) {
+              showError(
+                'Dinero insuficiente',
+                `Necesitas $${precioNum.toFixed(2)} para comprar este libro. Tienes $${state.dineroActual.toFixed(2)}.`
+              );
+              return;
+            }
+            
+            dispatch({ 
+              type: 'COMPRAR_LIBRO_CON_DINERO', 
+              payload: { libroId: book.id, precio: precioNum } 
+            });
+          }
+        });
+        setShowInputModal(true);
+      } else {
+        // Modo puntos
+        const puntosNecesarios = state.config.puntosParaComprar || 25;
+        
+        if (state.puntosActuales < puntosNecesarios) {
+          showError(
+            'Puntos insuficientes',
+            `Necesitas ${puntosNecesarios} puntos para comprar este libro. Tienes ${state.puntosActuales} puntos.`
+          );
+          return;
+        }
+        
+        showConfirm(
+          'Comprar libro con puntos',
+          `¿Quieres comprar "${book.titulo}" con ${puntosNecesarios} puntos?\n\nPuntos actuales: ${state.puntosActuales}\nPuntos después de la compra: ${state.puntosActuales - puntosNecesarios}`,
+          () => {
+            dispatch({ 
+              type: 'COMPRAR_LIBRO_CON_PUNTOS', 
+              payload: { libroId: book.id } 
+            });
+          },
+          undefined,
+          'Comprar',
+          'Cancelar'
         );
-        return;
       }
-      
-      showConfirm(
-        'Comprar libro con puntos',
-        `¿Quieres comprar "${book.titulo}" con ${puntosNecesarios} puntos?\n\nPuntos actuales: ${state.puntosActuales}\nPuntos después de la compra: ${state.puntosActuales - puntosNecesarios}`,
-        () => {
-          dispatch({ 
-            type: 'COMPRAR_LIBRO_CON_PUNTOS', 
-            payload: { libroId: book.id } 
-          });
-        },
-        undefined,
-        'Comprar',
-        'Cancelar'
-      );
     } else {
       // Sistema tradicional con precio
       setInputModalConfig({

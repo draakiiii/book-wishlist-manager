@@ -265,21 +265,34 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
             >
               <h4 className="text-lg font-semibold text-yellow-900 dark:text-yellow-100 mb-4 flex items-center space-x-2">
                 <Award className="h-5 w-5 text-yellow-600" />
-                <span>Sistema de Puntos</span>
+                <span>Sistema de Puntos/Dinero</span>
               </h4>
               <div className="text-center">
-                <p className="text-sm text-yellow-700 dark:text-yellow-300">Puntos Actuales</p>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  {state.config.modoDinero ? 'Dinero Actual' : 'Puntos Actuales'}
+                </p>
                 <p className="text-2xl font-semibold text-yellow-900 dark:text-yellow-100">
-                  {state.puntosActuales}
+                  {state.config.modoDinero 
+                    ? `$${state.dineroActual.toFixed(2)}` 
+                    : state.puntosActuales
+                  }
                 </p>
                 <p className="text-xs text-yellow-600 dark:text-yellow-400">disponibles</p>
               </div>
               <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
                 <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  <strong>Configuración actual:</strong> {state.config.puntosPorLibro || 10} pts/libro, {state.config.puntosPorSaga || 50} pts/saga, {state.config.puntosPorPagina || 1} pt/página
+                  <strong>Configuración actual:</strong> {
+                    state.config.modoDinero 
+                      ? `${state.config.dineroPorLibro || 5.0} $/libro, ${state.config.dineroPorSaga || 25.0} $/saga, ${state.config.dineroPorPagina || 0.5} $/página`
+                      : `${state.config.puntosPorLibro || 10} pts/libro, ${state.config.puntosPorSaga || 50} pts/saga, ${state.config.puntosPorPagina || 1} pt/página`
+                  }
                 </p>
                 <p className="text-sm text-yellow-800 dark:text-yellow-200 mt-1">
-                  <strong>Costo de compra:</strong> {state.config.puntosParaComprar || 25} puntos por libro
+                  <strong>Costo de compra:</strong> {
+                    state.config.modoDinero 
+                      ? `$${state.config.dineroParaComprar || 15.0} por libro`
+                      : `${state.config.puntosParaComprar || 25} puntos por libro`
+                  }
                 </p>
               </div>
             </motion.div>
