@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { AppStateProvider, useAppState } from './context/AppStateContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { motion } from 'framer-motion';
 import { 
   BookOpen, 
@@ -34,11 +35,13 @@ import DataExportImport from './components/DataExportImport';
 import ScanHistory from './components/ScanHistory';
 import ConfigForm from './components/ConfigForm';
 import BulkScanModal from './components/BulkScanModal';
+import LoginModal from './components/LoginModal';
 
 import './App.css';
 
 const AppContent: React.FC = () => {
   const { state, dispatch } = useAppState();
+  const { user, loading: authLoading, isAuthenticated, logout, migrateData, hasMigratedData } = useAuth();
   const [configSidebarOpen, setConfigSidebarOpen] = React.useState(false);
   const [configModalOpen, setConfigModalOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -47,6 +50,9 @@ const AppContent: React.FC = () => {
   const [scanHistoryModalOpen, setScanHistoryModalOpen] = useState(false);
   const [bulkScanModalOpen, setBulkScanModalOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  console.log('AppContent rendered', { authLoading, isAuthenticated, user: user?.email });
 
   // Inicializar searchResults con todos los libros cuando se abre el modal
   useEffect(() => {
@@ -88,6 +94,33 @@ const AppContent: React.FC = () => {
     };
   }, [dispatch]);
 
+  // Migrar datos desde localStorage cuando el usuario se autentica por primera vez
+  useEffect(() => {
+    if (isAuthenticated && user && !hasMigratedData) {
+      const localStorageData = localStorage.getItem('bibliotecaLibrosState_v1_0');
+      if (localStorageData) {
+        try {
+          const parsedData = JSON.parse(localStorageData);
+          migrateData(parsedData);
+        } catch (error) {
+          console.error('Error migrating data:', error);
+        }
+      }
+    }
+  }, [isAuthenticated, user, hasMigratedData, migrateData]);
+
+  const handleLoginSuccess = () => {
+    setShowLoginModal(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
   const handleRemoveNotification = (id: number) => {
     dispatch({ type: 'REMOVE_SAGA_NOTIFICATION', payload: { id } });
   };
@@ -114,6 +147,18 @@ const AppContent: React.FC = () => {
   // Libros prestados (para mostrar en resumen, pero no como sección separada)
   const librosPrestados = state.libros.filter(libro => libro.prestado === true);
 
+  // Mostrar loading mientras se autentica
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">Cargando aplicación...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="theme-transition min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
       {/* Notificaciones de saga completada */}
@@ -137,9 +182,16 @@ const AppContent: React.FC = () => {
               <div className="p-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg">
                 <BookOpen className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-lg sm:text-xl font-display font-bold gradient-text">
-                Mi Biblioteca
-              </h1>
+              <div className="flex flex-col">
+                <h1 className="text-lg sm:text-xl font-display font-bold gradient-text">
+                  Mi Biblioteca
+                </h1>
+                {isAuthenticated && user && (
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    Conectado como {user.email}
+                  </p>
+                )}
+              </div>
             </div>
             
             <div className="flex items-center space-x-2">
@@ -205,6 +257,29 @@ const AppContent: React.FC = () => {
               >
                 <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
               </button>
+
+              {/* Auth Button */}
+              {isAuthenticated ? (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleLogout}
+                  className="p-1.5 md:p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors duration-200"
+                  title={`Cerrar sesión (${user?.email})`}
+                >
+                  <Users className="h-4 w-4 md:h-5 md:w-5 text-red-600 dark:text-red-400" />
+                </motion.button>
+              ) : (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowLoginModal(true)}
+                  className="p-1.5 md:p-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 transition-colors duration-200"
+                  title="Iniciar sesión"
+                >
+                  <Users className="h-4 w-4 md:h-5 md:w-5 text-blue-600 dark:text-blue-400" />
+                </motion.button>
+              )}
             </div>
           </div>
         </div>
@@ -399,15 +474,24 @@ const AppContent: React.FC = () => {
           setBulkScanModalOpen(false);
         }}
       />
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   );
 };
 
 const App: React.FC = () => {
   return (
-    <AppStateProvider>
-      <AppContent />
-    </AppStateProvider>
+    <AuthProvider>
+      <AppStateProvider>
+        <AppContent />
+      </AppStateProvider>
+    </AuthProvider>
   );
 };
 

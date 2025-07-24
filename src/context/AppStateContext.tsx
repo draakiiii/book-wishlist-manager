@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useEffect, useState } from 'react';
 import { AppState, Action, Libro, ScanHistory, Statistics, Saga, EstadoLibro, Lectura } from '../types';
 import { getInitialTheme, persistThemePreference } from '../utils/themeConfig';
+import DatabaseService from '../services/databaseService';
+import { useAuth } from './AuthContext';
 
 const STORAGE_KEY = 'bibliotecaLibrosState_v1_0';
 
@@ -41,6 +43,50 @@ const initialState: AppState = {
   puntosGanados: 0,
   librosCompradosConPuntos: 0,
 };
+
+async function loadStateFromFirebase(): Promise<AppState | null> {
+  try {
+    console.log('loadStateFromFirebase: Starting to load from Firebase');
+    const firebaseState = await DatabaseService.loadAppState();
+    console.log('loadStateFromFirebase: Raw Firebase state:', firebaseState);
+    
+    if (firebaseState) {
+      // Migrar desde versión anterior si es necesario
+      if (firebaseState.progreso !== undefined) {
+        console.log('loadStateFromFirebase: Migrating from old version');
+        return migrateFromOldVersion(firebaseState);
+      }
+      
+      // Asegurar que todas las propiedades del estado inicial estén presentes
+      const completeState = {
+        ...initialState,
+        ...firebaseState,
+        sagaNotifications: firebaseState.sagaNotifications || [],
+        darkMode: firebaseState.darkMode || false,
+        sagas: firebaseState.sagas || [],
+        scanHistory: firebaseState.scanHistory || [],
+        searchHistory: firebaseState.searchHistory || [],
+        // Sistema de puntos
+        puntosActuales: firebaseState.puntosActuales || 0,
+        puntosGanados: firebaseState.puntosGanados || 0,
+        librosCompradosConPuntos: firebaseState.librosCompradosConPuntos || 0,
+      };
+      
+      console.log('loadStateFromFirebase: Complete state after merge:', {
+        librosCount: completeState.libros.length,
+        wishlistCount: completeState.libros.filter(l => l.estado === 'wishlist').length,
+        tbrCount: completeState.libros.filter(l => l.estado === 'tbr').length
+      });
+      
+      return completeState;
+    }
+    console.log('loadStateFromFirebase: No Firebase state found, returning null');
+    return null;
+  } catch (error) {
+    console.error('Error loading state from Firebase:', error);
+    return null;
+  }
+}
 
 function loadStateFromStorage(): AppState | null {
   try {
@@ -274,6 +320,11 @@ function appReducer(state: AppState, action: Action): AppState {
     }
 
     case 'ADD_BOOK': {
+      console.log('AppStateContext: ADD_BOOK action triggered', { 
+        libro: action.payload,
+        currentLibrosCount: state.libros.length 
+      });
+      
       const nuevoLibro = {
         ...action.payload,
         id: Date.now(),
@@ -289,6 +340,12 @@ function appReducer(state: AppState, action: Action): AppState {
         ...state, 
         libros: [...state.libros, nuevoLibro] 
       };
+      
+      console.log('AppStateContext: New state after ADD_BOOK', { 
+        newLibrosCount: nuevoEstado.libros.length,
+        wishlistCount: nuevoEstado.libros.filter(l => l.estado === 'wishlist').length,
+        tbrCount: nuevoEstado.libros.filter(l => l.estado === 'tbr').length
+      });
       
       // Manejar saga si existe
       if (nuevoLibro.sagaName) {
@@ -940,14 +997,78 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
   children, 
   initialState: customInitialState 
 }) => {
-  const savedState = loadStateFromStorage();
-  const initialAppState = savedState || customInitialState || initialState;
-  
-  const [state, dispatch] = useReducer(appReducer, initialAppState);
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
+  const [state, dispatch] = useReducer(appReducer, initialState);
+  const [isLoading, setIsLoading] = useState(false); // Cambiar a false para evitar loading infinito
+  const [isInitialized, setIsInitialized] = useState(false); // Nueva variable para controlar la inicialización
 
+  // Cargar estado inicial - SOLO Firebase
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+    console.log('AppStateContext: Starting initialization', { authLoading, isAuthenticated, user: user?.email });
+    
+    // Solo cargar desde Firebase si está autenticado
+    if (isAuthenticated && user && !authLoading) {
+      const loadFromFirebase = async () => {
+        try {
+          console.log('AppStateContext: Loading from Firebase');
+          const firebaseState = await loadStateFromFirebase();
+          if (firebaseState) {
+            console.log('AppStateContext: Firebase state loaded, updating');
+            dispatch({ type: 'IMPORT_DATA', payload: firebaseState });
+          } else {
+            console.log('AppStateContext: No Firebase data found, starting with empty state');
+          }
+          setIsInitialized(true);
+        } catch (error) {
+          console.error('AppStateContext: Error loading from Firebase:', error);
+          setIsInitialized(true);
+        }
+      };
+      loadFromFirebase();
+    } else if (!isAuthenticated && !authLoading) {
+      // Si no está autenticado, empezar con estado vacío
+      console.log('AppStateContext: Not authenticated, starting with empty state');
+      setIsInitialized(true);
+    }
+  }, [isAuthenticated, user, authLoading, dispatch]);
+
+  // Guardar estado en Firebase cuando esté autenticado
+  useEffect(() => {
+    console.log('AppStateContext: Save effect triggered', { 
+      isAuthenticated, 
+      user: user?.email, 
+      isLoading, 
+      isInitialized,
+      librosCount: state.libros.length 
+    });
+    
+    if (isAuthenticated && user && !isLoading && isInitialized) {
+      const saveToFirebase = async () => {
+        try {
+          console.log('AppStateContext: Saving to Firebase', { 
+            librosCount: state.libros.length,
+            wishlistCount: state.libros.filter(l => l.estado === 'wishlist').length,
+            tbrCount: state.libros.filter(l => l.estado === 'tbr').length
+          });
+          await DatabaseService.saveAppState(state);
+          console.log('AppStateContext: Successfully saved to Firebase');
+        } catch (error) {
+          console.error('Error saving to Firebase:', error);
+        }
+      };
+      saveToFirebase();
+    }
+  }, [state, isAuthenticated, user, isLoading, isInitialized]);
+
+  // Eliminado fallback a localStorage - solo Firebase
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <AppStateContext.Provider value={{ state, dispatch }}>
