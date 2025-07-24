@@ -35,6 +35,7 @@ import DataExportImport from './components/DataExportImport';
 import ScanHistory from './components/ScanHistory';
 import ConfigForm from './components/ConfigForm';
 import BulkScanModal from './components/BulkScanModal';
+import FeatureDemo from './components/FeatureDemo';
 
 import LoginScreen from './components/LoginScreen';
 
@@ -52,6 +53,7 @@ const AppContent: React.FC = () => {
   const [bulkScanModalOpen, setBulkScanModalOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [featureDemoOpen, setFeatureDemoOpen] = useState(false);
 
 
   console.log('AppContent rendered', { authLoading, isAuthenticated, user: user?.email });
@@ -251,6 +253,16 @@ const AppContent: React.FC = () => {
                 title="Estadísticas Avanzadas"
               >
                 <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setFeatureDemoOpen(true)}
+                className="p-1.5 md:p-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 transition-colors duration-200"
+                title="Demostración de Funcionalidades"
+              >
+                <BookOpen className="h-4 w-4 md:h-5 md:w-5 text-blue-600 dark:text-blue-400" />
               </motion.button>
               
               {/* Botón de Exportar/Importar Datos - DESHABILITADO TEMPORALMENTE */}
@@ -503,6 +515,12 @@ const AppContent: React.FC = () => {
           // Los libros se agregarán automáticamente a través del contexto
           setBulkScanModalOpen(false);
         }}
+      />
+
+      {/* Feature Demo Modal */}
+      <FeatureDemo
+        isOpen={featureDemoOpen}
+        onClose={() => setFeatureDemoOpen(false)}
       />
 
       {/* Logout Confirmation Dialog */}

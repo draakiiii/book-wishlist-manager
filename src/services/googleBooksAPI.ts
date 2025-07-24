@@ -147,6 +147,14 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
             // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
           };
           
+          // Debug logs
+          console.log('🔍 Google Books API Response:', {
+            volumeInfo: book,
+            accessInfo: accessInfo,
+            imageLinks: book.imageLinks,
+            finalBookData: bookData
+          });
+          
           // Cache the result
           (bookData as any).timestamp = Date.now();
           bookCache.set(cacheKey, bookData);
