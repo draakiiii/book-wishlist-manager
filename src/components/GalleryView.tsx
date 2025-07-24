@@ -214,7 +214,7 @@ const GalleryView: React.FC<GalleryViewProps> = ({ libros, onBookClick, onBookAc
 
       {/* Gallery Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-        <AnimatePresence>
+
           {filteredAndSortedBooks.map((libro) => (
             <motion.div
               key={libro.id}
@@ -339,7 +339,7 @@ const GalleryView: React.FC<GalleryViewProps> = ({ libros, onBookClick, onBookAc
               </div>
             </motion.div>
           ))}
-        </AnimatePresence>
+
       </div>
 
       {/* Empty State */}

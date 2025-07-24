@@ -86,7 +86,7 @@ const EditionsManager: React.FC<EditionsManagerProps> = ({ isOpen, onClose, libr
     dispatch({
       type: 'UPDATE_EDICION',
       payload: {
-        edicionId,
+        edicionId: editionId,
         updates
       }
     });
@@ -97,7 +97,7 @@ const EditionsManager: React.FC<EditionsManagerProps> = ({ isOpen, onClose, libr
     if (window.confirm('¿Estás seguro de que quieres eliminar esta edición?')) {
       dispatch({
         type: 'DELETE_EDICION',
-        payload: { edicionId }
+        payload: { edicionId: editionId }
       });
     }
   };
@@ -136,7 +136,6 @@ const EditionsManager: React.FC<EditionsManagerProps> = ({ isOpen, onClose, libr
   if (!isOpen || !libro) return null;
 
   return (
-    <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -592,7 +591,6 @@ const EditionsManager: React.FC<EditionsManagerProps> = ({ isOpen, onClose, libr
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
   );
 };
 
