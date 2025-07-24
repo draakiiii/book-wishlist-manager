@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { 
   BarChart3, 
@@ -17,7 +17,15 @@ import {
   FileText,
   Monitor,
   Headphones,
-  Info
+  Info,
+  X,
+  CheckCircle,
+  BookMarked,
+  Clock,
+  BookX,
+  Target,
+  Heart,
+  Share2
 } from 'lucide-react';
 import { Libro, Statistics } from '../types';
 import { useAppState } from '../context/AppStateContext';
@@ -30,7 +38,7 @@ interface AdvancedStatisticsProps {
 const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose }) => {
   const { state } = useAppState();
 
-  const statistics = useState(() => {
+  const statistics = useMemo(() => {
     // Filtrar libros excluyendo wishlist para estadísticas
     const librosParaEstadisticas = state.libros.filter(book => book.estado !== 'wishlist');
     
