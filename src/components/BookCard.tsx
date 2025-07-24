@@ -35,12 +35,7 @@ interface BookCardProps {
 const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => {
   const { state, dispatch } = useAppState();
   
-  // Log para debug
-  console.log('BookCard - book data:', {
-    titulo: book.titulo,
-    portada: book.portada,
-    mostrarPortadas: state.config.mostrarPortadas
-  });
+
   const { dialog, showError, showConfirm, hideDialog } = useDialog();
   const [showActions, setShowActions] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
@@ -294,118 +289,120 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         whileHover={{ y: -2 }}
-        className={`relative rounded-xl border-2 p-3 sm:p-4 transition-all duration-300 hover:shadow-lg ${getTypeColor()}`}
+        className={`relative rounded-xl border-2 transition-all duration-300 hover:shadow-lg book-card ${getTypeColor()} ${
+          state.config.mostrarPortadas ? 'p-3 sm:p-4' : 'p-4 sm:p-5'
+        }`}
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
       >
-      {/* Type Badge */}
-      <div className="absolute top-2 right-2 flex items-center space-x-1 px-2 py-1 bg-white/80 dark:bg-slate-800/80 rounded-full text-xs font-medium">
-        {getTypeIcon()}
-        <span className="capitalize hidden sm:inline">{getTypeLabel()}</span>
-      </div>
-
-      {/* Book Info */}
-      <div className="space-y-2 sm:space-y-3">
-        {/* Cover Image */}
-        {state.config.mostrarPortadas && (
-          <div className="flex justify-center">
-            {book.portada ? (
-              <div className="relative w-24 h-32 sm:w-28 sm:h-36 rounded-lg overflow-hidden shadow-md">
-                <img
-                  src={book.portada}
-                  alt={`Portada de ${book.titulo}`}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    console.log('Image failed to load:', book.portada);
-                    // Ocultar la imagen si falla al cargar
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                  onLoad={() => {
-                    console.log('Image loaded successfully:', book.portada);
-                  }}
-                />
-              </div>
-            ) : (
-              <div className="relative w-24 h-32 sm:w-28 sm:h-36 rounded-lg overflow-hidden shadow-md bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                <BookOpen className="h-8 w-8 text-slate-400" />
-              </div>
-            )}
-          </div>
-        )}
-        
-        <div>
-          <h3 className="font-semibold text-slate-900 dark:text-white text-base sm:text-lg leading-tight pr-16 sm:pr-20">
-            {book.titulo}
-          </h3>
-          {book.autor && (
-            <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 mt-1">
-              <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="text-xs sm:text-sm truncate">{book.autor}</span>
-            </div>
-          )}
+        {/* Type Badge */}
+        <div className="absolute top-2 right-2 flex items-center space-x-1 px-2 py-1 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-full text-xs font-medium z-10">
+          {getTypeIcon()}
+          <span className="capitalize hidden sm:inline">{getTypeLabel()}</span>
         </div>
 
-        {/* Book Details */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-          {book.paginas && (
-            <div className="flex items-center space-x-2">
-              <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-slate-500 flex-shrink-0" />
-              <span className="text-slate-700 dark:text-slate-300">
-                {book.paginas} páginas
-              </span>
+        {/* Book Content */}
+        <div className={`${state.config.mostrarPortadas ? 'flex flex-col sm:flex-row gap-3 sm:gap-4' : 'space-y-3'}`}>
+          {/* Cover Image */}
+          {state.config.mostrarPortadas && (
+            <div className="flex-shrink-0 flex justify-center sm:justify-start">
+              {book.portada ? (
+                <div className="relative w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 rounded-lg overflow-hidden shadow-lg">
+                  <img
+                    src={book.portada}
+                    alt={`Portada de ${book.titulo}`}
+                    className="w-full h-full object-cover cover-image"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  {/* Overlay for hover effect */}
+                  <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors duration-300" />
+                </div>
+              ) : (
+                <div className="relative w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 rounded-lg overflow-hidden shadow-lg bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center">
+                  <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-slate-400" />
+                </div>
+              )}
             </div>
           )}
           
-          {book.sagaName && (
-            <div className="flex items-center space-x-2">
-              <Star className="h-3 w-3 sm:h-4 sm:w-4 text-amber-500 flex-shrink-0" />
-              <span className="text-slate-700 dark:text-slate-300 truncate">
-                {book.sagaName}
-                {(() => {
-                  const bookNumber = getBookNumberInSaga(book);
-                  return bookNumber ? ` #${bookNumber}` : '';
-                })()}
-              </span>
+          {/* Book Info */}
+          <div className="flex-1 min-w-0 space-y-2 sm:space-y-3">
+            {/* Title and Author */}
+            <div>
+              <h3 className="font-semibold text-slate-900 dark:text-white book-title leading-tight pr-12 sm:pr-16 line-clamp-2">
+                {book.titulo}
+              </h3>
+                              {book.autor && (
+                  <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 mt-1">
+                    <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                    <span className="book-author truncate">{book.autor}</span>
+                  </div>
+                )}
             </div>
-          )}
 
-          {book.calificacion && (
-            <div className="flex items-center space-x-2">
-              <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 flex-shrink-0" />
-              <span className="text-slate-700 dark:text-slate-300">
-                {book.calificacion}/5
-              </span>
+            {/* Book Details Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 book-details">
+              {book.paginas && (
+                <div className="flex items-center space-x-2">
+                  <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-slate-500 flex-shrink-0" />
+                  <span className="text-slate-700 dark:text-slate-300">
+                    {book.paginas} páginas
+                  </span>
+                </div>
+              )}
+              
+              {book.sagaName && (
+                <div className="flex items-center space-x-2">
+                  <Star className="h-3 w-3 sm:h-4 sm:w-4 text-amber-500 flex-shrink-0" />
+                  <span className="text-slate-700 dark:text-slate-300 truncate">
+                    {book.sagaName}
+                    {(() => {
+                      const bookNumber = getBookNumberInSaga(book);
+                      return bookNumber ? ` #${bookNumber}` : '';
+                    })()}
+                  </span>
+                </div>
+              )}
+
+              {book.calificacion && (
+                <div className="flex items-center space-x-2">
+                  <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 flex-shrink-0" />
+                  <span className="text-slate-700 dark:text-slate-300">
+                    {book.calificacion}/5
+                  </span>
+                </div>
+              )}
+
+              {book.prestado && book.prestadoA && (
+                <div className="flex items-center space-x-2">
+                  <Users className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500 flex-shrink-0" />
+                  <span className="text-slate-700 dark:text-slate-300 truncate">
+                    Prestado a {book.prestadoA}
+                  </span>
+                </div>
+              )}
             </div>
-          )}
 
-          {book.prestado && book.prestadoA && (
-            <div className="flex items-center space-x-2">
-              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500 flex-shrink-0" />
-              <span className="text-slate-700 dark:text-slate-300 truncate">
-                Prestado a {book.prestadoA}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Actions */}
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ 
-            opacity: showActions ? 1 : 0, 
-            height: showActions ? 'auto' : 0 
-          }}
-          className="flex flex-wrap gap-1 sm:gap-2 pt-2"
-        >
+            {/* Actions */}
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ 
+                opacity: showActions ? 1 : 0, 
+                height: showActions ? 'auto' : 0 
+              }}
+              className="flex flex-wrap gap-1.5 sm:gap-2 pt-2 sm:pt-3"
+            >
           {/* TBR Actions */}
           {book.estado === 'tbr' && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleStartReading}
-              className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
+              className="flex-1 sm:flex-none px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-1.5 shadow-sm hover:shadow-md"
             >
-              <Play className="h-3 w-3" />
+              <Play className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>Empezar</span>
             </motion.button>
           )}
@@ -417,9 +414,9 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleFinishReading}
-                className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-success-500 hover:bg-success-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
+                className="flex-1 sm:flex-none px-3 py-2 bg-success-500 hover:bg-success-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-1.5 shadow-sm hover:shadow-md"
               >
-                <CheckCircle className="h-3 w-3" />
+                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span>Terminar</span>
               </motion.button>
               
@@ -427,9 +424,9 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleAbandonBook}
-                className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 bg-warning-500 hover:bg-warning-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-1"
+                className="flex-1 sm:flex-none px-3 py-2 bg-warning-500 hover:bg-warning-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-1.5 shadow-sm hover:shadow-md"
               >
-                <XCircle className="h-3 w-3" />
+                <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span>Abandonar</span>
               </motion.button>
             </>

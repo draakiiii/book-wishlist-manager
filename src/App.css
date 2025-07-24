@@ -98,6 +98,78 @@
 
 /* Mejoras para los botones en modo oscuro */
 .dark button {
+
+/* Line clamp utility for text truncation */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Smooth transitions for book cards */
+.book-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.book-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Cover image hover effects */
+.cover-image {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cover-image:hover {
+  transform: scale(1.05);
+}
+
+/* Responsive text sizing */
+@media (max-width: 640px) {
+  .book-title {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  
+  .book-author {
+    font-size: 0.75rem;
+  }
+  
+  .book-details {
+    font-size: 0.75rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .book-title {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+  
+  .book-author {
+    font-size: 0.875rem;
+  }
+  
+  .book-details {
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .book-title {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+}
   transition: all 0.2s ease;
 }
 

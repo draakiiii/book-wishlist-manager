@@ -95,8 +95,6 @@ const TBRForm: React.FC = () => {
   };
 
   const addBookToTBR = (bookData: BookData) => {
-    console.log('TBRForm - bookData received:', bookData);
-    console.log('TBRForm - bookData.portada:', bookData.portada);
     const nuevoLibro: Libro = {
       id: Date.now(),
       titulo: bookData.titulo,
@@ -123,8 +121,6 @@ const TBRForm: React.FC = () => {
       lecturas: []
     };
     
-    console.log('TBRForm - nuevoLibro created:', nuevoLibro);
-    
     dispatch({ type: 'ADD_BOOK', payload: nuevoLibro });
     
     // Limpiar formulario
@@ -139,24 +135,14 @@ const TBRForm: React.FC = () => {
   };
 
   const handleBookSelect = async (bookData: BookData) => {
-    console.log('Book selected - FULL DATA:', JSON.stringify(bookData, null, 2));
-    
     // Clear cache to ensure fresh data
     clearCache();
     
-    // Test the API to see what's happening
-    if (bookData.titulo) {
-      console.log('Testing API for book:', bookData.titulo);
-      await testGoogleBooksAPI(bookData.titulo);
-    }
-    
     // If the bookData doesn't have a cover, try to fetch it again
     if (!bookData.portada && bookData.isbn) {
-      console.log('No cover found, trying to fetch again with ISBN:', bookData.isbn);
       try {
         const freshBookData = await fetchBookData(bookData.isbn);
         if (freshBookData && freshBookData.portada) {
-          console.log('Found cover on second attempt:', freshBookData.portada);
           bookData.portada = freshBookData.portada;
         }
       } catch (error) {
