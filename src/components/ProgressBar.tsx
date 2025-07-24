@@ -149,14 +149,14 @@ const ProgressBar: React.FC = () => {
         >
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="p-1.5 sm:p-2 bg-green-500 rounded-lg">
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
             <div>
               <p className="text-xs sm:text-sm font-medium text-green-700 dark:text-green-300">
-                Páginas Leídas
+                Puntos
               </p>
               <p className="text-xl sm:text-2xl font-bold text-green-900 dark:text-green-100">
-                {paginasLeidas.toLocaleString()}
+                {state.puntosActuales}
               </p>
             </div>
           </div>

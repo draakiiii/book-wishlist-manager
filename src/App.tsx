@@ -51,6 +51,7 @@ const AppContent: React.FC = () => {
   const [scanHistoryModalOpen, setScanHistoryModalOpen] = useState(false);
   const [bulkScanModalOpen, setBulkScanModalOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
 
   console.log('AppContent rendered', { authLoading, isAuthenticated, user: user?.email });
@@ -120,6 +121,15 @@ const AppContent: React.FC = () => {
     } catch (error) {
       console.error('Error logging out:', error);
     }
+  };
+
+  const handleLogoutClick = () => {
+    setLogoutConfirmOpen(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setLogoutConfirmOpen(false);
+    await handleLogout();
   };
 
   const handleRemoveNotification = (id: number) => {
@@ -294,7 +304,7 @@ const AppContent: React.FC = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
                 className="p-1.5 md:p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors duration-200"
                 title={`Cerrar sesión (${user?.email})`}
               >
@@ -494,6 +504,64 @@ const AppContent: React.FC = () => {
           setBulkScanModalOpen(false);
         }}
       />
+
+      {/* Logout Confirmation Dialog */}
+      {logoutConfirmOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setLogoutConfirmOpen(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center space-x-2">
+                <Users className="h-5 w-5 text-red-500" />
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Cerrar Sesión
+                </h3>
+              </div>
+              <button
+                onClick={() => setLogoutConfirmOpen(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
+              >
+                <X className="h-5 w-5 text-slate-500" />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="p-6">
+              <p className="text-slate-700 dark:text-slate-300 mb-6">
+                ¿Estás seguro de que deseas cerrar la sesión?
+              </p>
+              
+              {/* Buttons */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setLogoutConfirmOpen(false)}
+                  className="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors duration-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleLogoutConfirm}
+                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200"
+                >
+                  Cerrar Sesión
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
 
 
     </div>
