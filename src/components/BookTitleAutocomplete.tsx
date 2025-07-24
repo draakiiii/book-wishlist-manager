@@ -59,7 +59,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedValue(inputValue);
       setIsUserTyping(false);
-    }, 500);
+    }, 1000);
 
     // Cleanup function
     return () => {
@@ -78,22 +78,34 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
         return;
       }
 
+      // Verify that this is still the current value (not stale)
+      if (debouncedValue !== inputValue) {
+        return;
+      }
+
       setIsLoading(true);
       try {
         const results = await searchBooksByTitle(debouncedValue);
-        setSuggestions(results);
-        setIsOpen(results.length > 0);
+        // Double-check that the value hasn't changed during the API call
+        if (debouncedValue === inputValue) {
+          setSuggestions(results);
+          setIsOpen(results.length > 0);
+        }
       } catch (error) {
         console.error('Error searching books:', error);
-        setSuggestions([]);
-        setIsOpen(false);
+        if (debouncedValue === inputValue) {
+          setSuggestions([]);
+          setIsOpen(false);
+        }
       } finally {
-        setIsLoading(false);
+        if (debouncedValue === inputValue) {
+          setIsLoading(false);
+        }
       }
     };
 
     searchBooks();
-  }, [debouncedValue, disabled, disableAutocomplete, justSelected]);
+  }, [debouncedValue, disabled, disableAutocomplete, justSelected, inputValue]);
 
   // Handle click outside
   useEffect(() => {
@@ -145,6 +157,13 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     if (disabled) return;
     
     const newValue = e.target.value;
+    
+    // Clear any pending search timeout immediately when user types
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
+    }
+    
     setInputValue(newValue);
     onChange(newValue);
     
@@ -166,11 +185,6 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     if (newValue.trim().length < 2) {
       setSuggestions([]);
       setIsOpen(false);
-      // Clear any pending search timeout
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-        searchTimeoutRef.current = null;
-      }
     }
   };
 
