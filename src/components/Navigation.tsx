@@ -10,6 +10,7 @@ import {
   BookOpen
 } from 'lucide-react';
 
+// Navigation component with dropdown menu for dashboard and books sections
 export type NavigationSection = 'dashboard' | 'books';
 export type BooksViewMode = 'list' | 'gallery';
 
