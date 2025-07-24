@@ -94,6 +94,16 @@ const TBRForm: React.FC = () => {
   };
 
   const addBookToTBR = (bookData: BookData) => {
+    console.log('TBRForm: Adding book with data:', {
+      titulo: bookData.titulo,
+      portadaUrl: bookData.portadaUrl,
+      portadaThumbnail: bookData.portadaThumbnail,
+      config: {
+        mostrarPortadas: state.config.mostrarPortadas,
+        descargarPortadasAutomaticamente: state.config.descargarPortadasAutomaticamente
+      }
+    });
+    
     const nuevoLibro: Libro = {
       id: Date.now(),
       titulo: bookData.titulo,

@@ -320,6 +320,10 @@ function agregarEstadoAlHistorial(libro: Libro, nuevoEstado: Libro['estado'], no
 function appReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'SET_CONFIG':
+      console.log('AppStateContext: SET_CONFIG action triggered', {
+        mostrarPortadas: action.payload.mostrarPortadas,
+        descargarPortadasAutomaticamente: action.payload.descargarPortadasAutomaticamente
+      });
       return { ...state, config: action.payload };
 
     case 'SET_CAMERA_PREFERENCE':

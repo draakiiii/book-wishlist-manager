@@ -16,6 +16,10 @@ const ConfigForm: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('ConfigForm: Saving config with portadas settings:', {
+      mostrarPortadas: config.mostrarPortadas,
+      descargarPortadasAutomaticamente: config.descargarPortadasAutomaticamente
+    });
     dispatch({ type: 'SET_CONFIG', payload: config });
     setIsEditing(false);
   };
