@@ -161,21 +161,6 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-amber-100 text-sm">Páginas Leídas</p>
-                  <p className="text-2xl font-bold">{statistics.paginasLeidas.toLocaleString()}</p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-amber-200" />
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
               className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white"
             >
               <div className="flex items-center justify-between">
@@ -282,28 +267,12 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
                 <Award className="h-5 w-5 text-yellow-600" />
                 <span>Sistema de Puntos</span>
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center">
-                  <p className="text-sm text-yellow-700 dark:text-yellow-300">Puntos Actuales</p>
-                  <p className="text-lg font-semibold text-yellow-900 dark:text-yellow-100">
-                    {state.puntosActuales}
-                  </p>
-                  <p className="text-xs text-yellow-600 dark:text-yellow-400">disponibles</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-yellow-700 dark:text-yellow-300">Puntos Ganados</p>
-                  <p className="text-lg font-semibold text-yellow-900 dark:text-yellow-100">
-                    {state.puntosGanados}
-                  </p>
-                  <p className="text-xs text-yellow-600 dark:text-yellow-400">total</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-yellow-700 dark:text-yellow-300">Libros Comprados</p>
-                  <p className="text-lg font-semibold text-yellow-900 dark:text-yellow-100">
-                    {state.librosCompradosConPuntos}
-                  </p>
-                  <p className="text-xs text-yellow-600 dark:text-yellow-400">con puntos</p>
-                </div>
+              <div className="text-center">
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">Puntos Actuales</p>
+                <p className="text-2xl font-semibold text-yellow-900 dark:text-yellow-100">
+                  {state.puntosActuales}
+                </p>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400">disponibles</p>
               </div>
               <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
                 <p className="text-sm text-yellow-800 dark:text-yellow-200">
@@ -419,18 +388,11 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
               <TrendingUp className="h-5 w-5 text-primary-500" />
               <span>Análisis de Lectura</span>
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="text-center">
                 <p className="text-sm text-slate-600 dark:text-slate-400">Tiempo Promedio</p>
                 <p className="text-lg font-semibold text-slate-900 dark:text-white">
                   {statistics.tiempoPromedio} días
-                </p>
-                <p className="text-xs text-slate-500">por libro</p>
-              </div>
-              <div className="text-center">
-                <p className="text-sm text-slate-600 dark:text-slate-400">Páginas Promedio</p>
-                <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                  {statistics.librosLeidos > 0 ? Math.round(statistics.paginasLeidas / statistics.librosLeidos) : 0}
                 </p>
                 <p className="text-xs text-slate-500">por libro</p>
               </div>
