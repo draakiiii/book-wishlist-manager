@@ -34,6 +34,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Sync internal state with prop value
   useEffect(() => {
@@ -44,16 +45,29 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
 
   // Debounce the search to detect when user stops typing
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // Only trigger search when user stops typing for 500ms
-      if (isUserTyping && inputValue.trim().length >= 2 && !justSelected) {
-        setDebouncedValue(inputValue);
-        setIsUserTyping(false);
-      }
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Don't search if conditions are not met
+    if (disabled || disableAutocomplete || justSelected || inputValue.trim().length < 2) {
+      return;
+    }
+
+    // Set a new timeout for search
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedValue(inputValue);
+      setIsUserTyping(false);
     }, 500);
 
-    return () => clearTimeout(timer);
-  }, [inputValue, isUserTyping, justSelected]);
+    // Cleanup function
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [inputValue, disabled, disableAutocomplete, justSelected]);
 
   // Search for books when debounced value changes
   useEffect(() => {
@@ -147,9 +161,26 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     if (disableAutocomplete) {
       setIsOpen(false);
     }
+    
+    // Clear any existing suggestions while typing
+    if (newValue.trim().length < 2) {
+      setSuggestions([]);
+      setIsOpen(false);
+      // Clear any pending search timeout
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+        searchTimeoutRef.current = null;
+      }
+    }
   };
 
   const handleBookSelect = (book: BookData) => {
+    // Clear any pending search timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
+    }
+    
     setInputValue(book.titulo);
     setDebouncedValue(book.titulo);
     setLastTypedValue(book.titulo);
