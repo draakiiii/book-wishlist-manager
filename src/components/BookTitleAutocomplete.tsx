@@ -191,6 +191,8 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   };
 
   const handleBookSelect = (book: BookData) => {
+    console.log('BookTitleAutocomplete - Book selected:', JSON.stringify(book, null, 2));
+    
     // Cancelar cualquier búsqueda en progreso
     if (debounceTimerRef.current) {
       window.clearTimeout(debounceTimerRef.current);
