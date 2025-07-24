@@ -295,12 +295,12 @@ const SagaEditor: React.FC<SagaEditorProps> = ({ isOpen, onClose, sagaId }) => {
                       </label>
                       <input
                         type="number"
-                        value={currentSaga?.totalLibros || ''}
+                        value={currentSaga?.count || ''}
                         onChange={(e) => {
                           if (editingSaga) {
-                            setEditingSaga(prev => prev ? { ...prev, totalLibros: parseInt(e.target.value) || 0 } : null);
-                          } else if (newSaga) {
-                            setNewSaga(prev => prev ? { ...prev, totalLibros: parseInt(e.target.value) || 0 } : null);
+                            setEditingSaga(prev => prev ? { ...prev, count: parseInt(e.target.value) || 0 } : null);
+                                                      } else if (newSaga) {
+                              setNewSaga(prev => prev ? { ...prev, count: parseInt(e.target.value) || 0 } : null);
                           }
                         }}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
@@ -372,12 +372,12 @@ const SagaEditor: React.FC<SagaEditorProps> = ({ isOpen, onClose, sagaId }) => {
                       axis="y"
                       values={sagaBooks}
                       onReorder={(newOrder) => {
-                        const newOrderIds = newOrder.map(book => book.id);
+                        const newOrderIds = newOrder.map(book => book?.id).filter(id => id !== undefined) as number[];
                         handleReorderBooks(newOrderIds);
                       }}
                       className="space-y-2"
                     >
-                      {sagaBooks.map((libro, index) => (
+                      {sagaBooks.filter((libro): libro is Libro => libro !== undefined).map((libro, index) => (
                         <Reorder.Item
                           key={libro.id}
                           value={libro}
