@@ -6,6 +6,117 @@ export interface Lectura {
   reseña?: string;
   paginasLeidas?: number;
   notas?: string;
+  citas?: Cita[]; // Nuevo: citas de la lectura
+}
+
+// Nueva interfaz para citas
+export interface Cita {
+  id: number;
+  texto: string;
+  pagina?: number;
+  capitulo?: string;
+  fecha: number;
+  notas?: string;
+  favorita?: boolean;
+}
+
+// Nueva interfaz para ediciones de libros
+export interface EdicionLibro {
+  id: number;
+  libroId: number; // ID del libro principal
+  isbn: string;
+  editorial: string;
+  año: number;
+  paginas: number;
+  formato: 'fisico' | 'digital' | 'audiolibro';
+  idioma: string;
+  precio?: number;
+  fechaCompra?: number;
+  estado: 'disponible' | 'prestado' | 'perdido';
+  ubicacion?: string;
+  notas?: string;
+  imagen?: string;
+}
+
+// Nueva interfaz para historial de préstamos
+export interface HistorialPrestamo {
+  id: number;
+  libroId: number;
+  edicionId?: number;
+  prestadoA: string;
+  fechaPrestamo: number;
+  fechaDevolucion?: number;
+  fechaLimite?: number;
+  estado: 'activo' | 'devuelto' | 'vencido';
+  notas?: string;
+  recordatoriosEnviados: number[];
+}
+
+// Nueva interfaz para widgets configurables
+export interface Widget {
+  id: string;
+  tipo: 'estadisticas' | 'objetivos' | 'proximasLecturas' | 'sagas' | 'wishlist' | 'prestamos' | 'reportes';
+  titulo: string;
+  visible: boolean;
+  orden: number;
+  configuracion?: Record<string, any>;
+}
+
+// Nueva interfaz para layouts
+export interface Layout {
+  id: string;
+  nombre: string;
+  tipo: 'grid' | 'lista' | 'galeria' | 'estanteria';
+  configuracion: {
+    columnas?: number;
+    tamañoTarjetas?: 'pequeño' | 'mediano' | 'grande';
+    mostrarPortadas?: boolean;
+    mostrarDetalles?: boolean;
+  };
+}
+
+// Nueva interfaz para reportes automáticos
+export interface ReporteAutomatico {
+  id: number;
+  tipo: 'mensual' | 'anual' | 'personalizado';
+  fechaGeneracion: number;
+  periodo: {
+    inicio: number;
+    fin: number;
+  };
+  datos: {
+    librosLeidos: number;
+    paginasLeidas: number;
+    tiempoLectura: number;
+    generosLeidos: Array<{ genero: string; count: number }>;
+    autoresLeidos: Array<{ autor: string; count: number }>;
+    sagasCompletadas: number;
+    objetivosCumplidos: number;
+    prestamosActivos: number;
+    valorAgregado: number;
+  };
+  exportado?: boolean;
+  fechaExportacion?: number;
+}
+
+// Nueva interfaz para reseñas compartibles
+export interface ResenaCompartible {
+  id: number;
+  libroId: number;
+  titulo: string;
+  autor: string;
+  calificacion: number;
+  reseña: string;
+  fecha: number;
+  citas?: Cita[];
+  etiquetas?: string[];
+  publica: boolean;
+  redesSociales: {
+    twitter?: boolean;
+    facebook?: boolean;
+    instagram?: boolean;
+    goodreads?: boolean;
+  };
 }
 
 export interface Libro {
@@ -50,6 +161,12 @@ export interface Libro {
   webReaderLink?: string;
   // Custom user-uploaded image (takes priority over API images)
   customImage?: string;
+  
+  // Nuevas propiedades
+  ediciones?: EdicionLibro[]; // Múltiples ediciones del libro
+  citas?: Cita[]; // Citas del libro
+  reseñasCompartibles?: ResenaCompartible[]; // Reseñas para compartir
+  etiquetas?: string[]; // Etiquetas personalizadas
 }
 
 export interface EstadoLibro {
@@ -70,6 +187,16 @@ export interface Saga {
   autor?: string;
   libros: number[]; // IDs de los libros de la saga
   orden?: number[]; // Orden de lectura recomendado
+  
+  // Nuevas propiedades para edición de sagas
+  imagen?: string; // Imagen de la saga
+  color?: string; // Color personalizado para la saga
+  prioridad?: number; // Prioridad de lectura
+  estado: 'activa' | 'pausada' | 'completada' | 'abandonada';
+  fechaInicio?: number;
+  fechaFin?: number;
+  notas?: string;
+  etiquetas?: string[];
 }
 
 export interface SagaNotification {
@@ -150,6 +277,7 @@ export interface Configuracion {
   flashlightEnabled?: boolean;
   zoomLevel?: number;
   defaultCameraId?: string;
+  autoCloseScanner?: boolean; // Nuevo: cerrar escáner automáticamente
   
   // Configuración de notificaciones
   notificacionesSaga?: boolean;
@@ -182,6 +310,13 @@ export interface Configuracion {
   mostrarSeccionLeidos?: boolean;
   mostrarSeccionAbandonados?: boolean;
   mostrarSeccionSagas?: boolean;
+  
+  // Nuevas configuraciones
+  layoutPredeterminado?: string; // ID del layout por defecto
+  widgetsHabilitados?: boolean;
+  reportesAutomaticos?: boolean;
+  compartirResenas?: boolean;
+  vistaGaleria?: boolean;
 }
 
 export interface AppState {
@@ -213,6 +348,13 @@ export interface AppState {
   tbr?: Libro[];
   historial?: Libro[];
   wishlist?: Libro[];
+  
+  // Nuevos estados
+  historialPrestamos: HistorialPrestamo[];
+  widgets: Widget[];
+  layouts: Layout[];
+  reportesAutomaticos: ReporteAutomatico[];
+  layoutActual: string;
 }
 
 export type Action =
@@ -271,6 +413,47 @@ export type Action =
   | { type: 'COMPRAR_LIBRO_CON_DINERO'; payload: { libroId: number } }
   | { type: 'RESETEAR_DINERO' }
   | { type: 'CAMBIAR_MODO_SISTEMA'; payload: { modoDinero: boolean } }
+  
+  // Nuevas acciones para las funcionalidades solicitadas
+  // Acciones de citas
+  | { type: 'ADD_CITA'; payload: { libroId: number; cita: Omit<Cita, 'id'> } }
+  | { type: 'UPDATE_CITA'; payload: { libroId: number; citaId: number; updates: Partial<Cita> } }
+  | { type: 'DELETE_CITA'; payload: { libroId: number; citaId: number } }
+  | { type: 'TOGGLE_CITA_FAVORITA'; payload: { libroId: number; citaId: number } }
+  
+  // Acciones de ediciones
+  | { type: 'ADD_EDICION'; payload: { libroId: number; edicion: Omit<EdicionLibro, 'id'> } }
+  | { type: 'UPDATE_EDICION'; payload: { edicionId: number; updates: Partial<EdicionLibro> } }
+  | { type: 'DELETE_EDICION'; payload: { edicionId: number } }
+  
+  // Acciones de historial de préstamos
+  | { type: 'ADD_PRESTAMO'; payload: HistorialPrestamo }
+  | { type: 'UPDATE_PRESTAMO'; payload: { id: number; updates: Partial<HistorialPrestamo> } }
+  | { type: 'DEVOLVER_PRESTAMO'; payload: { id: number; fecha?: number } }
+  | { type: 'DELETE_PRESTAMO'; payload: { id: number } }
+  
+  // Acciones de widgets
+  | { type: 'ADD_WIDGET'; payload: Widget }
+  | { type: 'UPDATE_WIDGET'; payload: { id: string; updates: Partial<Widget> } }
+  | { type: 'DELETE_WIDGET'; payload: { id: string } }
+  | { type: 'REORDER_WIDGETS'; payload: { orden: string[] } }
+  
+  // Acciones de layouts
+  | { type: 'ADD_LAYOUT'; payload: Layout }
+  | { type: 'UPDATE_LAYOUT'; payload: { id: string; updates: Partial<Layout> } }
+  | { type: 'DELETE_LAYOUT'; payload: { id: string } }
+  | { type: 'SET_LAYOUT_ACTUAL'; payload: { id: string } }
+  
+  // Acciones de reportes automáticos
+  | { type: 'GENERAR_REPORTE'; payload: ReporteAutomatico }
+  | { type: 'EXPORTAR_REPORTE'; payload: { id: number; formato: string } }
+  | { type: 'DELETE_REPORTE'; payload: { id: number } }
+  
+  // Acciones de reseñas compartibles
+  | { type: 'ADD_RESENA_COMPARTIBLE'; payload: { libroId: number; resena: Omit<ResenaCompartible, 'id'> } }
+  | { type: 'UPDATE_RESENA_COMPARTIBLE'; payload: { id: number; updates: Partial<ResenaCompartible> } }
+  | { type: 'DELETE_RESENA_COMPARTIBLE'; payload: { id: number } }
+  | { type: 'COMPARTIR_RESENA'; payload: { id: number; redes: string[] } }
   
   // Acciones de compatibilidad (para migración)
   | { type: 'MIGRATE_FROM_OLD_VERSION'; payload: any };

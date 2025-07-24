@@ -320,14 +320,40 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
               setIsProcessing(true);
               addFeedback('success', 'ISBN válido detectado. Procesando...', 1500);
               
-              // Stop scanning
+              // Stop scanning and turn off flashlight
               stopScanning();
               
-              // Process the ISBN and close modal
-              setTimeout(() => {
-                onScanSuccess(scannedCode);
-                onClose();
-              }, 1500);
+              // Turn off flashlight immediately
+              if (flashlightEnabled && videoRef.current) {
+                try {
+                  const stream = videoRef.current.srcObject as MediaStream;
+                  if (stream) {
+                    const track = stream.getVideoTracks()[0];
+                    if (track) {
+                      await track.applyConstraints({
+                        advanced: [{ torch: false } as any]
+                      });
+                      setFlashlightEnabled(false);
+                    }
+                  }
+                } catch (error) {
+                  console.error('Error turning off flashlight:', error);
+                }
+              }
+              
+              // Process the ISBN and close modal immediately if auto-close is enabled
+              if (state.config.autoCloseScanner) {
+                setTimeout(() => {
+                  onScanSuccess(scannedCode);
+                  onClose();
+                }, 1000); // Reduced delay for faster response
+              } else {
+                // If auto-close is disabled, just process the ISBN but keep modal open
+                setTimeout(() => {
+                  onScanSuccess(scannedCode);
+                  setIsProcessing(false);
+                }, 1000);
+              }
             } else {
               addFeedback('warning', 'Código detectado pero no es un ISBN válido', 2000);
             }

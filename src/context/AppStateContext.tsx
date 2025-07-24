@@ -22,6 +22,7 @@ const initialState: AppState = {
     notificacionesPrestamo: true,
     flashlightEnabled: false,
     zoomLevel: 1,
+    autoCloseScanner: true, // Nuevo: cerrar escáner automáticamente
     datosAnonimos: false,
     compartirEstadisticas: false,
     // Configuración del sistema de puntos/dinero
@@ -44,7 +45,13 @@ const initialState: AppState = {
     mostrarSeccionLeyendo: true,
     mostrarSeccionLeidos: true,
     mostrarSeccionAbandonados: true,
-    mostrarSeccionSagas: true
+    mostrarSeccionSagas: true,
+    // Nuevas configuraciones
+    layoutPredeterminado: 'default-grid',
+    widgetsHabilitados: true,
+    reportesAutomaticos: true,
+    compartirResenas: true,
+    vistaGaleria: false
   },
   libros: [],
   sagas: [],
@@ -60,6 +67,103 @@ const initialState: AppState = {
   dineroActual: 0,
   dineroGanado: 0,
   librosCompradosConDinero: 0,
+  // Nuevos estados
+  historialPrestamos: [],
+  widgets: [
+    {
+      id: 'estadisticas',
+      tipo: 'estadisticas',
+      titulo: 'Estadísticas',
+      visible: true,
+      orden: 1
+    },
+    {
+      id: 'objetivos',
+      tipo: 'objetivos',
+      titulo: 'Objetivos',
+      visible: true,
+      orden: 2
+    },
+    {
+      id: 'proximasLecturas',
+      tipo: 'proximasLecturas',
+      titulo: 'Próximas Lecturas',
+      visible: true,
+      orden: 3
+    },
+    {
+      id: 'sagas',
+      tipo: 'sagas',
+      titulo: 'Sagas',
+      visible: true,
+      orden: 4
+    },
+    {
+      id: 'wishlist',
+      tipo: 'wishlist',
+      titulo: 'Lista de Deseos',
+      visible: true,
+      orden: 5
+    },
+    {
+      id: 'prestamos',
+      tipo: 'prestamos',
+      titulo: 'Préstamos',
+      visible: true,
+      orden: 6
+    },
+    {
+      id: 'reportes',
+      tipo: 'reportes',
+      titulo: 'Reportes',
+      visible: true,
+      orden: 7
+    }
+  ],
+  layouts: [
+    {
+      id: 'default-grid',
+      nombre: 'Cuadrícula',
+      tipo: 'grid',
+      configuracion: {
+        columnas: 3,
+        tamañoTarjetas: 'mediano',
+        mostrarPortadas: true,
+        mostrarDetalles: true
+      }
+    },
+    {
+      id: 'default-list',
+      nombre: 'Lista',
+      tipo: 'lista',
+      configuracion: {
+        mostrarPortadas: true,
+        mostrarDetalles: true
+      }
+    },
+    {
+      id: 'default-gallery',
+      nombre: 'Galería',
+      tipo: 'galeria',
+      configuracion: {
+        columnas: 4,
+        tamañoTarjetas: 'grande',
+        mostrarPortadas: true,
+        mostrarDetalles: false
+      }
+    },
+    {
+      id: 'default-shelf',
+      nombre: 'Estantería',
+      tipo: 'estanteria',
+      configuracion: {
+        mostrarPortadas: true,
+        mostrarDetalles: true
+      }
+    }
+  ],
+  reportesAutomaticos: [],
+  layoutActual: 'default-grid'
 };
 
 async function loadStateFromFirebase(): Promise<AppState | null> {
@@ -1111,6 +1215,309 @@ function appReducer(state: AppState, action: Action): AppState {
           modoDinero
         }
       };
+    }
+
+    // Nuevas acciones para las funcionalidades solicitadas
+    
+    // Acciones de citas
+    case 'ADD_CITA': {
+      const { libroId, cita } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.id === libroId) {
+          const nuevaCita = {
+            ...cita,
+            id: Date.now()
+          };
+          return {
+            ...libro,
+            citas: [...(libro.citas || []), nuevaCita]
+          };
+        }
+        return libro;
+      });
+      return { ...state, libros: librosActualizados };
+    }
+
+    case 'UPDATE_CITA': {
+      const { libroId, citaId, updates } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.id === libroId) {
+          return {
+            ...libro,
+            citas: (libro.citas || []).map(cita => 
+              cita.id === citaId ? { ...cita, ...updates } : cita
+            )
+          };
+        }
+        return libro;
+      });
+      return { ...state, libros: librosActualizados };
+    }
+
+    case 'DELETE_CITA': {
+      const { libroId, citaId } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.id === libroId) {
+          return {
+            ...libro,
+            citas: (libro.citas || []).filter(cita => cita.id !== citaId)
+          };
+        }
+        return libro;
+      });
+      return { ...state, libros: librosActualizados };
+    }
+
+    case 'TOGGLE_CITA_FAVORITA': {
+      const { libroId, citaId } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.id === libroId) {
+          return {
+            ...libro,
+            citas: (libro.citas || []).map(cita => 
+              cita.id === citaId ? { ...cita, favorita: !cita.favorita } : cita
+            )
+          };
+        }
+        return libro;
+      });
+      return { ...state, libros: librosActualizados };
+    }
+
+    // Acciones de ediciones
+    case 'ADD_EDICION': {
+      const { libroId, edicion } = action.payload;
+      const nuevaEdicion = {
+        ...edicion,
+        id: Date.now()
+      };
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.id === libroId) {
+          return {
+            ...libro,
+            ediciones: [...(libro.ediciones || []), nuevaEdicion]
+          };
+        }
+        return libro;
+      });
+      return { ...state, libros: librosActualizados };
+    }
+
+    case 'UPDATE_EDICION': {
+      const { edicionId, updates } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.ediciones) {
+          return {
+            ...libro,
+            ediciones: libro.ediciones.map(edicion => 
+              edicion.id === edicionId ? { ...edicion, ...updates } : edicion
+            )
+          };
+        }
+        return libro;
+      });
+      return { ...state, libros: librosActualizados };
+    }
+
+    case 'DELETE_EDICION': {
+      const { edicionId } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.ediciones) {
+          return {
+            ...libro,
+            ediciones: libro.ediciones.filter(edicion => edicion.id !== edicionId)
+          };
+        }
+        return libro;
+      });
+      return { ...state, libros: librosActualizados };
+    }
+
+    // Acciones de historial de préstamos
+    case 'ADD_PRESTAMO': {
+      const nuevoPrestamo = {
+        ...action.payload,
+        id: Date.now()
+      };
+      return {
+        ...state,
+        historialPrestamos: [...state.historialPrestamos, nuevoPrestamo]
+      };
+    }
+
+    case 'UPDATE_PRESTAMO': {
+      const { id, updates } = action.payload;
+      const historialActualizado = state.historialPrestamos.map(prestamo => 
+        prestamo.id === id ? { ...prestamo, ...updates } : prestamo
+      );
+      return { ...state, historialPrestamos: historialActualizado };
+    }
+
+    case 'DEVOLVER_PRESTAMO': {
+      const { id, fecha } = action.payload;
+      const historialActualizado = state.historialPrestamos.map(prestamo => 
+        prestamo.id === id ? { 
+          ...prestamo, 
+          estado: 'devuelto' as const,
+          fechaDevolucion: fecha || Date.now()
+        } : prestamo
+      );
+      return { ...state, historialPrestamos: historialActualizado };
+    }
+
+    case 'DELETE_PRESTAMO': {
+      const { id } = action.payload;
+      return {
+        ...state,
+        historialPrestamos: state.historialPrestamos.filter(prestamo => prestamo.id !== id)
+      };
+    }
+
+    // Acciones de widgets
+    case 'ADD_WIDGET': {
+      return {
+        ...state,
+        widgets: [...state.widgets, action.payload]
+      };
+    }
+
+    case 'UPDATE_WIDGET': {
+      const { id, updates } = action.payload;
+      const widgetsActualizados = state.widgets.map(widget => 
+        widget.id === id ? { ...widget, ...updates } : widget
+      );
+      return { ...state, widgets: widgetsActualizados };
+    }
+
+    case 'DELETE_WIDGET': {
+      const { id } = action.payload;
+      return {
+        ...state,
+        widgets: state.widgets.filter(widget => widget.id !== id)
+      };
+    }
+
+    case 'REORDER_WIDGETS': {
+      const { orden } = action.payload;
+      const widgetsOrdenados = orden.map((id, index) => {
+        const widget = state.widgets.find(w => w.id === id);
+        return widget ? { ...widget, orden: index + 1 } : null;
+      }).filter(Boolean);
+      return { ...state, widgets: widgetsOrdenados };
+    }
+
+    // Acciones de layouts
+    case 'ADD_LAYOUT': {
+      return {
+        ...state,
+        layouts: [...state.layouts, action.payload]
+      };
+    }
+
+    case 'UPDATE_LAYOUT': {
+      const { id, updates } = action.payload;
+      const layoutsActualizados = state.layouts.map(layout => 
+        layout.id === id ? { ...layout, ...updates } : layout
+      );
+      return { ...state, layouts: layoutsActualizados };
+    }
+
+    case 'DELETE_LAYOUT': {
+      const { id } = action.payload;
+      return {
+        ...state,
+        layouts: state.layouts.filter(layout => layout.id !== id)
+      };
+    }
+
+    case 'SET_LAYOUT_ACTUAL': {
+      return {
+        ...state,
+        layoutActual: action.payload.id
+      };
+    }
+
+    // Acciones de reportes automáticos
+    case 'GENERAR_REPORTE': {
+      return {
+        ...state,
+        reportesAutomaticos: [...state.reportesAutomaticos, action.payload]
+      };
+    }
+
+    case 'EXPORTAR_REPORTE': {
+      const { id, formato } = action.payload;
+      const reportesActualizados = state.reportesAutomaticos.map(reporte => 
+        reporte.id === id ? { 
+          ...reporte, 
+          exportado: true,
+          fechaExportacion: Date.now()
+        } : reporte
+      );
+      return { ...state, reportesAutomaticos: reportesActualizados };
+    }
+
+    case 'DELETE_REPORTE': {
+      const { id } = action.payload;
+      return {
+        ...state,
+        reportesAutomaticos: state.reportesAutomaticos.filter(reporte => reporte.id !== id)
+      };
+    }
+
+    // Acciones de reseñas compartibles
+    case 'ADD_RESENA_COMPARTIBLE': {
+      const { libroId, resena } = action.payload;
+      const nuevaResena = {
+        ...resena,
+        id: Date.now()
+      };
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.id === libroId) {
+          return {
+            ...libro,
+            reseñasCompartibles: [...(libro.reseñasCompartibles || []), nuevaResena]
+          };
+        }
+        return libro;
+      });
+      return { ...state, libros: librosActualizados };
+    }
+
+    case 'UPDATE_RESENA_COMPARTIBLE': {
+      const { id, updates } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.reseñasCompartibles) {
+          return {
+            ...libro,
+            reseñasCompartibles: libro.reseñasCompartibles.map(resena => 
+              resena.id === id ? { ...resena, ...updates } : resena
+            )
+          };
+        }
+        return libro;
+      });
+      return { ...state, libros: librosActualizados };
+    }
+
+    case 'DELETE_RESENA_COMPARTIBLE': {
+      const { id } = action.payload;
+      const librosActualizados = state.libros.map(libro => {
+        if (libro.reseñasCompartibles) {
+          return {
+            ...libro,
+            reseñasCompartibles: libro.reseñasCompartibles.filter(resena => resena.id !== id)
+          };
+        }
+        return libro;
+      });
+      return { ...state, libros: librosActualizados };
+    }
+
+    case 'COMPARTIR_RESENA': {
+      // Esta acción se maneja en el componente correspondiente
+      // Aquí solo actualizamos el estado si es necesario
+      return state;
     }
 
     default:
