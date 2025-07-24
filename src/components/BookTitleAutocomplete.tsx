@@ -43,7 +43,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     setLastTypedValue(value);
   }, [value]);
 
-  // Debounce the search to detect when user stops typing
+  // Debounce the search to detect when user stops typing completely
   useEffect(() => {
     // Clear any existing timeout
     if (searchTimeoutRef.current) {
@@ -56,11 +56,14 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
       return;
     }
 
-    // Set a new timeout for search
+    // Set a new timeout for search - only executes when user stops typing for 500ms
     searchTimeoutRef.current = setTimeout(() => {
-      setDebouncedValue(inputValue);
-      setIsUserTyping(false);
-    }, 1000);
+      // Only search if user is still typing (not just selected a book)
+      if (!justSelected) {
+        setDebouncedValue(inputValue);
+        setIsUserTyping(false);
+      }
+    }, 500);
 
     // Cleanup function
     return () => {
@@ -74,6 +77,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
   // Search for books when debounced value changes
   useEffect(() => {
     const searchBooks = async () => {
+      // Don't search if conditions are not met
       if (disabled || disableAutocomplete || debouncedValue.trim().length < 2 || justSelected) {
         setSuggestions([]);
         setIsOpen(false);
@@ -85,15 +89,8 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
         return;
       }
 
-      // Don't search if we just selected a book
-      if (justSelected) {
-        return;
-      }
-
-      // Only show loading when we're actually searching (not while user is typing)
-      if (!isUserTyping) {
-        setIsLoading(true);
-      }
+      // Show loading and search
+      setIsLoading(true);
       
       try {
         const results = await searchBooksByTitle(debouncedValue);
@@ -116,7 +113,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     };
 
     searchBooks();
-  }, [debouncedValue, disabled, disableAutocomplete, justSelected, inputValue, isUserTyping]);
+  }, [debouncedValue, disabled, disableAutocomplete, justSelected, inputValue]);
 
   // Handle click outside
   useEffect(() => {
@@ -210,13 +207,15 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     // Set justSelected first to prevent debounce from triggering
     setJustSelected(true);
     
+    // Update all values without triggering search
     setInputValue(book.titulo);
     setDebouncedValue(book.titulo);
     setLastTypedValue(book.titulo);
     setIsUserTyping(false);
     setIsLoading(false);
-    onChange(book.titulo);
+    setSuggestions([]);
     setIsOpen(false);
+    onChange(book.titulo);
     
     if (onBookSelect) {
       onBookSelect(book);
