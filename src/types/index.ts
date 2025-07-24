@@ -164,6 +164,7 @@ export interface Configuracion {
   dineroPorSaga?: number;
   dineroPorPagina?: number;
   dineroParaComprar?: number;
+  costoPorPagina?: number; // Costo por página al comprar libros
 }
 
 export interface AppState {
@@ -249,7 +250,7 @@ export type Action =
   | { type: 'RESETEAR_PUNTOS' }
   | { type: 'GANAR_DINERO'; payload: { cantidad: number; motivo: string } }
   | { type: 'GASTAR_DINERO'; payload: { cantidad: number; motivo: string } }
-  | { type: 'COMPRAR_LIBRO_CON_DINERO'; payload: { libroId: number; precio: number } }
+  | { type: 'COMPRAR_LIBRO_CON_DINERO'; payload: { libroId: number } }
   | { type: 'RESETEAR_DINERO' }
   | { type: 'CAMBIAR_MODO_SISTEMA'; payload: { modoDinero: boolean } }
   

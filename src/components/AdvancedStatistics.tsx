@@ -290,7 +290,7 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
                 <p className="text-sm text-yellow-800 dark:text-yellow-200 mt-1">
                   <strong>Costo de compra:</strong> {
                     state.config.modoDinero 
-                      ? `$${state.config.dineroParaComprar || 15.0} por libro`
+                      ? `$${state.config.costoPorPagina || 0.25} por página`
                       : `${state.config.puntosParaComprar || 25} puntos por libro`
                   }
                 </p>

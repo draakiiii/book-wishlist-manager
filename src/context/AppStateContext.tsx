@@ -35,7 +35,8 @@ const initialState: AppState = {
     dineroPorLibro: 5.0,
     dineroPorSaga: 25.0,
     dineroPorPagina: 0.5,
-    dineroParaComprar: 15.0
+    dineroParaComprar: 15.0,
+    costoPorPagina: 0.25 // $0.25 por página al comprar libros
   },
   libros: [],
   sagas: [],
@@ -1041,26 +1042,35 @@ function appReducer(state: AppState, action: Action): AppState {
     }
 
     case 'COMPRAR_LIBRO_CON_DINERO': {
-      const { libroId, precio } = action.payload;
+      const { libroId } = action.payload;
       const libro = state.libros.find(l => l.id === libroId);
       
       if (!libro || !state.config.sistemaPuntosHabilitado || !state.config.modoDinero) {
         return state;
       }
 
-      if (state.dineroActual < precio) {
+      // Calcular costo basado en páginas del libro
+      const paginas = libro.paginas || 0;
+      const costoPorPagina = state.config.costoPorPagina || 0.25;
+      const costoTotal = paginas * costoPorPagina;
+
+      if (costoTotal <= 0) {
+        return state; // No se puede comprar un libro sin páginas
+      }
+
+      if (state.dineroActual < costoTotal) {
         return state;
       }
 
       // Cambiar el estado del libro de 'wishlist' a 'tbr' (comprado y listo para leer)
       const librosActualizados = state.libros.map(l => 
-        l.id === libroId ? agregarEstadoAlHistorial(l, 'tbr', `Comprado con $${precio.toFixed(2)}`) : l
+        l.id === libroId ? agregarEstadoAlHistorial(l, 'tbr', `Comprado con $${costoTotal.toFixed(2)} (${paginas} páginas × $${costoPorPagina.toFixed(2)}/página)`) : l
       );
 
       return {
         ...state,
         libros: librosActualizados,
-        dineroActual: state.dineroActual - precio,
+        dineroActual: state.dineroActual - costoTotal,
         librosCompradosConDinero: state.librosCompradosConDinero + 1
       };
     }
