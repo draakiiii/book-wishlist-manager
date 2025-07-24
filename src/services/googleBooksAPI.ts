@@ -135,6 +135,15 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
           if (book.imageLinks) {
             smallThumbnail = book.imageLinks.smallThumbnail;
             thumbnail = book.imageLinks.thumbnail;
+            
+            // Debug logging for image URLs
+            console.log('📸 Image URLs extracted:', {
+              smallThumbnail,
+              thumbnail,
+              rawImageLinks: book.imageLinks
+            });
+          } else {
+            console.log('❌ No imageLinks found in book data');
           }
           
           // Extract access information
