@@ -73,30 +73,15 @@ const ProgressBar: React.FC = () => {
           transition={{ delay: 0.1 }}
           className="bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 dark:from-yellow-600 dark:via-yellow-700 dark:to-orange-700 rounded-xl p-4 sm:p-6 border-2 border-yellow-300 dark:border-yellow-600 shadow-lg"
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between">
             <h3 className="text-lg sm:text-xl font-bold text-white flex items-center space-x-2">
               <Trophy className="h-6 w-6" />
               <span>Sistema de Puntos</span>
             </h3>
-            <div className="bg-white/20 rounded-full px-3 py-1">
-              <span className="text-sm font-bold text-white">
+            <div className="bg-white/20 rounded-full px-4 py-2">
+              <span className="text-xl sm:text-2xl font-bold text-white">
                 {state.puntosActuales} pts
               </span>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-white">
-            <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold mb-1">{state.puntosActuales}</div>
-              <div className="text-sm opacity-90">Puntos Actuales</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold mb-1">{state.puntosGanados}</div>
-              <div className="text-sm opacity-90">Puntos Ganados</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold mb-1">{state.librosCompradosConPuntos}</div>
-              <div className="text-sm opacity-90">Libros Comprados</div>
             </div>
           </div>
           
