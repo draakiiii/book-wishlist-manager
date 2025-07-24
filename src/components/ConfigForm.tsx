@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { motion } from 'framer-motion';
-import { Settings, Save, RotateCcw, Camera, CheckCircle, AlertCircle, Loader2, Target, Bell, Trophy } from 'lucide-react';
+import { Settings, RotateCcw, Camera, CheckCircle, AlertCircle, Loader2, Target, Bell, Trophy } from 'lucide-react';
 import { useDialog } from '../hooks/useDialog';
 import Dialog from './Dialog';
 
@@ -9,16 +9,12 @@ const ConfigForm: React.FC = () => {
   const { state, dispatch } = useAppState();
   const { dialog, showSuccess, showError, hideDialog } = useDialog();
   const [config, setConfig] = useState(state.config);
-  const [isEditing, setIsEditing] = useState(false);
+
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
   const [isVerifyingCameras, setIsVerifyingCameras] = useState(false);
   const [cameraVerificationStatus, setCameraVerificationStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    dispatch({ type: 'SET_CONFIG', payload: config });
-    setIsEditing(false);
-  };
+
 
   const handleReset = () => {
     if (window.confirm('¿Estás seguro de que quieres resetear tu progreso? Esto eliminará todos tus datos de lectura.')) {
@@ -34,15 +30,21 @@ const ConfigForm: React.FC = () => {
   };
 
   const handleInputChange = (field: keyof typeof config, value: number) => {
-    setConfig(prev => ({ ...prev, [field]: Math.max(0, value) }));
+    const newConfig = { ...config, [field]: Math.max(0, value) };
+    setConfig(newConfig);
+    dispatch({ type: 'SET_CONFIG', payload: newConfig });
   };
 
   const handleBooleanChange = (field: keyof typeof config, value: boolean) => {
-    setConfig(prev => ({ ...prev, [field]: value }));
+    const newConfig = { ...config, [field]: value };
+    setConfig(newConfig);
+    dispatch({ type: 'SET_CONFIG', payload: newConfig });
   };
 
   const handleStringChange = (field: keyof typeof config, value: string) => {
-    setConfig(prev => ({ ...prev, [field]: value }));
+    const newConfig = { ...config, [field]: value };
+    setConfig(newConfig);
+    dispatch({ type: 'SET_CONFIG', payload: newConfig });
   };
 
   // Verify cameras and request permissions
@@ -127,44 +129,10 @@ const ConfigForm: React.FC = () => {
           </div>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-          {isEditing ? (
-            <>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setConfig(state.config);
-                  setIsEditing(false);
-                }}
-                className="px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
-              >
-                Cancelar
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleSubmit}
-                className="px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
-              >
-                <Save className="h-4 w-4" />
-                <span>Guardar</span>
-              </motion.button>
-            </>
-          ) : (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsEditing(true)}
-              className="px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors duration-200"
-            >
-              Editar
-            </motion.button>
-          )}
-        </div>
+
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-6">
         {/* Reading Goals */}
         <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center space-x-2 mb-4">
@@ -184,8 +152,7 @@ const ConfigForm: React.FC = () => {
               type="number"
               value={config.objetivoLecturaAnual || 0}
               onChange={(e) => handleInputChange('objetivoLecturaAnual', parseInt(e.target.value) || 0)}
-              disabled={!isEditing}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
               min="0"
             />
           </div>
@@ -217,10 +184,9 @@ const ConfigForm: React.FC = () => {
                   type="checkbox"
                   checked={config.notificacionesSaga || false}
                   onChange={(e) => handleBooleanChange('notificacionesSaga', e.target.checked)}
-                  disabled={!isEditing}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-600 disabled:opacity-50"></div>
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-600"></div>
               </label>
             </div>
             
@@ -238,10 +204,9 @@ const ConfigForm: React.FC = () => {
                   type="checkbox"
                   checked={config.notificacionesObjetivo || false}
                   onChange={(e) => handleBooleanChange('notificacionesObjetivo', e.target.checked)}
-                  disabled={!isEditing}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-600 disabled:opacity-50"></div>
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-600"></div>
               </label>
             </div>
             
@@ -259,10 +224,9 @@ const ConfigForm: React.FC = () => {
                   type="checkbox"
                   checked={config.notificacionesPrestamo || false}
                   onChange={(e) => handleBooleanChange('notificacionesPrestamo', e.target.checked)}
-                  disabled={!isEditing}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-600 disabled:opacity-50"></div>
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-600"></div>
               </label>
             </div>
           </div>
@@ -288,7 +252,7 @@ const ConfigForm: React.FC = () => {
               <select
                 value={config.defaultCameraId || ''}
                 onChange={(e) => handleStringChange('defaultCameraId', e.target.value)}
-                disabled={!isEditing || availableCameras.length === 0}
+                disabled={availableCameras.length === 0}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50"
               >
                 <option value="">Seleccionar cámara...</option>
@@ -310,7 +274,7 @@ const ConfigForm: React.FC = () => {
               whileTap={{ scale: 0.98 }}
               type="button"
               onClick={handleVerifyCameras}
-              disabled={isVerifyingCameras || !isEditing}
+              disabled={isVerifyingCameras}
               className="w-full px-4 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 disabled:cursor-not-allowed"
             >
               {isVerifyingCameras ? (
@@ -365,10 +329,9 @@ const ConfigForm: React.FC = () => {
                   type="checkbox"
                   checked={config.sistemaPuntosHabilitado || false}
                   onChange={(e) => handleBooleanChange('sistemaPuntosHabilitado', e.target.checked)}
-                  disabled={!isEditing}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 dark:peer-focus:ring-yellow-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-yellow-600 disabled:opacity-50"></div>
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 dark:peer-focus:ring-yellow-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-yellow-600"></div>
               </label>
             </div>
             
@@ -392,10 +355,9 @@ const ConfigForm: React.FC = () => {
                       type="checkbox"
                       checked={config.modoDinero || false}
                       onChange={(e) => handleBooleanChange('modoDinero', e.target.checked)}
-                      disabled={!isEditing}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-green-600 disabled:opacity-50"></div>
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-green-600"></div>
                   </label>
                   <span className={`text-xs ${config.modoDinero ? 'text-green-600 dark:text-green-400 font-medium' : 'text-slate-500 dark:text-slate-400'}`}>
                     Dinero
@@ -415,8 +377,7 @@ const ConfigForm: React.FC = () => {
                     type="number"
                     value={config.puntosPorLibro || 10}
                     onChange={(e) => handleInputChange('puntosPorLibro', parseInt(e.target.value) || 0)}
-                    disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                     min="0"
                   />
                 </div>
@@ -429,8 +390,7 @@ const ConfigForm: React.FC = () => {
                     type="number"
                     value={config.puntosPorSaga || 50}
                     onChange={(e) => handleInputChange('puntosPorSaga', parseInt(e.target.value) || 0)}
-                    disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                     min="0"
                   />
                 </div>
@@ -443,8 +403,7 @@ const ConfigForm: React.FC = () => {
                     type="number"
                     value={config.puntosPorPagina || 1}
                     onChange={(e) => handleInputChange('puntosPorPagina', parseInt(e.target.value) || 0)}
-                    disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                     min="0"
                   />
                 </div>
@@ -457,8 +416,7 @@ const ConfigForm: React.FC = () => {
                     type="number"
                     value={config.puntosParaComprar || 25}
                     onChange={(e) => handleInputChange('puntosParaComprar', parseInt(e.target.value) || 0)}
-                    disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                     min="0"
                   />
                 </div>
@@ -477,8 +435,7 @@ const ConfigForm: React.FC = () => {
                     step="0.01"
                     value={config.dineroPorLibro || 5.0}
                     onChange={(e) => handleInputChange('dineroPorLibro', parseFloat(e.target.value) || 0)}
-                    disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     min="0"
                   />
                 </div>
@@ -492,8 +449,7 @@ const ConfigForm: React.FC = () => {
                     step="0.01"
                     value={config.dineroPorSaga || 25.0}
                     onChange={(e) => handleInputChange('dineroPorSaga', parseFloat(e.target.value) || 0)}
-                    disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     min="0"
                   />
                 </div>
@@ -507,8 +463,7 @@ const ConfigForm: React.FC = () => {
                     step="0.01"
                     value={config.dineroPorPagina || 0.5}
                     onChange={(e) => handleInputChange('dineroPorPagina', parseFloat(e.target.value) || 0)}
-                    disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     min="0"
                   />
                 </div>
@@ -522,8 +477,7 @@ const ConfigForm: React.FC = () => {
                     step="0.01"
                     value={config.costoPorPagina || 0.25}
                     onChange={(e) => handleInputChange('costoPorPagina', parseFloat(e.target.value) || 0)}
-                    disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     min="0"
                   />
                 </div>
@@ -567,7 +521,7 @@ const ConfigForm: React.FC = () => {
             </motion.button>
           </div>
         </div>
-      </form>
+      </div>
 
       {/* Dialog Component */}
       <Dialog

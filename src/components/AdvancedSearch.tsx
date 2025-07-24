@@ -25,6 +25,7 @@ import { useAppState } from '../context/AppStateContext';
 import { SearchFilters, Libro } from '../types';
 import { useDebounce } from 'use-debounce';
 import BookList from './BookList';
+import { getLanguageName } from '../utils/languageUtils';
 
 interface AdvancedSearchProps {
   onSearch: (results: Libro[]) => void;
@@ -382,7 +383,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onClose, isOp
                     >
                       <option value="">Todos los idiomas</option>
                       {filterOptions.idiomas.map(idioma => (
-                        <option key={idioma} value={idioma}>{idioma}</option>
+                        <option key={idioma} value={idioma}>{getLanguageName(idioma || '')}</option>
                       ))}
                     </select>
                   </div>

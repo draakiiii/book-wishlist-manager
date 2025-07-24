@@ -348,7 +348,7 @@ const AdvancedStatistics: React.FC<AdvancedStatisticsProps> = ({ isOpen, onClose
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.65 }}
-              className="bg-white dark:bg-slate-700 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-600"
+              className="bg-white dark:bg-slate-700 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-600 my-6"
             >
               <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center space-x-2">
                 <Target className="h-5 w-5 text-green-500" />
