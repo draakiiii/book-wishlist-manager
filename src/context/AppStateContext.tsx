@@ -1002,11 +1002,11 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
   const [isLoading, setIsLoading] = useState(false); // Cambiar a false para evitar loading infinito
   const [isInitialized, setIsInitialized] = useState(false); // Nueva variable para controlar la inicialización
 
-  // Cargar estado inicial - versión simplificada
+  // Cargar estado inicial - SOLO Firebase
   useEffect(() => {
     console.log('AppStateContext: Starting initialization', { authLoading, isAuthenticated, user: user?.email });
     
-    // Si está autenticado, cargar desde Firebase primero
+    // Solo cargar desde Firebase si está autenticado
     if (isAuthenticated && user && !authLoading) {
       const loadFromFirebase = async () => {
         try {
@@ -1016,40 +1016,32 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
             console.log('AppStateContext: Firebase state loaded, updating');
             dispatch({ type: 'IMPORT_DATA', payload: firebaseState });
           } else {
-            // Si no hay datos en Firebase, cargar desde localStorage como fallback
-            console.log('AppStateContext: No Firebase data, loading from localStorage');
-            const savedState = loadStateFromStorage();
-            if (savedState) {
-              console.log('AppStateContext: Loading from localStorage');
-              dispatch({ type: 'IMPORT_DATA', payload: savedState });
-            }
+            console.log('AppStateContext: No Firebase data found, starting with empty state');
           }
-          setIsInitialized(true); // Marcar como inicializado después de cargar
+          setIsInitialized(true);
         } catch (error) {
           console.error('AppStateContext: Error loading from Firebase:', error);
-          // En caso de error, cargar desde localStorage
-          const savedState = loadStateFromStorage();
-          if (savedState) {
-            console.log('AppStateContext: Loading from localStorage after Firebase error');
-            dispatch({ type: 'IMPORT_DATA', payload: savedState });
-          }
-          setIsInitialized(true); // Marcar como inicializado incluso si hay error
+          setIsInitialized(true);
         }
       };
       loadFromFirebase();
     } else if (!isAuthenticated && !authLoading) {
-      // Si no está autenticado, cargar desde localStorage
-      const savedState = loadStateFromStorage();
-      if (savedState) {
-        console.log('AppStateContext: Loading from localStorage (not authenticated)');
-        dispatch({ type: 'IMPORT_DATA', payload: savedState });
-      }
-      setIsInitialized(true); // Marcar como inicializado
+      // Si no está autenticado, empezar con estado vacío
+      console.log('AppStateContext: Not authenticated, starting with empty state');
+      setIsInitialized(true);
     }
   }, [isAuthenticated, user, authLoading, dispatch]);
 
   // Guardar estado en Firebase cuando esté autenticado
   useEffect(() => {
+    console.log('AppStateContext: Save effect triggered', { 
+      isAuthenticated, 
+      user: user?.email, 
+      isLoading, 
+      isInitialized,
+      librosCount: state.libros.length 
+    });
+    
     if (isAuthenticated && user && !isLoading && isInitialized) {
       const saveToFirebase = async () => {
         try {
@@ -1068,12 +1060,7 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
     }
   }, [state, isAuthenticated, user, isLoading, isInitialized]);
 
-  // Fallback a localStorage cuando no esté autenticado
-  useEffect(() => {
-    if (!isAuthenticated && !isLoading) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-  }, [state, isAuthenticated, isLoading]);
+  // Eliminado fallback a localStorage - solo Firebase
 
   if (isLoading) {
     return (
