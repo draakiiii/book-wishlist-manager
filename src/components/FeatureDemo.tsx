@@ -15,6 +15,7 @@ interface FeatureDemoProps {
 }
 
 const FeatureDemo: React.FC<FeatureDemoProps> = ({ isOpen, onClose }) => {
+  const { dispatch } = useAppState();
   const [selectedBook, setSelectedBook] = useState<typeof sampleBooks[0] | null>(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [ratingBook, setRatingBook] = useState<typeof sampleBooks[0] | null>(null);
@@ -70,7 +71,6 @@ const FeatureDemo: React.FC<FeatureDemoProps> = ({ isOpen, onClose }) => {
     };
 
     // Usar el contexto para agregar el libro
-    const { dispatch } = useAppState();
     dispatch({ type: 'ADD_BOOK', payload: testBook });
     
     alert('Libro de prueba agregado. Ve a la aplicación principal para verificar que las imágenes y el botón "Leer Muestra" funcionan correctamente.');
