@@ -48,6 +48,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     // Clear any existing timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
     }
 
     // Don't search if conditions are not met
@@ -57,14 +58,18 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
 
     // Set a new timeout for search
     searchTimeoutRef.current = setTimeout(() => {
-      setDebouncedValue(inputValue);
-      setIsUserTyping(false);
+      // Only search if user is still typing (not just selected a book)
+      if (!justSelected) {
+        setDebouncedValue(inputValue);
+        setIsUserTyping(false);
+      }
     }, 1000);
 
     // Cleanup function
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
+        searchTimeoutRef.current = null;
       }
     };
   }, [inputValue, disabled, disableAutocomplete, justSelected]);
@@ -83,7 +88,11 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
         return;
       }
 
-      setIsLoading(true);
+      // Only show loading when we're actually searching (not while user is typing)
+      if (!isUserTyping) {
+        setIsLoading(true);
+      }
+      
       try {
         const results = await searchBooksByTitle(debouncedValue);
         // Double-check that the value hasn't changed during the API call
@@ -105,7 +114,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     };
 
     searchBooks();
-  }, [debouncedValue, disabled, disableAutocomplete, justSelected, inputValue]);
+  }, [debouncedValue, disabled, disableAutocomplete, justSelected, inputValue, isUserTyping]);
 
   // Handle click outside
   useEffect(() => {
@@ -167,8 +176,9 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     setInputValue(newValue);
     onChange(newValue);
     
-    // Mark that user is actively typing
+    // Mark that user is actively typing and hide loading
     setIsUserTyping(true);
+    setIsLoading(false);
     setLastTypedValue(newValue);
     
     // Reset justSelected flag when user starts typing manually
@@ -200,6 +210,7 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
     setLastTypedValue(book.titulo);
     setJustSelected(true);
     setIsUserTyping(false);
+    setIsLoading(false);
     onChange(book.titulo);
     setIsOpen(false);
     
