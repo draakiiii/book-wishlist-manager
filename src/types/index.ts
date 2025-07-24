@@ -134,7 +134,6 @@ export interface Configuracion {
   
   // Configuración de lectura
   objetivoLecturaAnual?: number;
-  objetivoPaginasAnual?: number;
   recordatorioLectura?: boolean;
   recordatorioInterval?: number;
   

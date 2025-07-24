@@ -316,7 +316,7 @@ const AppContent: React.FC = () => {
 
             {/* Progress Section */}
             <CollapsibleSection
-              title="Objetivos de Lectura"
+              title="Progreso y Puntos"
               icon={<Trophy className="h-5 w-5" />}
               iconBgColor="bg-success-100 dark:bg-success-900/30"
               iconColor="text-success-600 dark:text-success-400"

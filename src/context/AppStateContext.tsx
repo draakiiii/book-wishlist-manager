@@ -15,7 +15,6 @@ const initialState: AppState = {
     statisticsEnabled: true,
     exportFormat: 'json',
     objetivoLecturaAnual: 12,
-    objetivoPaginasAnual: 4000,
     recordatorioLectura: true,
     recordatorioInterval: 86400000, // 24 horas
     notificacionesSaga: true,
