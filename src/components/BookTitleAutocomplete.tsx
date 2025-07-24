@@ -58,11 +58,8 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
 
     // Set a new timeout for search
     searchTimeoutRef.current = setTimeout(() => {
-      // Only search if user is still typing (not just selected a book)
-      if (!justSelected) {
-        setDebouncedValue(inputValue);
-        setIsUserTyping(false);
-      }
+      setDebouncedValue(inputValue);
+      setIsUserTyping(false);
     }, 1000);
 
     // Cleanup function
@@ -88,6 +85,11 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
         return;
       }
 
+      // Don't search if we just selected a book
+      if (justSelected) {
+        return;
+      }
+
       // Only show loading when we're actually searching (not while user is typing)
       if (!isUserTyping) {
         setIsLoading(true);
@@ -96,18 +98,18 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
       try {
         const results = await searchBooksByTitle(debouncedValue);
         // Double-check that the value hasn't changed during the API call
-        if (debouncedValue === inputValue) {
+        if (debouncedValue === inputValue && !justSelected) {
           setSuggestions(results);
           setIsOpen(results.length > 0);
         }
       } catch (error) {
         console.error('Error searching books:', error);
-        if (debouncedValue === inputValue) {
+        if (debouncedValue === inputValue && !justSelected) {
           setSuggestions([]);
           setIsOpen(false);
         }
       } finally {
-        if (debouncedValue === inputValue) {
+        if (debouncedValue === inputValue && !justSelected) {
           setIsLoading(false);
         }
       }
@@ -205,10 +207,12 @@ const BookTitleAutocomplete: React.FC<BookTitleAutocompleteProps> = ({
       searchTimeoutRef.current = null;
     }
     
+    // Set justSelected first to prevent debounce from triggering
+    setJustSelected(true);
+    
     setInputValue(book.titulo);
     setDebouncedValue(book.titulo);
     setLastTypedValue(book.titulo);
-    setJustSelected(true);
     setIsUserTyping(false);
     setIsLoading(false);
     onChange(book.titulo);
