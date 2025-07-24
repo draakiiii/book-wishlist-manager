@@ -36,7 +36,15 @@ const initialState: AppState = {
     dineroPorSaga: 25.0,
     dineroPorPagina: 0.5,
     dineroParaComprar: 15.0,
-    costoPorPagina: 0.25 // $0.25 por página al comprar libros
+    costoPorPagina: 0.25, // $0.25 por página al comprar libros
+    // Configuración de visibilidad de secciones
+    mostrarSeccionProgreso: true,
+    mostrarSeccionWishlist: true,
+    mostrarSeccionTBR: true,
+    mostrarSeccionLeyendo: true,
+    mostrarSeccionLeidos: true,
+    mostrarSeccionAbandonados: true,
+    mostrarSeccionSagas: true
   },
   libros: [],
   sagas: [],
