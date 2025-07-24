@@ -111,6 +111,9 @@ const TBRForm: React.FC = () => {
       genero: bookData.genero,
       formato: bookData.formato,
       precio: bookData.precio,
+      // Incluir portadas si están disponibles y la configuración lo permite
+      portadaUrl: state.config.descargarPortadasAutomaticamente ? bookData.portadaUrl : undefined,
+      portadaThumbnail: state.config.descargarPortadasAutomaticamente ? bookData.portadaThumbnail : undefined,
       estado: 'tbr',
       historialEstados: [{
         estado: 'tbr',

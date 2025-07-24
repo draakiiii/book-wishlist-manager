@@ -268,6 +268,62 @@ const ConfigForm: React.FC = () => {
           </div>
         </div>
 
+        {/* Portadas Settings */}
+        <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center space-x-2 mb-4">
+            <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+              <Book className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            </div>
+            <h3 className="text-sm font-medium text-slate-900 dark:text-white">
+              Configuración de Portadas
+            </h3>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Mostrar portadas de libros
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Muestra las portadas de los libros en las tarjetas
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.mostrarPortadas || false}
+                  onChange={(e) => handleBooleanChange('mostrarPortadas', e.target.checked)}
+                  disabled={!isEditing}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 dark:peer-focus:ring-orange-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-orange-600 disabled:opacity-50"></div>
+              </label>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Descargar portadas automáticamente
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Descarga automáticamente las portadas al escanear o buscar libros
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.descargarPortadasAutomaticamente || false}
+                  onChange={(e) => handleBooleanChange('descargarPortadasAutomaticamente', e.target.checked)}
+                  disabled={!isEditing}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 dark:peer-focus:ring-orange-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-orange-600 disabled:opacity-50"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
         {/* Scanner Settings */}
         <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center space-x-2 mb-4">

@@ -2,6 +2,58 @@
 
 Todos los cambios notables en este proyecto serán documentados en este archivo.
 
+## [7.1.0] - 2024-12-19
+
+### ✨ Nuevas Características
+
+#### 🎨 Portadas de Libros
+- **Visualización de portadas** en las tarjetas de libros con diseño responsivo
+- **Integración con Google Books API** para descarga automática de portadas
+- **Configuración de portadas** en Ajustes con opciones de mostrar/ocultar
+- **Descarga automática** de portadas al escanear o buscar libros
+- **Componente BookCover** con múltiples tamaños y fallback elegante
+- **Layout adaptativo** que se ajusta a móviles y escritorio
+- **Conversión HTTPS** automática de URLs para mayor seguridad
+- **Carga progresiva** con indicadores de loading y manejo de errores
+
+#### 📱 Mejoras en la Interfaz Móvil
+- **Layout horizontal** en pantallas grandes con portada e información lado a lado
+- **Layout vertical** en móviles con portada centrada arriba de la información
+- **Placeholder elegante** con icono de libro cuando no hay portada disponible
+- **Optimización de espacio** para mejor visualización en dispositivos móviles
+
+#### 🔧 Configuración Avanzada
+- **Sección de portadas** en el formulario de configuración
+- **Opciones independientes** para mostrar y descargar portadas
+- **Persistencia de configuración** en localStorage
+- **Aplicación inmediata** de cambios sin reiniciar la aplicación
+
+### 🔧 Mejoras Técnicas
+
+#### Estructura de Datos
+- **Nuevos campos** `portadaUrl` y `portadaThumbnail` en interfaces Libro y BookData
+- **Configuración extendida** con opciones de portadas
+- **Compatibilidad** con versiones anteriores
+
+#### API de Google Books
+- **Extracción de URLs** de portadas desde la respuesta de la API
+- **Soporte para múltiples formatos** (thumbnail y smallThumbnail)
+- **Conversión automática** de URLs HTTP a HTTPS
+- **Integración mejorada** en todos los flujos de búsqueda y escaneo
+
+#### Componentes
+- **BookCover component** reutilizable con estados de loading y error
+- **Múltiples tamaños** (small, medium, large) para diferentes contextos
+- **Fallback inteligente** cuando las imágenes no están disponibles
+- **Optimización de rendimiento** con lazy loading y caché
+
+### 🐛 Correcciones de Bugs
+- **Mejora en el manejo** de errores de carga de imágenes
+- **Optimización de re-renders** en componentes con portadas
+- **Corrección de layout** en dispositivos móviles
+
+---
+
 ## [7.0.0] - 2024-07-22
 
 ### ✨ Nuevas Características

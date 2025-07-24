@@ -511,6 +511,9 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
         sagaName: book.sagaName || undefined,
         isbn: book.isbn,
         fechaAgregado: Date.now(),
+        // Incluir portadas si están disponibles y la configuración lo permite
+        portadaUrl: state.config.descargarPortadasAutomaticamente && book.bookData?.portadaUrl ? book.bookData.portadaUrl : undefined,
+        portadaThumbnail: state.config.descargarPortadasAutomaticamente && book.bookData?.portadaThumbnail ? book.bookData.portadaThumbnail : undefined,
         estado: 'tbr',
         historialEstados: [{
           estado: 'tbr',

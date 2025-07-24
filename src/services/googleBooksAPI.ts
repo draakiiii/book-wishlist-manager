@@ -129,6 +129,23 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
           // Extract language
           const language = book.language || '';
           
+          // Extract cover images
+          let portadaUrl: string | undefined;
+          let portadaThumbnail: string | undefined;
+          if (book.imageLinks) {
+            // Preferir thumbnail para mejor rendimiento, pero usar la imagen completa si está disponible
+            portadaThumbnail = book.imageLinks.smallThumbnail || book.imageLinks.thumbnail;
+            portadaUrl = book.imageLinks.thumbnail || book.imageLinks.smallThumbnail;
+            
+            // Convertir URLs HTTP a HTTPS para mejor seguridad
+            if (portadaUrl && portadaUrl.startsWith('http:')) {
+              portadaUrl = portadaUrl.replace('http:', 'https:');
+            }
+            if (portadaThumbnail && portadaThumbnail.startsWith('http:')) {
+              portadaThumbnail = portadaThumbnail.replace('http:', 'https:');
+            }
+          }
+          
           bookData = {
             titulo: title,
             autor: author || undefined,
@@ -138,7 +155,9 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
             editorial: publisher || undefined,
             descripcion: description || undefined,
             categorias: categories.length > 0 ? categories : undefined,
-            idioma: language || undefined
+            idioma: language || undefined,
+            portadaUrl,
+            portadaThumbnail
             // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
           };
           

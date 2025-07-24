@@ -24,6 +24,7 @@ import LoanModal from './LoanModal';
 import { useDialog } from '../hooks/useDialog';
 import Dialog from './Dialog';
 import InputModal from './InputModal';
+import BookCover from './BookCover';
 
 interface BookCardProps {
   book: Libro;
@@ -292,24 +293,52 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
         onMouseLeave={() => setShowActions(false)}
       >
       {/* Type Badge */}
-      <div className="absolute top-2 right-2 flex items-center space-x-1 px-2 py-1 bg-white/80 dark:bg-slate-800/80 rounded-full text-xs font-medium">
+      <div className="absolute top-2 right-2 flex items-center space-x-1 px-2 py-1 bg-white/80 dark:bg-slate-800/80 rounded-full text-xs font-medium z-10">
         {getTypeIcon()}
         <span className="capitalize hidden sm:inline">{getTypeLabel()}</span>
       </div>
 
       {/* Book Info */}
       <div className="space-y-2 sm:space-y-3">
-        <div>
-          <h3 className="font-semibold text-slate-900 dark:text-white text-base sm:text-lg leading-tight pr-16 sm:pr-20">
-            {book.titulo}
-          </h3>
-          {book.autor && (
-            <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 mt-1">
-              <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="text-xs sm:text-sm truncate">{book.autor}</span>
+        {/* Cover Image and Info Layout */}
+        {state.config.mostrarPortadas ? (
+          <div className="flex flex-col sm:flex-row sm:items-start sm:space-x-3">
+            {/* Cover Image */}
+            <div className="flex justify-center sm:justify-start mb-3 sm:mb-0">
+              <BookCover
+                portadaUrl={book.portadaUrl}
+                portadaThumbnail={book.portadaThumbnail}
+                titulo={book.titulo}
+                size="medium"
+              />
             </div>
-          )}
-        </div>
+            
+            {/* Book Info */}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-slate-900 dark:text-white text-base sm:text-lg leading-tight pr-16 sm:pr-20">
+                {book.titulo}
+              </h3>
+              {book.autor && (
+                <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 mt-1">
+                  <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm truncate">{book.autor}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <h3 className="font-semibold text-slate-900 dark:text-white text-base sm:text-lg leading-tight pr-16 sm:pr-20">
+              {book.titulo}
+            </h3>
+            {book.autor && (
+              <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 mt-1">
+                <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="text-xs sm:text-sm truncate">{book.autor}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Book Details */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
