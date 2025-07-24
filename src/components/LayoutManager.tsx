@@ -99,7 +99,7 @@ const LayoutManager: React.FC<LayoutManagerProps> = ({ isOpen, onClose }) => {
     setNewLayout({
       tipo: firstType.id as any,
       nombre: `Nuevo ${firstType.name}`,
-      configuracion: firstType.defaultConfig
+      configuracion: firstType.defaultConfig as any
     });
   };
 
@@ -112,7 +112,7 @@ const LayoutManager: React.FC<LayoutManagerProps> = ({ isOpen, onClose }) => {
           id: `custom-${Date.now()}`,
           tipo: newLayout.tipo,
           nombre: newLayout.nombre,
-          configuracion: newLayout.configuracion || layoutType?.defaultConfig || {}
+          configuracion: newLayout.configuracion || layoutType?.defaultConfig as any || {}
         } as Layout
       });
       setNewLayout(null);
@@ -174,7 +174,6 @@ const LayoutManager: React.FC<LayoutManagerProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -224,7 +223,7 @@ const LayoutManager: React.FC<LayoutManagerProps> = ({ isOpen, onClose }) => {
                         setNewLayout(prev => ({
                           ...prev,
                           tipo: e.target.value as any,
-                          configuracion: selectedType?.defaultConfig
+                          configuracion: selectedType?.defaultConfig as any
                         }));
                       }}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
@@ -520,7 +519,6 @@ const LayoutManager: React.FC<LayoutManagerProps> = ({ isOpen, onClose }) => {
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
   );
 };
 
