@@ -129,12 +129,6 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
           // Extract language
           const language = book.language || '';
           
-          // Extract average rating
-          const averageRating = book.averageRating || 0;
-          
-          // Extract ratings count
-          const ratingsCount = book.ratingsCount || 0;
-          
           bookData = {
             titulo: title,
             autor: author || undefined,
@@ -144,9 +138,8 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
             editorial: publisher || undefined,
             descripcion: description || undefined,
             categorias: categories.length > 0 ? categories : undefined,
-            idioma: language || undefined,
-            calificacion: averageRating > 0 ? averageRating : undefined,
-            numCalificaciones: ratingsCount > 0 ? ratingsCount : undefined
+            idioma: language || undefined
+            // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
           };
           
           // Cache the result
@@ -314,9 +307,8 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
         editorial: book.publisher || undefined,
         descripcion: book.description || undefined,
         categorias: book.categories?.length > 0 ? book.categories : undefined,
-        idioma: book.language || undefined,
-        calificacion: book.averageRating > 0 ? book.averageRating : undefined,
-        numCalificaciones: book.ratingsCount > 0 ? book.ratingsCount : undefined
+        idioma: book.language || undefined
+        // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
     });
 
@@ -408,12 +400,6 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
       // Extract language
       const language = book.language || '';
       
-      // Extract average rating
-      const averageRating = book.averageRating || 0;
-      
-      // Extract ratings count
-      const ratingsCount = book.ratingsCount || 0;
-
       // Extract ISBN if available
       let isbn: string | undefined;
       if (book.industryIdentifiers) {
@@ -431,9 +417,8 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
         editorial: publisher || undefined,
         descripcion: description || undefined,
         categorias: categories.length > 0 ? categories : undefined,
-        idioma: language || undefined,
-        calificacion: averageRating > 0 ? averageRating : undefined,
-        numCalificaciones: ratingsCount > 0 ? ratingsCount : undefined
+        idioma: language || undefined
+        // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
     });
 
