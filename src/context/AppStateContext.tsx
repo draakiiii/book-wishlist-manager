@@ -1005,14 +1005,7 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
   useEffect(() => {
     console.log('AppStateContext: Starting initialization', { authLoading, isAuthenticated, user: user?.email });
     
-    // Cargar inmediatamente desde localStorage como fallback
-    const savedState = loadStateFromStorage();
-    if (savedState) {
-      console.log('AppStateContext: Loading from localStorage');
-      dispatch({ type: 'IMPORT_DATA', payload: savedState });
-    }
-    
-    // Si está autenticado, intentar cargar desde Firebase
+    // Si está autenticado, cargar desde Firebase primero
     if (isAuthenticated && user && !authLoading) {
       const loadFromFirebase = async () => {
         try {
@@ -1021,12 +1014,33 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
           if (firebaseState) {
             console.log('AppStateContext: Firebase state loaded, updating');
             dispatch({ type: 'IMPORT_DATA', payload: firebaseState });
+          } else {
+            // Si no hay datos en Firebase, cargar desde localStorage como fallback
+            console.log('AppStateContext: No Firebase data, loading from localStorage');
+            const savedState = loadStateFromStorage();
+            if (savedState) {
+              console.log('AppStateContext: Loading from localStorage');
+              dispatch({ type: 'IMPORT_DATA', payload: savedState });
+            }
           }
         } catch (error) {
           console.error('AppStateContext: Error loading from Firebase:', error);
+          // En caso de error, cargar desde localStorage
+          const savedState = loadStateFromStorage();
+          if (savedState) {
+            console.log('AppStateContext: Loading from localStorage after Firebase error');
+            dispatch({ type: 'IMPORT_DATA', payload: savedState });
+          }
         }
       };
       loadFromFirebase();
+    } else if (!isAuthenticated && !authLoading) {
+      // Si no está autenticado, cargar desde localStorage
+      const savedState = loadStateFromStorage();
+      if (savedState) {
+        console.log('AppStateContext: Loading from localStorage (not authenticated)');
+        dispatch({ type: 'IMPORT_DATA', payload: savedState });
+      }
     }
   }, [isAuthenticated, user, authLoading, dispatch]);
 
