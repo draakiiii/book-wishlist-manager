@@ -503,23 +503,49 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
   const addSelectedBooks = () => {
     const booksToAdd: Libro[] = scannedBooks
       .filter(book => selectedBooks.has(book.id) && book.status === 'found')
-      .map(book => ({
-        id: Date.now() + Math.random(),
-        titulo: book.titulo,
-        autor: book.autor,
-        paginas: parseInt(book.paginas) || undefined,
-        sagaName: book.sagaName || undefined,
-        isbn: book.isbn,
-        fechaAgregado: Date.now(),
-        estado: 'tbr',
-        historialEstados: [{
+      .map(book => {
+        // Usar bookData si está disponible, sino usar los campos básicos
+        const bookData = book.bookData;
+        
+        return {
+          id: Date.now() + Math.random(),
+          titulo: book.titulo,
+          autor: book.autor,
+          paginas: parseInt(book.paginas) || undefined,
+          sagaName: book.sagaName || undefined,
+          isbn: book.isbn,
+          publicacion: bookData?.publicacion,
+          editorial: bookData?.editorial,
+          descripcion: bookData?.descripcion,
+          categorias: bookData?.categorias,
+          idioma: bookData?.idioma,
+          calificacion: bookData?.calificacion,
+          numCalificaciones: bookData?.numCalificaciones,
+          genero: bookData?.genero,
+          formato: bookData?.formato,
+          precio: bookData?.precio,
+          // Campos para imágenes de portada (Google Books API)
+          imageLinks: bookData?.imageLinks,
+          // Campos para acceso a vista previa (Google Books API)
+          accessInfo: bookData?.accessInfo,
+          fechaAgregado: Date.now(),
           estado: 'tbr',
-          fecha: Date.now()
-        }],
-        lecturas: [] // <-- Añadido para cumplir con el tipo Libro
-      }));
+          historialEstados: [{
+            estado: 'tbr',
+            fecha: Date.now()
+          }],
+          lecturas: []
+        };
+      });
 
     if (booksToAdd.length > 0) {
+      // Debug logs
+      console.log('📚 BulkScanModal: Adding books with data:', {
+        booksToAdd,
+        imageLinks: booksToAdd.map(book => book.imageLinks),
+        accessInfo: booksToAdd.map(book => book.accessInfo)
+      });
+      
       booksToAdd.forEach(book => {
         dispatch({ type: 'ADD_BOOK', payload: book });
       });

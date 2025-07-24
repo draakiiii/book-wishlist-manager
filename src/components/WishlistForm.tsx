@@ -109,6 +109,10 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ onOpenConfig }) => {
       genero: bookData.genero,
       formato: bookData.formato,
       precio: bookData.precio,
+      // Campos para imágenes de portada (Google Books API)
+      imageLinks: bookData.imageLinks,
+      // Campos para acceso a vista previa (Google Books API)
+      accessInfo: bookData.accessInfo,
       estado: 'wishlist',
       historialEstados: [{
         estado: 'wishlist',
@@ -116,6 +120,14 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ onOpenConfig }) => {
       }],
       lecturas: []
     };
+    
+    // Debug logs
+    console.log('📚 WishlistForm: Creating new book with data:', {
+      bookData,
+      nuevoLibro,
+      imageLinks: bookData.imageLinks,
+      accessInfo: bookData.accessInfo
+    });
     
     dispatch({ type: 'ADD_BOOK', payload: nuevoLibro });
     

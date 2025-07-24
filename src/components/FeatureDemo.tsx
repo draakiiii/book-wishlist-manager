@@ -6,6 +6,8 @@ import BookCoverImage from './BookCoverImage';
 import BookDescriptionModal from './BookDescriptionModal';
 import RatingModal from './RatingModal';
 import { clearCache } from '../services/googleBooksAPI';
+import { useAppState } from '../context/AppStateContext';
+import { Libro } from '../types';
 
 interface FeatureDemoProps {
   isOpen: boolean;
@@ -32,6 +34,46 @@ const FeatureDemo: React.FC<FeatureDemoProps> = ({ isOpen, onClose }) => {
   const handleClearCache = () => {
     clearCache();
     alert('Caché de la API limpiado. Ahora puedes probar agregando un nuevo libro.');
+  };
+
+  const handleTestAddBook = () => {
+    // Crear un libro de prueba con datos reales de Google Books API
+    const testBook: Libro = {
+      id: Date.now(),
+      titulo: "El camino de los reyes (El Archivo de las Tormentas 1)",
+      autor: "Brandon Sanderson",
+      paginas: 1511,
+      isbn: "9788490691779",
+      publicacion: 2015,
+      editorial: "NOVA",
+      descripcion: "Una épica historia de fantasía que sigue las vidas de varios personajes...",
+      idioma: "es",
+      categorias: ["Fiction"],
+      calificacion: 5,
+      numCalificaciones: 1,
+      estado: "tbr",
+      historialEstados: [{
+        estado: "tbr",
+        fecha: Date.now()
+      }],
+      lecturas: [],
+      // Campos para imágenes de portada (Google Books API)
+      imageLinks: {
+        smallThumbnail: "http://books.google.com/books/content?id=YhCYCgAAQBAJ&printsec=frontcover&img=1&zoom=5&edge=curl&source=gbs_api",
+        thumbnail: "http://books.google.com/books/content?id=YhCYCgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+      },
+      // Campos para acceso a vista previa (Google Books API)
+      accessInfo: {
+        viewability: "PARTIAL",
+        webReaderLink: "http://play.google.com/books/reader?id=YhCYCgAAQBAJ&hl=&source=gbs_api"
+      }
+    };
+
+    // Usar el contexto para agregar el libro
+    const { dispatch } = useAppState();
+    dispatch({ type: 'ADD_BOOK', payload: testBook });
+    
+    alert('Libro de prueba agregado. Ve a la aplicación principal para verificar que las imágenes y el botón "Leer Muestra" funcionan correctamente.');
   };
 
   if (!isOpen) return null;
@@ -205,6 +247,19 @@ const FeatureDemo: React.FC<FeatureDemoProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
           </section>
+
+          {/* Botón para agregar un libro de prueba */}
+          <div className="text-center">
+            <button
+              onClick={handleTestAddBook}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              Agregar Libro de Prueba a la Aplicación
+            </button>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+              Este botón agregará un libro de ejemplo a tu lista de libros.
+            </p>
+          </div>
         </div>
 
         {/* Modales */}

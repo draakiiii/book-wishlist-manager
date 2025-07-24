@@ -340,7 +340,9 @@ function appReducer(state: AppState, action: Action): AppState {
     case 'ADD_BOOK': {
       console.log('AppStateContext: ADD_BOOK action triggered', { 
         libro: action.payload,
-        currentLibrosCount: state.libros.length 
+        currentLibrosCount: state.libros.length,
+        imageLinks: action.payload.imageLinks,
+        accessInfo: action.payload.accessInfo
       });
       
       const nuevoLibro = {
