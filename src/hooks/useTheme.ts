@@ -3,41 +3,100 @@ import { AppStateContext } from '../context/AppStateContext';
 import { 
   getInitialTheme, 
   applyThemeToDOM, 
-  persistThemePreference, 
+  persistThemePreference,
+  getCurrentColorScheme,
+  getCustomTheme,
+  persistColorScheme,
+  persistCustomTheme,
   THEME_CONFIG 
 } from '../utils/themeConfig';
 
 export const useTheme = () => {
-  // Force light mode only
-  const isDark = false;
+  const [isDark, setIsDark] = useState(false);
+  const [colorScheme, setColorScheme] = useState('azul');
+  const [customTheme, setCustomTheme] = useState<any>(null);
 
   // Intentar obtener el contexto AppState si está disponible
   const appStateContext = useContext(AppStateContext);
 
   useEffect(() => {
-    // Aplicar el tema al DOM - always light mode
-    applyThemeToDOM(false);
+    // Inicializar tema desde localStorage o preferencias del sistema
+    const initialTheme = getInitialTheme();
+    const initialColorScheme = getCurrentColorScheme();
+    const initialCustomTheme = getCustomTheme();
     
-    // Persistir la preferencia - always light mode
-    persistThemePreference(false);
-
+    setIsDark(initialTheme);
+    setColorScheme(initialColorScheme);
+    setCustomTheme(initialCustomTheme);
+    
+    // Aplicar tema al DOM
+    applyThemeToDOM(initialTheme, initialColorScheme, initialCustomTheme);
+    
     // Sincronizar con AppState si está disponible
-    if (appStateContext && appStateContext.state && appStateContext.state.darkMode !== false) {
-      appStateContext.dispatch({ type: 'SET_DARK_MODE', payload: false });
+    if (appStateContext && appStateContext.state && appStateContext.state.darkMode !== initialTheme) {
+      appStateContext.dispatch({ type: 'SET_DARK_MODE', payload: initialTheme });
     }
   }, [appStateContext]);
 
   const toggleTheme = () => {
-    // No-op function - theme cannot be toggled
+    const newTheme = !isDark;
+    setIsDark(newTheme);
+    applyThemeToDOM(newTheme, colorScheme, customTheme);
+    persistThemePreference(newTheme);
+    
+    // Sincronizar con AppState
+    if (appStateContext) {
+      appStateContext.dispatch({ type: 'SET_DARK_MODE', payload: newTheme });
+    }
   };
 
   const setTheme = (dark: boolean) => {
-    // No-op function - theme cannot be changed
+    setIsDark(dark);
+    applyThemeToDOM(dark, colorScheme, customTheme);
+    persistThemePreference(dark);
+    
+    // Sincronizar con AppState
+    if (appStateContext) {
+      appStateContext.dispatch({ type: 'SET_DARK_MODE', payload: dark });
+    }
+  };
+
+  const setColorSchemeHandler = (scheme: string) => {
+    setColorScheme(scheme);
+    applyThemeToDOM(isDark, scheme, customTheme);
+    persistColorScheme(scheme);
+  };
+
+  const setCustomThemeHandler = (theme: any) => {
+    setCustomTheme(theme);
+    applyThemeToDOM(isDark, colorScheme, theme);
+    persistCustomTheme(theme);
+  };
+
+  const resetTheme = () => {
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setIsDark(systemTheme);
+    setColorScheme('azul');
+    setCustomTheme(null);
+    applyThemeToDOM(systemTheme, 'azul', null);
+    persistThemePreference(systemTheme);
+    persistColorScheme('azul');
+    persistCustomTheme(null);
+    
+    // Sincronizar con AppState
+    if (appStateContext) {
+      appStateContext.dispatch({ type: 'SET_DARK_MODE', payload: systemTheme });
+    }
   };
 
   return {
     isDark,
+    colorScheme,
+    customTheme,
     toggleTheme,
-    setTheme
+    setTheme,
+    setColorScheme: setColorSchemeHandler,
+    setCustomTheme: setCustomThemeHandler,
+    resetTheme
   };
 }; 

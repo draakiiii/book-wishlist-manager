@@ -182,6 +182,155 @@ export interface Configuracion {
   mostrarSeccionLeidos?: boolean;
   mostrarSeccionAbandonados?: boolean;
   mostrarSeccionSagas?: boolean;
+
+  // === NUEVAS CONFIGURACIONES AVANZADAS ===
+  
+  // Sistema de Temas Avanzado
+  temaPersonalizado?: {
+    nombre: string;
+    colores: {
+      primario: string;
+      secundario: string;
+      exito: string;
+      advertencia: string;
+      error: string;
+      fondo: string;
+      texto: string;
+      borde: string;
+    };
+    modoOscuro?: boolean;
+  };
+  esquemaColor?: 'azul' | 'verde' | 'morado' | 'naranja' | 'rosa' | 'personalizado';
+  modoOscuro?: boolean;
+  transicionesAnimadas?: boolean;
+  efectosVisuales?: boolean;
+  
+  // Personalización de Layout
+  ordenSecciones?: string[]; // Array con el orden de las secciones
+  layoutCompacto?: boolean;
+  mostrarIconos?: boolean;
+  mostrarDescripciones?: boolean;
+  espaciadoPersonalizado?: 'compacto' | 'normal' | 'espacioso';
+  
+  // Personalización de Tipografía
+  tamanoFuente?: 'pequeno' | 'normal' | 'grande' | 'extra-grande';
+  familiaFuente?: 'inter' | 'poppins' | 'roboto' | 'open-sans' | 'system';
+  pesoFuente?: 'normal' | 'medio' | 'semi-bold' | 'bold';
+  
+  // Personalización de UI
+  bordesRedondeados?: 'ninguno' | 'suave' | 'normal' | 'redondeado';
+  sombras?: 'ninguna' | 'suave' | 'normal' | 'pronunciada';
+  opacidadTarjetas?: number; // 0-100
+  efectoGlass?: boolean;
+  modoMinimalista?: boolean;
+  
+  // Personalización de Contenido
+  etiquetasPersonalizadas?: {
+    wishlist?: string;
+    tbr?: string;
+    leyendo?: string;
+    leidos?: string;
+    abandonados?: string;
+    sagas?: string;
+    progreso?: string;
+  };
+  iconosPersonalizados?: {
+    wishlist?: string;
+    tbr?: string;
+    leyendo?: string;
+    leidos?: string;
+    abandonados?: string;
+    sagas?: string;
+    progreso?: string;
+  };
+  
+  // Configuración de Rendimiento
+  modoAltoRendimiento?: boolean;
+  animacionesReducidas?: boolean;
+  cargaLazy?: boolean;
+  cacheHabilitado?: boolean;
+  compresionImagenes?: boolean;
+  
+  // Configuración de Accesibilidad
+  modoAltoContraste?: boolean;
+  tamanoTextoAccesible?: boolean;
+  navegacionTeclado?: boolean;
+  lectoresPantalla?: boolean;
+  reducirMovimiento?: boolean;
+  
+  // Configuración de Privacidad Avanzada
+  modoIncognito?: boolean;
+  noTracking?: boolean;
+  datosLocalSolo?: boolean;
+  backupAutomatico?: boolean;
+  encriptacionDatos?: boolean;
+  
+  // Configuración de Notificaciones Avanzadas
+  notificacionesPush?: boolean;
+  notificacionesEmail?: boolean;
+  recordatoriosLectura?: boolean;
+  recordatoriosObjetivos?: boolean;
+  recordatoriosPrestamos?: boolean;
+  frecuenciaNotificaciones?: 'inmediata' | 'diaria' | 'semanal' | 'mensual';
+  
+  // Configuración de Búsqueda y Filtros
+  busquedaAvanzada?: boolean;
+  filtrosGuardados?: boolean;
+  historialBusqueda?: boolean;
+  sugerenciasBusqueda?: boolean;
+  busquedaFuzzy?: boolean;
+  
+  // Configuración de Importación/Exportación
+  formatoExportacion?: 'json' | 'csv' | 'excel' | 'pdf';
+  backupAutomatico?: boolean;
+  sincronizacionNube?: boolean;
+  servicioNube?: 'google-drive' | 'dropbox' | 'onedrive' | 'personal';
+  
+  // Configuración de Escáner Avanzado
+  resolucionCamara?: 'baja' | 'media' | 'alta' | 'ultra';
+  formatoCodigoBarras?: 'ean13' | 'ean8' | 'upc' | 'isbn' | 'todos';
+  sonidoEscaneo?: boolean;
+  vibracionEscaneo?: boolean;
+  modoEscaneoRapido?: boolean;
+  
+  // Configuración de Estadísticas Avanzadas
+  estadisticasDetalladas?: boolean;
+  graficosInteractivos?: boolean;
+  exportarEstadisticas?: boolean;
+  comparacionAnual?: boolean;
+  metasPersonalizadas?: boolean;
+  
+  // Configuración de Gamificación
+  logrosHabilitados?: boolean;
+  insigniasHabilitadas?: boolean;
+  nivelesHabilitados?: boolean;
+  desafiosHabilitados?: boolean;
+  rankingHabilitado?: boolean;
+  
+  // Configuración de Social
+  compartirLogros?: boolean;
+  bibliotecaPublica?: boolean;
+  recomendacionesHabilitadas?: boolean;
+  comentariosHabilitados?: boolean;
+  
+  // Configuración de Integración
+  integracionGoodreads?: boolean;
+  integracionLibraryThing?: boolean;
+  integracionCalibre?: boolean;
+  apiKeyPersonalizada?: string;
+  
+  // Configuración de Idioma y Región
+  idioma?: 'es' | 'en' | 'fr' | 'de' | 'pt' | 'it';
+  region?: string;
+  formatoFecha?: 'dd/mm/yyyy' | 'mm/dd/yyyy' | 'yyyy-mm-dd';
+  formatoHora?: '12h' | '24h';
+  moneda?: 'EUR' | 'USD' | 'GBP' | 'MXN' | 'ARS' | 'CLP';
+  
+  // Configuración de Desarrollo (solo para desarrolladores)
+  modoDesarrollo?: boolean;
+  logsDetallados?: boolean;
+  herramientasDesarrollo?: boolean;
+  modoDebug?: boolean;
 }
 
 export interface AppState {
