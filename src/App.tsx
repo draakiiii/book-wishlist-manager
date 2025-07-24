@@ -35,7 +35,8 @@ import DataExportImport from './components/DataExportImport';
 import ScanHistory from './components/ScanHistory';
 import ConfigForm from './components/ConfigForm';
 import BulkScanModal from './components/BulkScanModal';
-import LoginModal from './components/LoginModal';
+
+import LoginScreen from './components/LoginScreen';
 
 import './App.css';
 
@@ -50,7 +51,7 @@ const AppContent: React.FC = () => {
   const [scanHistoryModalOpen, setScanHistoryModalOpen] = useState(false);
   const [bulkScanModalOpen, setBulkScanModalOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [showLoginModal, setShowLoginModal] = useState(false);
+
 
   console.log('AppContent rendered', { authLoading, isAuthenticated, user: user?.email });
 
@@ -110,7 +111,7 @@ const AppContent: React.FC = () => {
   }, [isAuthenticated, user, hasMigratedData, migrateData]);
 
   const handleLoginSuccess = () => {
-    setShowLoginModal(false);
+    // El usuario ya está autenticado, no necesitamos hacer nada más
   };
 
   const handleLogout = async () => {
@@ -154,6 +155,37 @@ const AppContent: React.FC = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-slate-600 dark:text-slate-400">Cargando aplicación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar pantalla de login si no está autenticado
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8"
+          >
+            {/* Logo y título */}
+            <div className="text-center mb-8">
+              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-2xl flex items-center justify-center mb-4">
+                <BookOpen className="h-8 w-8 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                Mi Biblioteca
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400">
+                Inicia sesión para acceder a tu biblioteca personal
+              </p>
+            </div>
+
+            {/* Login Screen integrado */}
+            <LoginScreen onLoginSuccess={handleLoginSuccess} />
+          </motion.div>
         </div>
       </div>
     );
@@ -217,6 +249,9 @@ const AppContent: React.FC = () => {
                   <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
                 </motion.button>
                 
+                {/* Botón de Exportar/Importar Datos - DESHABILITADO TEMPORALMENTE */}
+                {/* Para habilitar, descomenta las siguientes líneas: */}
+                {/*
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -226,6 +261,7 @@ const AppContent: React.FC = () => {
                 >
                   <Database className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
                 </motion.button>
+                */}
                 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -258,28 +294,16 @@ const AppContent: React.FC = () => {
                 <Settings className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
               </button>
 
-              {/* Auth Button */}
-              {isAuthenticated ? (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleLogout}
-                  className="p-1.5 md:p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors duration-200"
-                  title={`Cerrar sesión (${user?.email})`}
-                >
-                  <Users className="h-4 w-4 md:h-5 md:w-5 text-red-600 dark:text-red-400" />
-                </motion.button>
-              ) : (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowLoginModal(true)}
-                  className="p-1.5 md:p-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 transition-colors duration-200"
-                  title="Iniciar sesión"
-                >
-                  <Users className="h-4 w-4 md:h-5 md:w-5 text-blue-600 dark:text-blue-400" />
-                </motion.button>
-              )}
+              {/* Logout Button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                className="p-1.5 md:p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors duration-200"
+                title={`Cerrar sesión (${user?.email})`}
+              >
+                <Users className="h-4 w-4 md:h-5 md:w-5 text-red-600 dark:text-red-400" />
+              </motion.button>
             </div>
           </div>
         </div>
@@ -475,12 +499,7 @@ const AppContent: React.FC = () => {
         }}
       />
 
-      {/* Login Modal */}
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
+
     </div>
   );
 };
