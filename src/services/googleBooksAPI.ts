@@ -365,6 +365,28 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
   }
 };
 
+// Test function to debug API response
+export const testGoogleBooksAPI = async (query: string) => {
+  try {
+    const url = `${API_CONFIG.baseUrl}?q=${encodeURIComponent(query)}&langRestrict=${API_CONFIG.language}&maxResults=1`;
+    console.log('Testing API with URL:', url);
+    
+    const response = await fetchWithTimeout(url);
+    const data = await response.json();
+    
+    console.log('Raw API response:', data);
+    if (data.items && data.items.length > 0) {
+      console.log('First book volumeInfo:', data.items[0].volumeInfo);
+      console.log('First book imageLinks:', data.items[0].volumeInfo.imageLinks);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error testing API:', error);
+    return null;
+  }
+};
+
 // New function to search books by title for autocomplete
 export const searchBooksByTitle = async (query: string): Promise<BookData[]> => {
   try {
@@ -396,6 +418,8 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
 
     const results = data.items.map((item: any) => {
       const book = item.volumeInfo;
+      
+      console.log('Processing book:', book.title, 'imageLinks:', book.imageLinks);
       
       // Extract and clean the title
       let title = book.title || '';
@@ -461,7 +485,7 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
         }
       }
       
-      return {
+      const result = {
         titulo: title,
         autor: author || undefined,
         paginas: pages,
@@ -474,6 +498,9 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
         portada: coverUrl
         // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
+      
+      console.log('Final result for book:', title, 'portada:', coverUrl);
+      return result;
     });
 
     // Cache the results

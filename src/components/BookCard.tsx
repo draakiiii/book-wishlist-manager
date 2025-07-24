@@ -307,15 +307,9 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
       {/* Book Info */}
       <div className="space-y-2 sm:space-y-3">
         {/* Cover Image */}
-        {(() => {
-          const shouldShowCover = state.config.mostrarPortadas && book.portada;
-          console.log('BookCard render - shouldShowCover:', shouldShowCover, {
-            mostrarPortadas: state.config.mostrarPortadas,
-            bookPortada: book.portada,
-            bookTitulo: book.titulo
-          });
-          return shouldShowCover ? (
-            <div className="flex justify-center">
+        {state.config.mostrarPortadas && (
+          <div className="flex justify-center">
+            {book.portada ? (
               <div className="relative w-24 h-32 sm:w-28 sm:h-36 rounded-lg overflow-hidden shadow-md">
                 <img
                   src={book.portada}
@@ -331,15 +325,13 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
                   }}
                 />
               </div>
-            </div>
-          ) : (
-            <div className="flex justify-center">
+            ) : (
               <div className="relative w-24 h-32 sm:w-28 sm:h-36 rounded-lg overflow-hidden shadow-md bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
                 <BookOpen className="h-8 w-8 text-slate-400" />
               </div>
-            </div>
-          );
-        })()}
+            )}
+          </div>
+        )}
         
         <div>
           <h3 className="font-semibold text-slate-900 dark:text-white text-base sm:text-lg leading-tight pr-16 sm:pr-20">

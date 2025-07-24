@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Clock, Search, Camera, Loader2, CheckCircle, AlertCircle, Barcode } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 import { Libro, BookData } from '../types';
-import { fetchBookData } from '../services/googleBooksAPI';
+import { fetchBookData, testGoogleBooksAPI } from '../services/googleBooksAPI';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import SagaAutocomplete from './SagaAutocomplete';
 import ISBNInputModal from './ISBNInputModal';
@@ -136,7 +136,15 @@ const TBRForm: React.FC = () => {
     setScanMessage('');
   };
 
-  const handleBookSelect = (bookData: BookData) => {
+  const handleBookSelect = async (bookData: BookData) => {
+    console.log('Book selected:', bookData);
+    
+    // Test the API to see what's happening
+    if (bookData.titulo) {
+      console.log('Testing API for book:', bookData.titulo);
+      await testGoogleBooksAPI(bookData.titulo);
+    }
+    
     setSelectedBookData(bookData);
     setTitulo(bookData.titulo);
     setAutor(bookData.autor || '');
