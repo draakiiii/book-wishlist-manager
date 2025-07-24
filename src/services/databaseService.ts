@@ -81,11 +81,20 @@ export class DatabaseService {
         tbrCount: cleanedState.libros?.filter((l: any) => l.estado === 'tbr').length || 0
       });
       
-      await setDoc(userDataRef, {
+      const dataToSave = {
         ...cleanedState,
         lastUpdated: serverTimestamp(),
         version: '1.0'
+      };
+      
+      console.log('DatabaseService.saveAppState: Final data being saved to Firebase:', {
+        librosCount: dataToSave.libros?.length || 0,
+        librosArray: dataToSave.libros,
+        hasLibrosProperty: 'libros' in dataToSave,
+        dataKeys: Object.keys(dataToSave)
       });
+      
+      await setDoc(userDataRef, dataToSave);
       
       console.log('DatabaseService.saveAppState: Successfully saved to Firebase');
     } catch (error) {
@@ -106,6 +115,12 @@ export class DatabaseService {
       if (docSnap.exists()) {
         const data = docSnap.data();
         console.log('DatabaseService.loadAppState: Raw data from Firebase:', data);
+        console.log('DatabaseService.loadAppState: Detailed libros array:', {
+          librosLength: data.libros?.length || 0,
+          librosArray: data.libros,
+          hasLibrosProperty: 'libros' in data,
+          dataKeys: Object.keys(data)
+        });
         
         // Remover campos de Firebase que no son parte del estado
         const { lastUpdated, version, ...appState } = data;
