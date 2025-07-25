@@ -6,7 +6,10 @@ import {
   BookOpen, 
   Settings,
   Users,
-  X
+  X,
+  Clock,
+  Heart,
+  Trophy
 } from 'lucide-react';
 import Navigation, { NavigationSection, BooksViewMode } from './components/Navigation';
 import BooksView from './components/BooksView';
@@ -18,6 +21,10 @@ import DataExportImport from './components/DataExportImport';
 import ScanHistory from './components/ScanHistory';
 import ConfigForm from './components/ConfigForm';
 import BulkScanModal from './components/BulkScanModal';
+import BarcodeScannerModal from './components/BarcodeScannerModal';
+import TBRForm from './components/TBRForm';
+import WishlistForm from './components/WishlistForm';
+import SagaList from './components/SagaList';
 
 import LoginScreen from './components/LoginScreen';
 
@@ -29,9 +36,14 @@ const AppContent: React.FC = () => {
   const [configSidebarOpen, setConfigSidebarOpen] = React.useState(false);
   const [configModalOpen, setConfigModalOpen] = useState(false);
 
+  // Estados para todos los modales
   const [exportImportModalOpen, setExportImportModalOpen] = useState(false);
   const [scanHistoryModalOpen, setScanHistoryModalOpen] = useState(false);
   const [bulkScanModalOpen, setBulkScanModalOpen] = useState(false);
+  const [barcodeScannerModalOpen, setBarcodeScannerModalOpen] = useState(false);
+  const [tbrFormModalOpen, setTbrFormModalOpen] = useState(false);
+  const [wishlistFormModalOpen, setWishlistFormModalOpen] = useState(false);
+  const [sagaListModalOpen, setSagaListModalOpen] = useState(false);
 
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   
@@ -39,10 +51,39 @@ const AppContent: React.FC = () => {
   const [currentSection, setCurrentSection] = useState<NavigationSection>('dashboard');
   const [currentBooksView, setCurrentBooksView] = useState<BooksViewMode>('list');
 
-
   console.log('AppContent rendered', { authLoading, isAuthenticated, user: user?.email });
 
-
+  // Función para manejar la apertura de modales desde la navegación
+  const handleModalOpen = (modal: string) => {
+    switch (modal) {
+      case 'barcodeScanner':
+        setBarcodeScannerModalOpen(true);
+        break;
+      case 'bulkScan':
+        setBulkScanModalOpen(true);
+        break;
+      case 'scanHistory':
+        setScanHistoryModalOpen(true);
+        break;
+      case 'dataExportImport':
+        setExportImportModalOpen(true);
+        break;
+      case 'tbrForm':
+        setTbrFormModalOpen(true);
+        break;
+      case 'wishlistForm':
+        setWishlistFormModalOpen(true);
+        break;
+      case 'sagaList':
+        setSagaListModalOpen(true);
+        break;
+      case 'configForm':
+        setConfigModalOpen(true);
+        break;
+      default:
+        break;
+    }
+  };
 
   useEffect(() => {
     // Aplicar el modo oscuro al body
@@ -100,7 +141,7 @@ const AppContent: React.FC = () => {
     try {
       await logout();
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error('Error during logout:', error);
     }
   };
 
@@ -117,53 +158,24 @@ const AppContent: React.FC = () => {
     dispatch({ type: 'REMOVE_SAGA_NOTIFICATION', payload: { id } });
   };
 
-
-
-  // Mostrar loading mientras se autentica
+  // Mostrar pantalla de login si no está autenticado
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400">Cargando aplicación...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
+          <p className="mt-4 text-slate-600 dark:text-slate-400">Cargando...</p>
         </div>
       </div>
     );
   }
 
-  // Mostrar pantalla de login si no está autenticado
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8"
-          >
-            {/* Logo y título */}
-            <div className="text-center mb-8">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-2xl flex items-center justify-center mb-4">
-                <BookOpen className="h-8 w-8 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                Mi Biblioteca
-              </h1>
-              <p className="text-slate-600 dark:text-slate-400">
-                Inicia sesión para acceder a tu biblioteca personal
-              </p>
-            </div>
-
-            {/* Login Screen integrado */}
-            <LoginScreen onLoginSuccess={handleLoginSuccess} />
-          </motion.div>
-        </div>
-      </div>
-    );
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
   }
 
   return (
-    <div className="theme-transition min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
       {/* Notificaciones de saga completada */}
       {state.sagaNotifications && state.sagaNotifications.map((notification) => (
         <SagaCompletionNotification
@@ -172,64 +184,38 @@ const AppContent: React.FC = () => {
           onClose={() => handleRemoveNotification(notification.id)}
         />
       ))}
-      
+
       {/* Header */}
-      <motion.header 
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="sticky top-0 z-50 glass-effect border-b border-white/20"
+      <motion.header
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-700 sticky top-0 z-40"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg">
-                <BookOpen className="h-6 w-6 text-white" />
+            <div className="flex items-center space-x-4">
+              {/* Logo */}
+              <div className="flex items-center space-x-2">
+                <BookOpen className="h-8 w-8 text-primary-500" />
+                <span className="text-xl font-bold text-slate-900 dark:text-white hidden sm:block">
+                  Biblioteca
+                </span>
               </div>
-              <div className="flex flex-col">
-                <h1 className="text-lg sm:text-xl font-display font-bold gradient-text">
-                  Mi Biblioteca
-                </h1>
-              </div>
-              
-              {/* Navegación */}
-              <div className="hidden md:block ml-8">
+
+              {/* Desktop Navigation */}
+              <div className="hidden md:block">
                 <Navigation
                   currentSection={currentSection}
                   currentBooksView={currentBooksView}
                   onSectionChange={setCurrentSection}
                   onBooksViewChange={setCurrentBooksView}
+                  onModalOpen={handleModalOpen}
                 />
               </div>
             </div>
             
             <div className="flex items-center space-x-1 sm:space-x-2">
-              
-              {/* Botón de Exportar/Importar Datos - DESHABILITADO TEMPORALMENTE */}
-              {/* Para habilitar, descomenta las siguientes líneas: */}
-              {/*
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setExportImportModalOpen(true)}
-                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
-                title="Exportar/Importar Datos"
-              >
-                <Database className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-              </motion.button>
-              */}
-              
-              {/* Historial de Escaneos - DESHABILITADO TEMPORALMENTE */}
-              {/*
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setScanHistoryModalOpen(true)}
-                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
-                title="Historial de Escaneos"
-              >
-                <History className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-              </motion.button>
-              */}
               
               {/* Mobile Navigation */}
               <div className="md:hidden">
@@ -238,6 +224,7 @@ const AppContent: React.FC = () => {
                   currentBooksView={currentBooksView}
                   onSectionChange={setCurrentSection}
                   onBooksViewChange={setCurrentBooksView}
+                  onModalOpen={handleModalOpen}
                 />
               </div>
 
@@ -338,8 +325,6 @@ const AppContent: React.FC = () => {
         </motion.div>
       )}
 
-
-
       {/* Data Export/Import Modal */}
       <DataExportImport
         isOpen={exportImportModalOpen}
@@ -361,6 +346,137 @@ const AppContent: React.FC = () => {
           setBulkScanModalOpen(false);
         }}
       />
+
+      {/* Barcode Scanner Modal */}
+      {barcodeScannerModalOpen && (
+        <BarcodeScannerModal
+          onClose={() => setBarcodeScannerModalOpen(false)}
+          onScanSuccess={(isbn) => {
+            // El libro se agregará automáticamente a través del contexto
+            setBarcodeScannerModalOpen(false);
+          }}
+        />
+      )}
+
+      {/* TBR Form Modal */}
+      {tbrFormModalOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setTbrFormModalOpen(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center space-x-2">
+                <Clock className="h-5 w-5 text-warning-500" />
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Agregar a TBR
+                </h3>
+              </div>
+              <button
+                onClick={() => setTbrFormModalOpen(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
+              >
+                <X className="h-5 w-5 text-slate-500" />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <TBRForm />
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Wishlist Form Modal */}
+      {wishlistFormModalOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setWishlistFormModalOpen(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center space-x-2">
+                <Heart className="h-5 w-5 text-red-500" />
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Agregar a Wishlist
+                </h3>
+              </div>
+              <button
+                onClick={() => setWishlistFormModalOpen(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
+              >
+                <X className="h-5 w-5 text-slate-500" />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <WishlistForm />
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Saga List Modal */}
+      {sagaListModalOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setSagaListModalOpen(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center space-x-2">
+                <Trophy className="h-5 w-5 text-yellow-500" />
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Gestión de Sagas
+                </h3>
+              </div>
+              <button
+                onClick={() => setSagaListModalOpen(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
+              >
+                <X className="h-5 w-5 text-slate-500" />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <SagaList />
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
 
       {/* Logout Confirmation Dialog */}
       {logoutConfirmOpen && (
@@ -419,7 +535,6 @@ const AppContent: React.FC = () => {
           </motion.div>
         </motion.div>
       )}
-
 
     </div>
   );
