@@ -5,18 +5,15 @@ import { motion } from 'framer-motion';
 import { 
   BookOpen, 
   Settings,
-  Search,
-  BarChart3,
   Users,
   X
 } from 'lucide-react';
 import Navigation, { NavigationSection, BooksViewMode } from './components/Navigation';
 import BooksView from './components/BooksView';
 import Dashboard from './components/Dashboard';
+import Statistics from './components/Statistics';
 import Sidebar from './components/Sidebar';
 import SagaCompletionNotification from './components/SagaCompletionNotification';
-import AdvancedSearch from './components/AdvancedSearch';
-import AdvancedStatistics from './components/AdvancedStatistics';
 import DataExportImport from './components/DataExportImport';
 import ScanHistory from './components/ScanHistory';
 import ConfigForm from './components/ConfigForm';
@@ -31,8 +28,7 @@ const AppContent: React.FC = () => {
   const { user, loading: authLoading, isAuthenticated, logout, migrateData, hasMigratedData } = useAuth();
   const [configSidebarOpen, setConfigSidebarOpen] = React.useState(false);
   const [configModalOpen, setConfigModalOpen] = useState(false);
-  const [searchModalOpen, setSearchModalOpen] = useState(false);
-  const [statisticsModalOpen, setStatisticsModalOpen] = useState(false);
+
   const [exportImportModalOpen, setExportImportModalOpen] = useState(false);
   const [scanHistoryModalOpen, setScanHistoryModalOpen] = useState(false);
   const [bulkScanModalOpen, setBulkScanModalOpen] = useState(false);
@@ -207,26 +203,6 @@ const AppContent: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-1 sm:space-x-2">
-              {/* Search and Statistics buttons - visible on all screens */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSearchModalOpen(true)}
-                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
-                title="Búsqueda Avanzada"
-              >
-                <Search className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-              </motion.button>
-              
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setStatisticsModalOpen(true)}
-                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 mx-1"
-                title="Estadísticas Avanzadas"
-              >
-                <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-              </motion.button>
               
               {/* Botón de Exportar/Importar Datos - DESHABILITADO TEMPORALMENTE */}
               {/* Para habilitar, descomenta las siguientes líneas: */}
@@ -310,6 +286,9 @@ const AppContent: React.FC = () => {
             viewMode={currentBooksView}
             onViewModeChange={setCurrentBooksView}
           />
+        ) : currentSection === 'statistics' ? (
+          // Statistics view content
+          <Statistics />
         ) : null}
       </main>
       
@@ -359,18 +338,7 @@ const AppContent: React.FC = () => {
         </motion.div>
       )}
 
-      {/* Advanced Search Modal */}
-      <AdvancedSearch
-        isOpen={searchModalOpen}
-        onClose={() => setSearchModalOpen(false)}
-        onSearch={() => {}}
-      />
 
-      {/* Advanced Statistics Modal */}
-      <AdvancedStatistics
-        isOpen={statisticsModalOpen}
-        onClose={() => setStatisticsModalOpen(false)}
-      />
 
       {/* Data Export/Import Modal */}
       <DataExportImport

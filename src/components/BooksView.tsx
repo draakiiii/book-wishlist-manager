@@ -10,7 +10,17 @@ import {
   Calendar,
   Star,
   BookOpen,
-  X
+  X,
+  CheckCircle,
+  Clock,
+  Heart,
+  BookMarked,
+  BookX,
+  Share2,
+  RotateCcw,
+  Hash,
+  Globe,
+  Building
 } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 import { Libro } from '../types';
@@ -35,7 +45,34 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
   const [sortBy, setSortBy] = useState<SortOption>('fechaAgregado');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [showFilters, setShowFilters] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [editingBook, setEditingBook] = useState<Libro | null>(null);
+  
+  // Filtros avanzados
+  const [autorFilter, setAutorFilter] = useState('');
+  const [sagaFilter, setSagaFilter] = useState('');
+  const [generoFilter, setGeneroFilter] = useState('');
+  const [editorialFilter, setEditorialFilter] = useState('');
+  const [idiomaFilter, setIdiomaFilter] = useState('');
+  const [formatoFilter, setFormatoFilter] = useState('');
+  const [calificacionMin, setCalificacionMin] = useState('');
+  const [calificacionMax, setCalificacionMax] = useState('');
+  const [paginasMin, setPaginasMin] = useState('');
+  const [paginasMax, setPaginasMax] = useState('');
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
+
+  // Opciones para filtros avanzados
+  const filterOptions = useMemo(() => {
+    const autores = [...new Set(state.libros.map(l => l.autor).filter(Boolean))].sort();
+    const sagas = [...new Set(state.libros.map(l => l.sagaName).filter(Boolean))].sort();
+    const generos = [...new Set(state.libros.map(l => l.genero).filter(Boolean))].sort();
+    const editoriales = [...new Set(state.libros.map(l => l.editorial).filter(Boolean))].sort();
+    const idiomas = [...new Set(state.libros.map(l => l.idioma).filter(Boolean))].sort();
+    const formatos = [...new Set(state.libros.map(l => l.formato).filter(Boolean))].sort();
+    
+    return { autores, sagas, generos, editoriales, idiomas, formatos };
+  }, [state.libros]);
 
   // Filtrar y ordenar libros
   const filteredAndSortedBooks = useMemo(() => {
@@ -48,13 +85,69 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
         libro.titulo.toLowerCase().includes(searchLower) ||
         (libro.autor && libro.autor.toLowerCase().includes(searchLower)) ||
         (libro.genero && libro.genero.toLowerCase().includes(searchLower)) ||
-        (libro.editorial && libro.editorial.toLowerCase().includes(searchLower))
+        (libro.editorial && libro.editorial.toLowerCase().includes(searchLower)) ||
+        (libro.isbn && libro.isbn.toLowerCase().includes(searchLower))
       );
     }
 
     // Filtrar por estado
     if (filterState !== 'todos') {
       filtered = filtered.filter(libro => libro.estado === filterState);
+    }
+
+    // Filtros avanzados
+    if (autorFilter) {
+      filtered = filtered.filter(libro => libro.autor === autorFilter);
+    }
+    
+    if (sagaFilter) {
+      filtered = filtered.filter(libro => libro.sagaName === sagaFilter);
+    }
+    
+    if (generoFilter) {
+      filtered = filtered.filter(libro => libro.genero === generoFilter);
+    }
+    
+    if (editorialFilter) {
+      filtered = filtered.filter(libro => libro.editorial === editorialFilter);
+    }
+    
+    if (idiomaFilter) {
+      filtered = filtered.filter(libro => libro.idioma === idiomaFilter);
+    }
+    
+    if (formatoFilter) {
+      filtered = filtered.filter(libro => libro.formato === formatoFilter);
+    }
+    
+    if (calificacionMin) {
+      const min = parseFloat(calificacionMin);
+      filtered = filtered.filter(libro => (libro.calificacion || 0) >= min);
+    }
+    
+    if (calificacionMax) {
+      const max = parseFloat(calificacionMax);
+      filtered = filtered.filter(libro => (libro.calificacion || 0) <= max);
+    }
+    
+    if (paginasMin) {
+      const min = parseInt(paginasMin);
+      filtered = filtered.filter(libro => (libro.paginas || 0) >= min);
+    }
+    
+    if (paginasMax) {
+      const max = parseInt(paginasMax);
+      filtered = filtered.filter(libro => (libro.paginas || 0) <= max);
+    }
+    
+    if (fechaDesde) {
+      const desde = new Date(fechaDesde).getTime();
+      filtered = filtered.filter(libro => (libro.fechaAgregado || 0) >= desde);
+    }
+    
+    if (fechaHasta) {
+      const hasta = new Date(fechaHasta).getTime();
+      filtered = filtered.filter(libro => (libro.fechaAgregado || 0) <= hasta);
     }
 
     // Ordenar
@@ -97,7 +190,7 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
     });
 
     return filtered;
-  }, [state.libros, searchTerm, filterState, sortBy, sortDirection]);
+  }, [state.libros, searchTerm, filterState, sortBy, sortDirection, autorFilter, sagaFilter, generoFilter, editorialFilter, idiomaFilter, formatoFilter, calificacionMin, calificacionMax, paginasMin, paginasMax, fechaDesde, fechaHasta]);
 
   const handleDelete = (id: number) => {
     dispatch({ type: 'DELETE_BOOK', payload: id });
@@ -120,6 +213,25 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
       setSortDirection('asc');
     }
   };
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setFilterState('todos');
+    setAutorFilter('');
+    setSagaFilter('');
+    setGeneroFilter('');
+    setEditorialFilter('');
+    setIdiomaFilter('');
+    setFormatoFilter('');
+    setCalificacionMin('');
+    setCalificacionMax('');
+    setPaginasMin('');
+    setPaginasMax('');
+    setFechaDesde('');
+    setFechaHasta('');
+  };
+
+  const hasActiveFilters = searchTerm || filterState !== 'todos' || autorFilter || sagaFilter || generoFilter || editorialFilter || idiomaFilter || formatoFilter || calificacionMin || calificacionMax || paginasMin || paginasMax || fechaDesde || fechaHasta;
 
   return (
     <div className="space-y-6">
@@ -209,36 +321,58 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
               )}
             </div>
 
-            {/* Filtros por estado */}
+            {/* Filtros rápidos por estado */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Filtrar por estado
+                Filtros Rápidos por Estado
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-7 gap-2 mb-4">
                 {[
-                  { key: 'todos', label: 'Todos', icon: BookOpen },
-                  { key: 'wishlist', label: 'Lista de Deseos', icon: BookOpen },
-                  { key: 'tbr', label: 'Por Leer', icon: BookOpen },
-                  { key: 'leyendo', label: 'Leyendo', icon: BookOpen },
-                  { key: 'leido', label: 'Leídos', icon: BookOpen },
-                  { key: 'abandonado', label: 'Abandonados', icon: BookOpen }
-                ].map(({ key, label, icon: Icon }) => (
+                  { key: 'todos', label: 'Todos', icon: BookOpen, color: 'bg-slate-500', shortLabel: 'Todos' },
+                  { key: 'wishlist', label: 'Lista de Deseos', icon: Heart, color: 'bg-pink-500', shortLabel: 'Wishlist' },
+                  { key: 'tbr', label: 'Por Leer', icon: BookMarked, color: 'bg-blue-500', shortLabel: 'TBR' },
+                  { key: 'leyendo', label: 'Leyendo', icon: Clock, color: 'bg-orange-500', shortLabel: 'Leyendo' },
+                  { key: 'leido', label: 'Leídos', icon: CheckCircle, color: 'bg-green-500', shortLabel: 'Leídos' },
+                  { key: 'abandonado', label: 'Abandonados', icon: BookX, color: 'bg-red-500', shortLabel: 'Abandonados' }
+                ].map(({ key, label, icon: Icon, color, shortLabel }) => (
                   <motion.button
                     key={key}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setFilterState(key as FilterState)}
-                    className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                    className={`flex flex-col items-center justify-center p-2 rounded-lg text-xs font-medium transition-colors ${
                       filterState === key
-                        ? 'bg-primary-500 text-white'
+                        ? `${color} text-white`
                         : 'bg-white/50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-slate-700/70'
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span>{label}</span>
-                    <span className="text-xs opacity-75">({getFilterCount(key as FilterState)})</span>
+                    <Icon className="h-4 w-4 mb-1" />
+                    <span className="hidden sm:inline text-center">{label}</span>
+                    <span className="sm:hidden text-center text-[10px] leading-tight">{shortLabel}</span>
+                    <span className="text-[10px] opacity-75">({getFilterCount(key as FilterState)})</span>
                   </motion.button>
                 ))}
+              </div>
+
+              {/* Botón para mostrar filtros avanzados */}
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  className="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center space-x-1"
+                >
+                  <Filter className="h-4 w-4" />
+                  <span>{showAdvancedFilters ? 'Ocultar' : 'Mostrar'} filtros avanzados</span>
+                </button>
+                
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="flex items-center space-x-1 text-sm text-red-600 dark:text-red-400 hover:underline"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    <span>Limpiar filtros</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -276,6 +410,209 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
                 ))}
               </div>
             </div>
+
+            {/* Filtros avanzados */}
+            {showAdvancedFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mt-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg space-y-4"
+              >
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                  Filtros Avanzados
+                </h4>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Autor */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <Share2 className="inline h-3 w-3 mr-1" />
+                      Autor
+                    </label>
+                    <select
+                      value={autorFilter}
+                      onChange={(e) => setAutorFilter(e.target.value)}
+                      className="w-full p-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    >
+                      <option value="">Todos los autores</option>
+                      {filterOptions.autores.map(autor => (
+                        <option key={autor} value={autor}>{autor}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Saga */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <BookOpen className="inline h-3 w-3 mr-1" />
+                      Saga
+                    </label>
+                    <select
+                      value={sagaFilter}
+                      onChange={(e) => setSagaFilter(e.target.value)}
+                      className="w-full p-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    >
+                      <option value="">Todas las sagas</option>
+                      {filterOptions.sagas.map(saga => (
+                        <option key={saga} value={saga}>{saga}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Género */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <Hash className="inline h-3 w-3 mr-1" />
+                      Género
+                    </label>
+                    <select
+                      value={generoFilter}
+                      onChange={(e) => setGeneroFilter(e.target.value)}
+                      className="w-full p-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    >
+                      <option value="">Todos los géneros</option>
+                      {filterOptions.generos.map(genero => (
+                        <option key={genero} value={genero}>{genero}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Editorial */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <Building className="inline h-3 w-3 mr-1" />
+                      Editorial
+                    </label>
+                    <select
+                      value={editorialFilter}
+                      onChange={(e) => setEditorialFilter(e.target.value)}
+                      className="w-full p-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    >
+                      <option value="">Todas las editoriales</option>
+                      {filterOptions.editoriales.map(editorial => (
+                        <option key={editorial} value={editorial}>{editorial}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Idioma */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <Globe className="inline h-3 w-3 mr-1" />
+                      Idioma
+                    </label>
+                    <select
+                      value={idiomaFilter}
+                      onChange={(e) => setIdiomaFilter(e.target.value)}
+                      className="w-full p-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    >
+                      <option value="">Todos los idiomas</option>
+                      {filterOptions.idiomas.map(idioma => (
+                        <option key={idioma} value={idioma}>{idioma}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Formato */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <BookOpen className="inline h-3 w-3 mr-1" />
+                      Formato
+                    </label>
+                    <select
+                      value={formatoFilter}
+                      onChange={(e) => setFormatoFilter(e.target.value)}
+                      className="w-full p-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    >
+                      <option value="">Todos los formatos</option>
+                      {filterOptions.formatos.map(formato => (
+                        <option key={formato} value={formato}>{formato}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Calificación */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <Star className="inline h-3 w-3 mr-1" />
+                      Calificación
+                    </label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max="5"
+                        step="0.1"
+                        value={calificacionMin}
+                        onChange={(e) => setCalificacionMin(e.target.value)}
+                        placeholder="Min"
+                        className="w-full p-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        max="5"
+                        step="0.1"
+                        value={calificacionMax}
+                        onChange={(e) => setCalificacionMax(e.target.value)}
+                        placeholder="Max"
+                        className="w-full p-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Páginas */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <Hash className="inline h-3 w-3 mr-1" />
+                      Páginas
+                    </label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="number"
+                        min="0"
+                        value={paginasMin}
+                        onChange={(e) => setPaginasMin(e.target.value)}
+                        placeholder="Min"
+                        className="w-full p-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        value={paginasMax}
+                        onChange={(e) => setPaginasMax(e.target.value)}
+                        placeholder="Max"
+                        className="w-full p-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Fecha agregado */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <Calendar className="inline h-3 w-3 mr-1" />
+                      Fecha Agregado
+                    </label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="date"
+                        value={fechaDesde}
+                        onChange={(e) => setFechaDesde(e.target.value)}
+                        className="w-full p-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      />
+                      <input
+                        type="date"
+                        value={fechaHasta}
+                        onChange={(e) => setFechaHasta(e.target.value)}
+                        className="w-full p-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
         )}
 
