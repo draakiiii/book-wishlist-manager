@@ -100,7 +100,7 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
       calificacion: lectura.calificacion || 0,
       reseña: lectura.reseña || '',
       paginasLeidas: lectura.paginasLeidas || book?.paginas || 0,
-      notas: lectura.notas || ''
+      notas: '' // No se edita en el formulario
     });
   };
 
@@ -112,8 +112,8 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
       fechaFin: new Date(newLectura.fechaFin).getTime(),
       calificacion: newLectura.calificacion > 0 ? newLectura.calificacion : undefined,
       reseña: newLectura.reseña || undefined,
-      paginasLeidas: newLectura.paginasLeidas || undefined,
-      notas: newLectura.notas || undefined
+      paginasLeidas: newLectura.paginasLeidas || undefined
+      // No se actualizan las notas desde el formulario de edición
     };
 
     dispatch({
@@ -141,7 +141,7 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
       calificacion: 0,
       reseña: '',
       paginasLeidas: book?.paginas || 0,
-      notas: ''
+      notas: '' // No se edita en el formulario
     });
   };
 
@@ -595,18 +595,7 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
                               rows={2}
                             />
                           </div>
-                          <div>
-                            <label className="block text-xs font-medium text-green-800 dark:text-green-200 mb-1">
-                              Notas adicionales
-                            </label>
-                            <textarea
-                              value={newLectura.notas}
-                              onChange={(e) => setNewLectura({...newLectura, notas: e.target.value})}
-                              placeholder="Notas personales..."
-                              className="w-full px-2 py-1 text-xs border border-green-300 dark:border-green-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-none"
-                              rows={2}
-                            />
-                          </div>
+
                         </div>
                         <div className="flex justify-end space-x-2 mt-3">
                           <button
@@ -636,7 +625,7 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
                                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">
                                   Lectura #{book.lecturas.length - index}
                                 </span>
-                                {lectura.calificacion && (
+                                {lectura.calificacion && lectura.calificacion > 0 && (
                                   <div className="flex items-center space-x-1">
                                     {[...Array(5)].map((_, i) => (
                                       <Star
