@@ -20,12 +20,17 @@ import {
   RotateCcw,
   Hash,
   Globe,
-  Building
+  Building,
+  Edit3,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 import { Libro } from '../types';
 import BookCard from './BookCard';
 import BookEditModal from './BookEditModal';
+import { useDialog } from '../hooks/useDialog';
+import Dialog from './Dialog';
 
 export type BooksViewMode = 'list' | 'gallery';
 
@@ -40,6 +45,7 @@ type FilterState = 'todos' | 'wishlist' | 'tbr' | 'leyendo' | 'leido' | 'abandon
 
 const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => {
   const { state, dispatch } = useAppState();
+  const { dialog, showConfirm, hideDialog } = useDialog();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterState, setFilterState] = useState<FilterState>('todos');
   const [sortBy, setSortBy] = useState<SortOption>('fechaAgregado');
@@ -47,6 +53,11 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
   const [showFilters, setShowFilters] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [editingBook, setEditingBook] = useState<Libro | null>(null);
+  
+  // Edición masiva
+  const [isBulkEditMode, setIsBulkEditMode] = useState(false);
+  const [selectedBooks, setSelectedBooks] = useState<Set<number>>(new Set());
+  const [showBulkEditModal, setShowBulkEditModal] = useState(false);
   
   // Filtros avanzados
   const [autorFilter, setAutorFilter] = useState('');
@@ -193,11 +204,75 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
   }, [state.libros, searchTerm, filterState, sortBy, sortDirection, autorFilter, sagaFilter, generoFilter, editorialFilter, idiomaFilter, formatoFilter, calificacionMin, calificacionMax, paginasMin, paginasMax, fechaDesde, fechaHasta]);
 
   const handleDelete = (id: number) => {
-    dispatch({ type: 'DELETE_BOOK', payload: id });
+    const book = state.libros.find(libro => libro.id === id);
+    showConfirm(
+      'Eliminar libro',
+      `¿Estás seguro de que quieres eliminar "${book?.titulo || 'este libro'}" de tu biblioteca?\n\nEsta acción no se puede deshacer.`,
+      () => {
+        dispatch({ type: 'DELETE_BOOK', payload: id });
+      },
+      undefined,
+      'Eliminar',
+      'Cancelar'
+    );
   };
 
   const handleEdit = (book: Libro) => {
     setEditingBook(book);
+  };
+
+  // Funciones de edición masiva
+  const toggleBulkEditMode = () => {
+    setIsBulkEditMode(!isBulkEditMode);
+    setSelectedBooks(new Set());
+  };
+
+  const toggleBookSelection = (bookId: number) => {
+    const newSelected = new Set(selectedBooks);
+    if (newSelected.has(bookId)) {
+      newSelected.delete(bookId);
+    } else {
+      newSelected.add(bookId);
+    }
+    setSelectedBooks(newSelected);
+  };
+
+  const selectAllBooks = () => {
+    setSelectedBooks(new Set(filteredAndSortedBooks.map(book => book.id)));
+  };
+
+  const deselectAllBooks = () => {
+    setSelectedBooks(new Set());
+  };
+
+  const handleBulkStateChange = (newState: Libro['estado']) => {
+    if (selectedBooks.size === 0) return;
+
+    const bookTitles = Array.from(selectedBooks)
+      .map(id => state.libros.find(book => book.id === id)?.titulo)
+      .filter(Boolean)
+      .slice(0, 3)
+      .join(', ');
+
+    const moreBooks = selectedBooks.size > 3 ? ` y ${selectedBooks.size - 3} más` : '';
+
+    showConfirm(
+      'Cambiar estado de libros',
+      `¿Estás seguro de que quieres cambiar el estado de "${bookTitles}${moreBooks}" a "${newState}"?`,
+      () => {
+        selectedBooks.forEach(bookId => {
+          dispatch({ 
+            type: 'CHANGE_BOOK_STATE', 
+            payload: { id: bookId, newState } 
+          });
+        });
+        setSelectedBooks(new Set());
+        setIsBulkEditMode(false);
+      },
+      undefined,
+      'Cambiar',
+      'Cancelar'
+    );
   };
 
   const getFilterCount = (estado: FilterState) => {
@@ -244,10 +319,26 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
           <p className="text-slate-600 dark:text-slate-400">
             {filteredAndSortedBooks.length} {filteredAndSortedBooks.length === 1 ? 'libro' : 'libros'}
             {filterState !== 'todos' && ` en ${filterState}`}
+            {isBulkEditMode && selectedBooks.size > 0 && ` (${selectedBooks.size} seleccionados)`}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Botón de edición masiva */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={toggleBulkEditMode}
+            className={`p-2 rounded-lg transition-colors ${
+              isBulkEditMode
+                ? 'bg-primary-500 text-white'
+                : 'bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-400'
+            }`}
+            title="Edición masiva"
+          >
+            <Edit3 className="h-4 w-4" />
+          </motion.button>
+
           {/* Toggle vista */}
           <div className="flex items-center bg-white/10 rounded-lg p-1">
             <motion.button
@@ -287,10 +378,60 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
                 : 'bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-400'
             }`}
           >
-            <Filter className="h-5 w-5" />
+            <Filter className="h-4 w-4" />
           </motion.button>
         </div>
       </div>
+
+      {/* Controles de edición masiva */}
+      {isBulkEditMode && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-effect rounded-xl p-4"
+        >
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                {selectedBooks.size} de {filteredAndSortedBooks.length} libros seleccionados
+              </span>
+              
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={selectAllBooks}
+                  className="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                >
+                  Seleccionar todos
+                </button>
+                <button
+                  onClick={deselectAllBooks}
+                  className="text-xs px-2 py-1 bg-slate-500 text-white rounded hover:bg-slate-600 transition-colors"
+                >
+                  Deseleccionar
+                </button>
+              </div>
+            </div>
+
+            {selectedBooks.size > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-600 dark:text-slate-400">Cambiar estado a:</span>
+                <select
+                  onChange={(e) => handleBulkStateChange(e.target.value as Libro['estado'])}
+                  className="text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  defaultValue=""
+                >
+                  <option value="" disabled>Seleccionar estado</option>
+                  <option value="tbr">TBR</option>
+                  <option value="leyendo">Leyendo</option>
+                  <option value="leido">Leído</option>
+                  <option value="abandonado">Abandonado</option>
+                  <option value="wishlist">Wishlist</option>
+                </select>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       {/* Panel de filtros y búsqueda */}
       {showFilters && (
@@ -629,7 +770,28 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
+              className="relative"
             >
+              {/* Checkbox de selección */}
+              {isBulkEditMode && (
+                <div className="absolute top-2 left-2 z-20">
+                  <button
+                    onClick={() => toggleBookSelection(libro.id)}
+                    className={`p-1 rounded-full transition-colors ${
+                      selectedBooks.has(libro.id)
+                        ? 'bg-primary-500 text-white'
+                        : 'bg-white/80 text-slate-600 hover:bg-white'
+                    }`}
+                  >
+                    {selectedBooks.has(libro.id) ? (
+                      <CheckSquare className="h-4 w-4" />
+                    ) : (
+                      <Square className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              )}
+
               <BookCard
                 book={libro}
                 onDelete={handleDelete}
@@ -667,6 +829,20 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
           onClose={() => setEditingBook(null)}
         />
       )}
+
+      {/* Dialog Component */}
+      <Dialog
+        isOpen={dialog.isOpen}
+        onClose={hideDialog}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        confirmText={dialog.confirmText}
+        cancelText={dialog.cancelText}
+        onConfirm={dialog.onConfirm}
+        onCancel={dialog.onCancel}
+        showCancel={dialog.showCancel}
+      />
     </div>
   );
 };

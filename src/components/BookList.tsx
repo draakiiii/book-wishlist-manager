@@ -5,6 +5,8 @@ import BookEditModal from './BookEditModal';
 import { motion } from 'framer-motion';
 import { BookOpen, Inbox } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
+import { useDialog } from '../hooks/useDialog';
+import Dialog from './Dialog';
 
 interface BookListProps {
   books: Libro[];
@@ -14,10 +16,21 @@ interface BookListProps {
 
 const BookList: React.FC<BookListProps> = ({ books, type, emptyMessage }) => {
   const { dispatch } = useAppState();
+  const { dialog, showConfirm, hideDialog } = useDialog();
   const [editingBook, setEditingBook] = useState<Libro | null>(null);
 
   const handleDelete = (id: number) => {
-    dispatch({ type: 'DELETE_BOOK', payload: id });
+    const book = books.find(libro => libro.id === id);
+    showConfirm(
+      'Eliminar libro',
+      `¿Estás seguro de que quieres eliminar "${book?.titulo || 'este libro'}" de tu biblioteca?\n\nEsta acción no se puede deshacer.`,
+      () => {
+        dispatch({ type: 'DELETE_BOOK', payload: id });
+      },
+      undefined,
+      'Eliminar',
+      'Cancelar'
+    );
   };
 
   const handleEdit = (book: Libro) => {
@@ -111,6 +124,20 @@ const BookList: React.FC<BookListProps> = ({ books, type, emptyMessage }) => {
           listType={type}
         />
       )}
+
+      {/* Dialog Component */}
+      <Dialog
+        isOpen={dialog.isOpen}
+        onClose={hideDialog}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        confirmText={dialog.confirmText}
+        cancelText={dialog.cancelText}
+        onConfirm={dialog.onConfirm}
+        onCancel={dialog.onCancel}
+        showCancel={dialog.showCancel}
+      />
     </div>
   );
 };

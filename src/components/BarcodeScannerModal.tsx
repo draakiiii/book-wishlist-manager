@@ -55,28 +55,52 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
   };
 
   const toggleFlashlight = async () => {
-    if (!videoRef.current) return;
+    console.log('🔦 Toggle flashlight clicked');
+    if (!videoRef.current) {
+      console.log('❌ No video ref');
+      return;
+    }
     
     try {
       const stream = videoRef.current.srcObject as MediaStream;
-      if (!stream) return;
+      if (!stream) {
+        console.log('❌ No stream');
+        return;
+      }
       
       const track = stream.getVideoTracks()[0];
-      if (!track) return;
+      if (!track) {
+        console.log('❌ No video track');
+        return;
+      }
       
+      console.log('📹 Video track found:', track.label);
       const capabilities = track.getCapabilities();
+      console.log('🔧 Track capabilities:', capabilities);
+      
       if (!capabilities || !('torch' in capabilities)) {
+        console.log('❌ No torch capability');
         addFeedback('warning', 'Esta cámara no soporta linterna');
         return;
       }
       
       const newFlashlightState = !flashlightEnabled;
+      console.log('🔦 Setting flashlight to:', newFlashlightState);
+      
+      // Apply constraints with torch setting
       await track.applyConstraints({
         advanced: [{ torch: newFlashlightState } as any]
       });
       
       setFlashlightEnabled(newFlashlightState);
       addFeedback('info', newFlashlightState ? 'Linterna activada' : 'Linterna desactivada', 1500);
+      
+      // If scanning is active, restart with new settings
+      if (isScanning) {
+        console.log('🔄 Restarting scanner with new flashlight setting');
+        stopScanning();
+        setTimeout(() => startScanning(), 500);
+      }
     } catch (error) {
       console.error('Error toggling flashlight:', error);
       addFeedback('error', 'Error al controlar la linterna');
@@ -84,23 +108,38 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
   };
 
   const adjustZoom = async (newZoom: number) => {
-    if (!videoRef.current) return;
+    console.log('🔍 Adjust zoom clicked:', newZoom);
+    if (!videoRef.current) {
+      console.log('❌ No video ref');
+      return;
+    }
     
     try {
       const stream = videoRef.current.srcObject as MediaStream;
-      if (!stream) return;
+      if (!stream) {
+        console.log('❌ No stream');
+        return;
+      }
       
       const track = stream.getVideoTracks()[0];
-      if (!track) return;
+      if (!track) {
+        console.log('❌ No video track');
+        return;
+      }
       
+      console.log('📹 Video track found:', track.label);
       const capabilities = track.getCapabilities();
+      console.log('🔧 Track capabilities:', capabilities);
+      
       if (!capabilities || !('zoom' in capabilities)) {
+        console.log('❌ No zoom capability');
         addFeedback('warning', 'Esta cámara no soporta zoom digital');
         return;
       }
       
       const zoomRange = capabilities.zoom as { min: number; max: number };
       const clampedZoom = Math.max(zoomRange.min, Math.min(zoomRange.max, newZoom));
+      console.log('🔍 Setting zoom to:', clampedZoom, 'range:', zoomRange);
       
       await track.applyConstraints({
         advanced: [{ zoom: clampedZoom } as any]
@@ -108,6 +147,13 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       
       setZoomLevel(clampedZoom);
       addFeedback('info', `Zoom ajustado a ${clampedZoom.toFixed(1)}x`, 1500);
+      
+      // If scanning is active, restart with new settings
+      if (isScanning) {
+        console.log('🔄 Restarting scanner with new zoom setting');
+        stopScanning();
+        setTimeout(() => startScanning(), 500);
+      }
     } catch (error) {
       console.error('Error adjusting zoom:', error);
       addFeedback('error', 'Error al ajustar el zoom');
@@ -267,6 +313,19 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     try {
       setIsScanning(true);
       addFeedback('info', 'Iniciando escaneo...', 1500);
+      
+      // Configure video constraints with advanced features
+      const constraints = {
+        video: {
+          deviceId: availableCameras[currentCamera]?.deviceId ? { exact: availableCameras[currentCamera].deviceId } : undefined,
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          advanced: [
+            { torch: flashlightEnabled },
+            { zoom: zoomLevel }
+          ]
+        }
+      };
       
       await codeReaderRef.current.decodeFromVideoDevice(
         availableCameras[currentCamera]?.deviceId || null,
@@ -465,34 +524,37 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
             muted
           />
           
-          {/* Camera Controls */}
-          <div className="absolute top-4 right-4 flex flex-col space-y-2">
+          {/* Camera Controls - Always visible */}
+          <div className="absolute top-4 right-4 flex flex-col space-y-2 z-10">
             {/* Flashlight Button */}
             <button
               onClick={toggleFlashlight}
+              disabled={isProcessing}
               className={`p-2 rounded-lg transition-colors duration-200 ${
                 flashlightEnabled 
                   ? 'bg-yellow-500 text-white' 
                   : 'bg-white/20 text-white hover:bg-white/30'
-              }`}
+              } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <Zap className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Zoom Controls */}
-          <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-sm rounded-lg p-2">
+          {/* Zoom Controls - Always visible */}
+          <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-sm rounded-lg p-2 z-10">
             <div className="flex flex-col space-y-2">
               <button
                 onClick={() => adjustZoom(zoomLevel + 0.5)}
-                className="p-1 rounded bg-white/20 text-white hover:bg-white/30"
+                disabled={isProcessing}
+                className={`p-1 rounded bg-white/20 text-white hover:bg-white/30 ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 +
               </button>
               <span className="text-white text-xs text-center">{zoomLevel.toFixed(1)}x</span>
               <button
                 onClick={() => adjustZoom(zoomLevel - 0.5)}
-                className="p-1 rounded bg-white/20 text-white hover:bg-white/30"
+                disabled={isProcessing}
+                className={`p-1 rounded bg-white/20 text-white hover:bg-white/30 ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 -
               </button>
@@ -541,7 +603,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
         {/* Controls */}
         <div className="p-4 space-y-4">
           {/* Camera Controls */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -553,20 +615,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
               <span className="text-sm">Cámara</span>
             </motion.button>
             
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={toggleFlashlight}
-              disabled={isProcessing}
-              className={`px-3 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 ${
-                flashlightEnabled 
-                  ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-700' 
-                  : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              <Zap className="h-4 w-4" />
-              <span className="text-sm">Linterna</span>
-            </motion.button>
+
             
             <motion.button
               whileHover={{ scale: 1.05 }}
