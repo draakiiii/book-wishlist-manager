@@ -420,8 +420,8 @@ const BookCover: React.FC<BookCoverProps> = ({
           className={`${sizeClasses[size]} ${className} flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-lg border border-slate-300 dark:border-slate-600 ${size !== 'small' ? 'cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors' : ''}`}
           onClick={handleCoverClick}
         >
-          <div className="text-center p-2">
-            <BookOpen className={`${iconSize[size]} mx-auto text-slate-400 dark:text-slate-500 ${size !== 'small' ? 'mb-1' : ''}`} />
+          <div className={`text-center ${isGalleryView ? 'p-4 flex flex-col justify-center h-full' : 'p-2'}`}>
+            <BookOpen className={`${iconSize[size]} mx-auto text-slate-400 dark:text-slate-500 ${size !== 'small' ? (isGalleryView ? 'mb-3' : 'mb-2') : ''}`} />
             {placeholderText[size] && (
               <span className={`text-slate-400 dark:text-slate-500 leading-none ${size === 'large' ? 'text-sm' : isGalleryView ? 'text-base' : 'text-xs'}`}>
                 {placeholderText[size]}
