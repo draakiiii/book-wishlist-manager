@@ -55,6 +55,70 @@ const Statistics: React.FC = () => {
       .filter(book => book.precio && book.precio > 0)
       .reduce((sum, book) => sum + (book.precio || 0), 0);
     
+    // Calculate average book price
+    const librosConPrecio = state.libros.filter(book => book.precio && book.precio > 0);
+    const precioPromedio = librosConPrecio.length > 0 
+      ? librosConPrecio.reduce((sum, book) => sum + (book.precio || 0), 0) / librosConPrecio.length
+      : 0;
+    
+    // Calculate reading speed (pages per day)
+    const librosConTiempoLectura = state.libros
+      .filter(book => book.estado === 'leido' && book.fechaInicio && book.fechaFin && book.paginas)
+      .map(book => {
+        const diasLectura = (book.fechaFin! - book.fechaInicio!) / (1000 * 60 * 60 * 24);
+        return {
+          paginas: book.paginas!,
+          dias: Math.max(1, diasLectura) // Mínimo 1 día para evitar división por cero
+        };
+      });
+    
+    const velocidadLectura = librosConTiempoLectura.length > 0
+      ? librosConTiempoLectura.reduce((sum, libro) => sum + (libro.paginas / libro.dias), 0) / librosConTiempoLectura.length
+      : 0;
+    
+    // Calculate books by format
+    const librosPorFormato = state.libros.reduce((acc, book) => {
+      const formato = book.formato || 'fisico';
+      acc[formato] = (acc[formato] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    // Calculate average pages per book
+    const librosConPaginas = state.libros.filter(book => book.paginas && book.paginas > 0);
+    const paginasPromedio = librosConPaginas.length > 0
+      ? librosConPaginas.reduce((sum, book) => sum + (book.paginas || 0), 0) / librosConPaginas.length
+      : 0;
+    
+    // Calculate completion rate by genre
+    const generosConCompletados = state.libros
+      .filter(book => book.genero && book.estado === 'leido')
+      .reduce((acc, book) => {
+        if (!acc[book.genero!]) {
+          acc[book.genero!] = { completados: 0, total: 0 };
+        }
+        acc[book.genero!].completados++;
+        return acc;
+      }, {} as Record<string, { completados: number; total: number }>);
+    
+    // Add total books per genre
+    state.libros.forEach(book => {
+      if (book.genero) {
+        if (!generosConCompletados[book.genero]) {
+          generosConCompletados[book.genero] = { completados: 0, total: 0 };
+        }
+        generosConCompletados[book.genero].total++;
+      }
+    });
+    
+    const generosConMejorTasa = Object.entries(generosConCompletados)
+      .filter(([, stats]) => stats.total >= 2) // Solo géneros con al menos 2 libros
+      .map(([genero, stats]) => ({
+        genero,
+        tasaCompletado: (stats.completados / stats.total) * 100
+      }))
+      .sort((a, b) => b.tasaCompletado - a.tasaCompletado)
+      .slice(0, 3);
+    
     // Most read authors
     const autoresCont = state.libros
       .filter(book => book.autor && book.estado === 'leido')
@@ -105,7 +169,12 @@ const Statistics: React.FC = () => {
       generosMasLeidos,
       objetivoAnual,
       progresoObjetivo,
-      valorTotalColeccion
+      valorTotalColeccion,
+      precioPromedio,
+      velocidadLectura,
+      librosPorFormato,
+      paginasPromedio,
+      generosConMejorTasa
     };
   }, [state.libros, state.sagas, state.config.objetivoLecturaAnual]);
 
@@ -154,10 +223,31 @@ const Statistics: React.FC = () => {
     },
     {
       title: 'Valor Total',
-      value: `$${statistics.valorTotalColeccion.toLocaleString()}`,
+      value: `${statistics.valorTotalColeccion.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`,
       icon: BookOpen,
       color: 'bg-emerald-500',
       description: 'De la colección'
+    },
+    {
+      title: 'Precio Promedio',
+      value: `${statistics.precioPromedio.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`,
+      icon: BookOpen,
+      color: 'bg-blue-500',
+      description: 'Por libro'
+    },
+    {
+      title: 'Velocidad Lectura',
+      value: `${statistics.velocidadLectura.toFixed(1)}`,
+      icon: BookOpen,
+      color: 'bg-purple-500',
+      description: 'Páginas/día'
+    },
+    {
+      title: 'Páginas Promedio',
+      value: `${statistics.paginasPromedio.toFixed(0)}`,
+      icon: BookOpen,
+      color: 'bg-orange-500',
+      description: 'Por libro'
     }
   ];
 
@@ -181,7 +271,7 @@ const Statistics: React.FC = () => {
       </div>
 
       {/* Tarjetas de estadísticas principales */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-11 gap-4">
         {statCards.map((stat, index) => (
           <motion.div
             key={stat.title}
@@ -409,6 +499,95 @@ const Statistics: React.FC = () => {
                         className="bg-green-500 h-2 rounded-full"
                         style={{ 
                           width: `${(genero.count / Math.max(...statistics.generosMasLeidos.map(g => g.count))) * 100}%` 
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Estadísticas adicionales */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Libros por formato */}
+        {Object.keys(statistics.librosPorFormato).length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="glass-effect rounded-xl p-6"
+          >
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center">
+              <BookOpen className="h-5 w-5 mr-2 text-indigo-500" />
+              Libros por Formato
+            </h3>
+            <div className="space-y-3">
+              {Object.entries(statistics.librosPorFormato)
+                .sort(([,a], [,b]) => b - a)
+                .map(([formato, count], index) => (
+                  <div key={formato} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                        {index + 1}
+                      </div>
+                      <span className="font-medium text-slate-900 dark:text-white capitalize">
+                        {formato}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-slate-600 dark:text-slate-400">
+                        {count} {count === 1 ? 'libro' : 'libros'}
+                      </span>
+                      <div className="w-16 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                        <div 
+                          className="bg-indigo-500 h-2 rounded-full"
+                          style={{ 
+                            width: `${(count / Math.max(...Object.values(statistics.librosPorFormato))) * 100}%` 
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Géneros con mejor tasa de completado */}
+        {statistics.generosConMejorTasa.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="glass-effect rounded-xl p-6"
+          >
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center">
+              <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
+              Géneros Más Completados
+            </h3>
+            <div className="space-y-3">
+              {statistics.generosConMejorTasa.map((genero, index) => (
+                <div key={genero.genero} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                      {index + 1}
+                    </div>
+                    <span className="font-medium text-slate-900 dark:text-white">
+                      {genero.genero}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                      {genero.tasaCompletado.toFixed(1)}%
+                    </span>
+                    <div className="w-16 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                      <div 
+                        className="bg-green-500 h-2 rounded-full"
+                        style={{ 
+                          width: `${genero.tasaCompletado}%` 
                         }}
                       />
                     </div>
