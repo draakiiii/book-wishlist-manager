@@ -15,6 +15,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
+import { useDialog } from '../hooks/useDialog';
 import { ScanHistory as ScanHistoryType } from '../types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -26,6 +27,7 @@ interface ScanHistoryProps {
 
 const ScanHistory: React.FC<ScanHistoryProps> = ({ isOpen, onClose }) => {
   const { state, dispatch } = useAppState();
+  const { showConfirm } = useDialog();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSuccess, setFilterSuccess] = useState<'all' | 'success' | 'error'>('all');
   const [sortBy, setSortBy] = useState<'timestamp' | 'isbn' | 'titulo'>('timestamp');
@@ -85,9 +87,16 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({ isOpen, onClose }) => {
   }, [state.scanHistory, searchTerm, filterSuccess, sortBy, sortOrder]);
 
   const clearHistory = () => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar todo el historial de escaneos?')) {
-      dispatch({ type: 'CLEAR_SCAN_HISTORY' });
-    }
+    showConfirm(
+      'Eliminar historial',
+      '¿Estás seguro de que quieres eliminar todo el historial de escaneos?',
+      () => {
+        dispatch({ type: 'CLEAR_SCAN_HISTORY' });
+      },
+      undefined,
+      'Eliminar',
+      'Cancelar'
+    );
   };
 
   const getSuccessRate = () => {

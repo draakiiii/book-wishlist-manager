@@ -16,6 +16,7 @@ import {
   HardDrive
 } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
+import { useDialog } from '../hooks/useDialog';
 import { ExportData } from '../types';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
@@ -29,6 +30,7 @@ interface DataExportImportProps {
 
 const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) => {
   const { state, dispatch } = useAppState();
+  const { showConfirm } = useDialog();
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
@@ -215,11 +217,20 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
   }, [exportData]);
 
   const clearAllData = useCallback(() => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar todos los datos? Esta acción no se puede deshacer.')) {
-      // Clear all books and reset to initial state
-      dispatch({ type: 'IMPORT_DATA', payload: { libros: [], sagas: [] } });
-      setImportSuccess('Todos los datos han sido eliminados');
-    }
+    showConfirm(
+      'Eliminar todos los datos',
+      '¿Estás seguro de que quieres eliminar todos los datos? Esta acción no se puede deshacer.',
+      () => {
+        // Clear all books and reset to initial state
+        dispatch({ type: 'IMPORT_DATA', payload: { libros: [], sagas: [] } });
+        dispatch({ type: 'RESETEAR_PUNTOS' });
+        dispatch({ type: 'RESETEAR_DINERO' });
+        setImportSuccess('Todos los datos han sido eliminados');
+      },
+      undefined,
+      'Eliminar',
+      'Cancelar'
+    );
   }, [dispatch]);
 
   // Calculate book counts by state

@@ -604,7 +604,16 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
               <ShoppingCart className="h-3 w-3" />
               <span>
                 {state.config.sistemaPuntosHabilitado 
-                  ? `Comprar (${state.config.puntosParaComprar || 25} pts)`
+                  ? state.config.modoDinero
+                    ? (() => {
+                        const paginas = book.paginas || 0;
+                        const costoPorPagina = state.config.costoPorPagina || 0.25;
+                        const costoTotal = paginas * costoPorPagina;
+                        return costoTotal > 0 
+                          ? `Comprar ($${costoTotal.toFixed(2)})`
+                          : 'Comprar';
+                      })()
+                    : `Comprar (${state.config.puntosParaComprar || 25} pts)`
                   : 'Comprar'
                 }
               </span>
