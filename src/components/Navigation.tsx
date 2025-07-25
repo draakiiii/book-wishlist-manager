@@ -1,13 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
+import {
   Home,
   Book,
   ChevronDown,
   List,
   Grid,
   BarChart3,
-  Search,
   History,
   Database,
   Settings,
@@ -15,8 +14,6 @@ import {
   Heart,
   Clock,
   Users,
-  FileText,
-  BookOpen,
   Download
 } from 'lucide-react';
 
@@ -25,37 +22,33 @@ export type NavigationSection =
   | 'dashboard' 
   | 'books' 
   | 'statistics' 
-  | 'search'
-  | 'scanning'
-  | 'management'
-  | 'tools'
-  | 'settings';
+  | 'barcodeScanner'
+  | 'bulkScan'
+  | 'scanHistory'
+  | 'dataExportImport'
+  | 'tbrForm'
+  | 'wishlistForm'
+  | 'sagaList'
+  | 'configForm';
 
 export type BooksViewMode = 'list' | 'gallery';
-export type SearchMode = 'basic' | 'advanced';
-export type ScanningMode = 'single' | 'bulk' | 'history';
-export type ManagementMode = 'tbr' | 'wishlist' | 'loans' | 'sagas';
-export type ToolsMode = 'export' | 'import' | 'backup';
 
 interface NavigationProps {
   currentSection: NavigationSection;
   currentBooksView: BooksViewMode;
   onSectionChange: (section: NavigationSection) => void;
   onBooksViewChange: (view: BooksViewMode) => void;
-  onModalOpen?: (modal: string) => void;
 }
 
 const Navigation: React.FC<NavigationProps> = ({
   currentSection,
   currentBooksView,
   onSectionChange,
-  onBooksViewChange,
-  onModalOpen
+  onBooksViewChange
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -80,13 +73,6 @@ const Navigation: React.FC<NavigationProps> = ({
     setIsDropdownOpen(false);
   };
 
-  const handleModalOpen = (modal: string) => {
-    if (onModalOpen) {
-      onModalOpen(modal);
-    }
-    setIsDropdownOpen(false);
-  };
-
   const getSectionLabel = () => {
     switch (currentSection) {
       case 'dashboard':
@@ -95,15 +81,21 @@ const Navigation: React.FC<NavigationProps> = ({
         return `Libros (${currentBooksView === 'list' ? 'Lista' : 'Galería'})`;
       case 'statistics':
         return 'Estadísticas';
-      case 'search':
-        return 'Búsqueda';
-      case 'scanning':
-        return 'Escaneo';
-      case 'management':
-        return 'Gestión';
-      case 'tools':
-        return 'Herramientas';
-      case 'settings':
+      case 'barcodeScanner':
+        return 'Escáner de Código de Barras';
+      case 'bulkScan':
+        return 'Escaneo Masivo';
+      case 'scanHistory':
+        return 'Historial de Escaneos';
+      case 'dataExportImport':
+        return 'Exportar/Importar Datos';
+      case 'tbrForm':
+        return 'Agregar a TBR';
+      case 'wishlistForm':
+        return 'Agregar a Wishlist';
+      case 'sagaList':
+        return 'Gestión de Sagas';
+      case 'configForm':
         return 'Configuración';
       default:
         return 'Dashboard';
@@ -118,15 +110,21 @@ const Navigation: React.FC<NavigationProps> = ({
         return <Book className="h-4 w-4" />;
       case 'statistics':
         return <BarChart3 className="h-4 w-4" />;
-      case 'search':
-        return <Search className="h-4 w-4" />;
-      case 'scanning':
+      case 'barcodeScanner':
         return <Scan className="h-4 w-4" />;
-      case 'management':
-        return <Users className="h-4 w-4" />;
-      case 'tools':
+      case 'bulkScan':
+        return <Scan className="h-4 w-4" />;
+      case 'scanHistory':
+        return <History className="h-4 w-4" />;
+      case 'dataExportImport':
         return <Database className="h-4 w-4" />;
-      case 'settings':
+      case 'tbrForm':
+        return <Clock className="h-4 w-4" />;
+      case 'wishlistForm':
+        return <Heart className="h-4 w-4" />;
+      case 'sagaList':
+        return <Users className="h-4 w-4" />;
+      case 'configForm':
         return <Settings className="h-4 w-4" />;
       default:
         return <Home className="h-4 w-4" />;
@@ -135,7 +133,6 @@ const Navigation: React.FC<NavigationProps> = ({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Botón principal del menú */}
       <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
@@ -143,20 +140,14 @@ const Navigation: React.FC<NavigationProps> = ({
         className="flex items-center space-x-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors duration-200 text-slate-700 dark:text-slate-300"
       >
         {getSectionIcon()}
-        <span className="hidden sm:inline font-medium">{getSectionLabel()}</span>
-        <ChevronDown 
-          className={`h-4 w-4 transition-transform duration-200 ${
-            isDropdownOpen ? 'rotate-180' : ''
-          }`} 
-        />
+        <span className="hidden sm:block font-medium">{getSectionLabel()}</span>
+        <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
       </motion.button>
 
-      {/* Menú desplegable */}
       {isDropdownOpen && (
         <motion.div
           initial={{ opacity: 0, y: -10, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.15 }}
           className="absolute top-full right-0 sm:left-0 sm:right-auto mt-2 w-80 sm:w-72 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden max-h-[80vh] overflow-y-auto"
         >
@@ -276,17 +267,21 @@ const Navigation: React.FC<NavigationProps> = ({
               </div>
             </div>
 
-            {/* Escaneo Individual */}
+            {/* Escáner de Código de Barras */}
             <motion.button
               whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
-              onClick={() => handleModalOpen('barcodeScanner')}
-              className="w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+              onClick={() => handleSectionClick('barcodeScanner')}
+              className={`w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 ${
+                currentSection === 'barcodeScanner'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
             >
-              <BookOpen className="h-4 w-4" />
+              <Scan className="h-4 w-4" />
               <div className="flex-1 text-left">
-                <div className="text-sm font-medium">Escaneo Individual</div>
+                <div className="text-sm font-medium">Escáner de Código de Barras</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                  <span className="hidden sm:inline">Escanear un libro por ISBN</span>
+                  <span className="hidden sm:inline">Escanear un libro individual</span>
                   <span className="sm:hidden">Escanear libro</span>
                 </div>
               </div>
@@ -295,10 +290,14 @@ const Navigation: React.FC<NavigationProps> = ({
             {/* Escaneo Masivo */}
             <motion.button
               whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
-              onClick={() => handleModalOpen('bulkScan')}
-              className="w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 mt-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+              onClick={() => handleSectionClick('bulkScan')}
+              className={`w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 mt-1 ${
+                currentSection === 'bulkScan'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
             >
-              <Database className="h-4 w-4" />
+              <Scan className="h-4 w-4" />
               <div className="flex-1 text-left">
                 <div className="text-sm font-medium">Escaneo Masivo</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -311,12 +310,16 @@ const Navigation: React.FC<NavigationProps> = ({
             {/* Historial de Escaneos */}
             <motion.button
               whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
-              onClick={() => handleModalOpen('scanHistory')}
-              className="w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 mt-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+              onClick={() => handleSectionClick('scanHistory')}
+              className={`w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 mt-1 ${
+                currentSection === 'scanHistory'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
             >
               <History className="h-4 w-4" />
               <div className="flex-1 text-left">
-                <div className="text-sm font-medium">Historial</div>
+                <div className="text-sm font-medium">Historial de Escaneos</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
                   <span className="hidden sm:inline">Ver historial de escaneos</span>
                   <span className="sm:hidden">Historial</span>
@@ -339,18 +342,22 @@ const Navigation: React.FC<NavigationProps> = ({
               </div>
             </div>
 
-            {/* TBR (To Be Read) */}
+            {/* TBR */}
             <motion.button
               whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
-              onClick={() => handleModalOpen('tbrForm')}
-              className="w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+              onClick={() => handleSectionClick('tbrForm')}
+              className={`w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 ${
+                currentSection === 'tbrForm'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
             >
               <Clock className="h-4 w-4" />
               <div className="flex-1 text-left">
-                <div className="text-sm font-medium">TBR</div>
+                <div className="text-sm font-medium">Agregar a TBR</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
                   <span className="hidden sm:inline">Libros por leer</span>
-                  <span className="sm:hidden">Por leer</span>
+                  <span className="sm:hidden">TBR</span>
                 </div>
               </div>
             </motion.button>
@@ -358,31 +365,39 @@ const Navigation: React.FC<NavigationProps> = ({
             {/* Wishlist */}
             <motion.button
               whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
-              onClick={() => handleModalOpen('wishlistForm')}
-              className="w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 mt-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+              onClick={() => handleSectionClick('wishlistForm')}
+              className={`w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 mt-1 ${
+                currentSection === 'wishlistForm'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
             >
               <Heart className="h-4 w-4" />
               <div className="flex-1 text-left">
-                <div className="text-sm font-medium">Wishlist</div>
+                <div className="text-sm font-medium">Agregar a Wishlist</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
                   <span className="hidden sm:inline">Libros deseados</span>
-                  <span className="sm:hidden">Deseados</span>
+                  <span className="sm:hidden">Wishlist</span>
                 </div>
               </div>
             </motion.button>
 
-            {/* Sagas */}
+            {/* Gestión de Sagas */}
             <motion.button
               whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
-              onClick={() => handleModalOpen('sagaList')}
-              className="w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 mt-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+              onClick={() => handleSectionClick('sagaList')}
+              className={`w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 mt-1 ${
+                currentSection === 'sagaList'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
             >
-              <FileText className="h-4 w-4" />
+              <Users className="h-4 w-4" />
               <div className="flex-1 text-left">
-                <div className="text-sm font-medium">Sagas</div>
+                <div className="text-sm font-medium">Gestión de Sagas</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                  <span className="hidden sm:inline">Gestionar series de libros</span>
-                  <span className="sm:hidden">Series</span>
+                  <span className="hidden sm:inline">Administrar sagas</span>
+                  <span className="sm:hidden">Sagas</span>
                 </div>
               </div>
             </motion.button>
@@ -402,18 +417,22 @@ const Navigation: React.FC<NavigationProps> = ({
               </div>
             </div>
 
-            {/* Exportar Datos */}
+            {/* Exportar/Importar Datos */}
             <motion.button
               whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
-              onClick={() => handleModalOpen('dataExportImport')}
-              className="w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+              onClick={() => handleSectionClick('dataExportImport')}
+              className={`w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 ${
+                currentSection === 'dataExportImport'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
             >
               <Download className="h-4 w-4" />
               <div className="flex-1 text-left">
-                <div className="text-sm font-medium">Exportar/Importar</div>
+                <div className="text-sm font-medium">Exportar/Importar Datos</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                  <span className="hidden sm:inline">Respaldar y restaurar datos</span>
-                  <span className="sm:hidden">Respaldar datos</span>
+                  <span className="hidden sm:inline">Respaldo y restauración</span>
+                  <span className="sm:hidden">Datos</span>
                 </div>
               </div>
             </motion.button>
@@ -426,8 +445,12 @@ const Navigation: React.FC<NavigationProps> = ({
           <div className="p-1.5 sm:p-2">
             <motion.button
               whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
-              onClick={() => handleModalOpen('configForm')}
-              className="w-full flex items-center space-x-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg transition-colors duration-200 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+              onClick={() => handleSectionClick('configForm')}
+              className={`w-full flex items-center space-x-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg transition-colors duration-200 ${
+                currentSection === 'configForm'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
             >
               <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
               <div className="flex-1 text-left">
