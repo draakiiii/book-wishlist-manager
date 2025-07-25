@@ -17,7 +17,14 @@ const BookList: React.FC<BookListProps> = ({ books, type, emptyMessage }) => {
   const [editingBook, setEditingBook] = useState<Libro | null>(null);
 
   const handleDelete = (id: number) => {
-    dispatch({ type: 'DELETE_BOOK', payload: id });
+    const book = books.find(libro => libro.id === id);
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de que quieres eliminar "${book?.titulo || 'este libro'}" de tu biblioteca?\n\nEsta acción no se puede deshacer.`
+    );
+    
+    if (confirmDelete) {
+      dispatch({ type: 'DELETE_BOOK', payload: id });
+    }
   };
 
   const handleEdit = (book: Libro) => {

@@ -202,10 +202,16 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
   };
 
   const handleDelete = () => {
-    if (onDelete) {
-      onDelete(book.id);
-    } else {
-      dispatch({ type: 'DELETE_BOOK', payload: book.id });
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de que quieres eliminar "${book.titulo}" de tu biblioteca?\n\nEsta acción no se puede deshacer.`
+    );
+    
+    if (confirmDelete) {
+      if (onDelete) {
+        onDelete(book.id);
+      } else {
+        dispatch({ type: 'DELETE_BOOK', payload: book.id });
+      }
     }
   };
 
@@ -295,8 +301,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           whileHover={{ scale: 1.02, y: -2 }}
-          className={`relative rounded-xl border-2 p-3 transition-all duration-300 hover:shadow-lg ${getTypeColor()} group cursor-pointer`}
-          onClick={handleShowDescription}
+          className={`relative rounded-xl border-2 p-3 transition-all duration-300 hover:shadow-lg ${getTypeColor()} group`}
         >
           {/* Type Badge */}
           <div className="absolute -top-2 -right-2 z-10">
