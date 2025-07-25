@@ -50,6 +50,11 @@ const Statistics: React.FC = () => {
       ? librosConCalificacion.reduce((sum, book) => sum + (book.calificacion || 0), 0) / librosConCalificacion.length
       : 0;
     
+    // Calculate total collection value
+    const valorTotalColeccion = state.libros
+      .filter(book => book.precio && book.precio > 0)
+      .reduce((sum, book) => sum + (book.precio || 0), 0);
+    
     // Most read authors
     const autoresCont = state.libros
       .filter(book => book.autor && book.estado === 'leido')
@@ -99,7 +104,8 @@ const Statistics: React.FC = () => {
       autoresMasLeidos,
       generosMasLeidos,
       objetivoAnual,
-      progresoObjetivo
+      progresoObjetivo,
+      valorTotalColeccion
     };
   }, [state.libros, state.sagas, state.config.objetivoLecturaAnual]);
 
@@ -145,6 +151,13 @@ const Statistics: React.FC = () => {
       icon: BookX,
       color: 'bg-red-500',
       description: 'Sin terminar'
+    },
+    {
+      title: 'Valor Total',
+      value: `$${statistics.valorTotalColeccion.toLocaleString()}`,
+      icon: BookOpen,
+      color: 'bg-emerald-500',
+      description: 'De la colección'
     }
   ];
 
@@ -168,7 +181,7 @@ const Statistics: React.FC = () => {
       </div>
 
       {/* Tarjetas de estadísticas principales */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
         {statCards.map((stat, index) => (
           <motion.div
             key={stat.title}

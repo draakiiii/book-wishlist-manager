@@ -71,12 +71,20 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       }
       
       const newFlashlightState = !flashlightEnabled;
+      
+      // Apply constraints with torch setting
       await track.applyConstraints({
         advanced: [{ torch: newFlashlightState } as any]
       });
       
       setFlashlightEnabled(newFlashlightState);
       addFeedback('info', newFlashlightState ? 'Linterna activada' : 'Linterna desactivada', 1500);
+      
+      // If scanning is active, restart with new settings
+      if (isScanning) {
+        stopScanning();
+        setTimeout(() => startScanning(), 500);
+      }
     } catch (error) {
       console.error('Error toggling flashlight:', error);
       addFeedback('error', 'Error al controlar la linterna');
@@ -108,6 +116,12 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
       
       setZoomLevel(clampedZoom);
       addFeedback('info', `Zoom ajustado a ${clampedZoom.toFixed(1)}x`, 1500);
+      
+      // If scanning is active, restart with new settings
+      if (isScanning) {
+        stopScanning();
+        setTimeout(() => startScanning(), 500);
+      }
     } catch (error) {
       console.error('Error adjusting zoom:', error);
       addFeedback('error', 'Error al ajustar el zoom');
@@ -267,6 +281,19 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
     try {
       setIsScanning(true);
       addFeedback('info', 'Iniciando escaneo...', 1500);
+      
+      // Configure video constraints with advanced features
+      const constraints = {
+        video: {
+          deviceId: availableCameras[currentCamera]?.deviceId ? { exact: availableCameras[currentCamera].deviceId } : undefined,
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          advanced: [
+            { torch: flashlightEnabled },
+            { zoom: zoomLevel }
+          ]
+        }
+      };
       
       await codeReaderRef.current.decodeFromVideoDevice(
         availableCameras[currentCamera]?.deviceId || null,

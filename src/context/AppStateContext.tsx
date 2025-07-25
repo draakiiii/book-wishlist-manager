@@ -456,6 +456,7 @@ function appReducer(state: AppState, action: Action): AppState {
 
     case 'UPDATE_BOOK_IMAGE': {
       const { id, customImage } = action.payload;
+      console.log('🖼️ Updating book image:', { id, hasCustomImage: !!customImage, imageLength: customImage?.length });
       return {
         ...state,
         libros: state.libros.map(libro => 

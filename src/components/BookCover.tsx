@@ -29,15 +29,26 @@ const BookCover: React.FC<BookCoverProps> = ({
   // Choose appropriate image URL based on context and size
   // Priority: customImage > API images based on context
   const getImageUrl = () => {
+    console.log('🖼️ Getting image URL for book:', book.titulo, {
+      hasCustomImage: !!book.customImage,
+      customImageLength: book.customImage?.length,
+      thumbnail: !!book.thumbnail,
+      smallThumbnail: !!book.smallThumbnail
+    });
+    
     // Always prioritize custom user image if available
     if (book.customImage) {
+      console.log('✅ Using custom image for:', book.titulo);
       return book.customImage;
     }
     
     // Fall back to API images based on context
-    return (context === 'detail' || size === 'large') 
+    const apiImage = (context === 'detail' || size === 'large') 
       ? book.thumbnail || book.smallThumbnail 
       : book.smallThumbnail || book.thumbnail;
+    
+    console.log('📚 Using API image for:', book.titulo, apiImage ? 'Yes' : 'No');
+    return apiImage;
   };
 
   const imageUrl = getImageUrl();
@@ -137,19 +148,57 @@ const BookCover: React.FC<BookCoverProps> = ({
     if (file && onImageUpdate) {
       setIsUploading(true);
       
-      // Create a FileReader to convert file to base64
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        onImageUpdate(book.id, result);
-        setIsUploading(false);
-        setShowMenu(false);
+      // Compress and resize image before saving
+      const compressImage = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          
+          img.onload = () => {
+            // Calculate new dimensions (max 800px width/height)
+            const maxSize = 800;
+            let { width, height } = img;
+            
+            if (width > height) {
+              if (width > maxSize) {
+                height = (height * maxSize) / width;
+                width = maxSize;
+              }
+            } else {
+              if (height > maxSize) {
+                width = (width * maxSize) / height;
+                height = maxSize;
+              }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw and compress
+            ctx?.drawImage(img, 0, 0, width, height);
+            
+            // Convert to base64 with compression (0.8 quality)
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            resolve(compressedDataUrl);
+          };
+          
+          img.onerror = reject;
+          img.src = URL.createObjectURL(file);
+        });
       };
-      reader.onerror = () => {
-        setIsUploading(false);
-        alert('Error al cargar la imagen. Por favor, inténtalo de nuevo.');
-      };
-      reader.readAsDataURL(file);
+      
+      compressImage(file)
+        .then((compressedImage) => {
+          onImageUpdate(book.id, compressedImage);
+          setIsUploading(false);
+          setShowMenu(false);
+        })
+        .catch((error) => {
+          console.error('Error compressing image:', error);
+          setIsUploading(false);
+          alert('Error al procesar la imagen. Por favor, inténtalo de nuevo.');
+        });
     }
   };
 
