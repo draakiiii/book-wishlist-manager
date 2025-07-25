@@ -625,7 +625,7 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
                                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">
                                   Lectura #{book.lecturas.length - index}
                                 </span>
-                                {lectura.calificacion && lectura.calificacion > 0 && (
+                                {lectura.calificacion !== undefined && lectura.calificacion !== null && lectura.calificacion > 0 && (
                                   <div className="flex items-center space-x-1">
                                     {[...Array(5)].map((_, i) => (
                                       <Star
@@ -681,13 +681,7 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
                                 </div>
                               )}
                               
-                              {lectura.notas && (
-                                <div className="mt-2 p-2 bg-white/50 dark:bg-slate-800/50 rounded border-l-2 border-green-500">
-                                  <p className="text-sm text-slate-800 dark:text-slate-200 italic">
-                                    "{lectura.notas}"
-                                  </p>
-                                </div>
-                              )}
+
                             </div>
                           </div>
                         ))}
