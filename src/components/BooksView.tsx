@@ -619,7 +619,7 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
       {/* Lista/Galería de libros */}
       <div className={`${
         viewMode === 'gallery'
-          ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4'
+          ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 items-start'
           : 'space-y-4'
       }`}>
         {filteredAndSortedBooks.length > 0 ? (
@@ -629,6 +629,7 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
+              className={viewMode === 'gallery' ? 'h-72' : ''}
             >
               <BookCard
                 book={libro}

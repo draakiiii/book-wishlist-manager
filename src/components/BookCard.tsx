@@ -295,7 +295,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           whileHover={{ scale: 1.02, y: -2 }}
-          className={`relative rounded-xl border-2 p-3 transition-all duration-300 hover:shadow-lg ${getTypeColor()} group cursor-pointer`}
+          className={`relative rounded-xl border-2 p-3 transition-all duration-300 hover:shadow-lg ${getTypeColor()} group cursor-pointer h-72 flex flex-col`}
           onClick={handleShowDescription}
         >
           {/* Type Badge */}
@@ -315,7 +315,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
           )}
 
           {/* Book Cover */}
-          <div className="aspect-[3/4] mb-3">
+          <div className="w-full h-48 mb-3 flex-shrink-0">
             <BookCover
               book={book}
               onImageUpdate={handleImageUpdate}
@@ -324,17 +324,19 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
           </div>
 
           {/* Book Info */}
-          <div className="space-y-1">
-            <h3 className="font-semibold text-sm text-slate-900 dark:text-white line-clamp-2 leading-tight">
-              {book.titulo}
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-1">
-              {book.autor}
-            </p>
+          <div className="flex-1 flex flex-col justify-between min-h-0">
+            <div className="space-y-1">
+              <h3 className="font-semibold text-sm text-slate-900 dark:text-white line-clamp-2 leading-tight">
+                {book.titulo}
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-1">
+                {book.autor}
+              </p>
+            </div>
             
             {/* Rating */}
             {book.calificacion && book.calificacion > 0 && (
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-1 mt-auto pt-2">
                 <Star className="h-3 w-3 text-yellow-500 fill-current" />
                 <span className="text-xs text-slate-600 dark:text-slate-400">
                   {book.calificacion}
