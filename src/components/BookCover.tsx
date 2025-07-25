@@ -398,7 +398,7 @@ const BookCover: React.FC<BookCoverProps> = ({
     return (
       <div className="relative">
         <div 
-          className={`${getDynamicSizeClass()} ${className} flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-lg border border-slate-300 dark:border-slate-600 ${size !== 'small' ? 'cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors' : ''}`}
+          className={`${getDynamicSizeClass()} ${className} flex items-center justify-center bg-slate-200 dark:bg-slate-700 ${className.includes('rounded-lg') ? 'rounded-lg' : ''} border border-slate-300 dark:border-slate-600 ${size !== 'small' ? 'cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors' : ''}`}
           onClick={handleCoverClick}
         >
                       <div className="text-center p-2">
@@ -419,7 +419,7 @@ const BookCover: React.FC<BookCoverProps> = ({
   return (
     <div className="relative">
       <div 
-        className={`${getDynamicSizeClass()} ${className} relative overflow-hidden rounded-lg border border-slate-300 dark:border-slate-600 ${size === 'large' ? 'shadow-lg' : 'shadow-sm'} ${size !== 'small' ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
+        className={`${getDynamicSizeClass()} ${className} relative overflow-hidden ${className.includes('rounded-lg') ? 'rounded-lg' : ''} border border-slate-300 dark:border-slate-600 ${size === 'large' ? 'shadow-lg' : 'shadow-sm'} ${size !== 'small' ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
         onClick={handleCoverClick}
       >
         {imageLoading && (
