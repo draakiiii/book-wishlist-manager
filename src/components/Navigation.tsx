@@ -6,8 +6,6 @@ import {
   ChevronDown,
   List,
   Grid,
-  Filter,
-  BookOpen,
   BarChart3
 } from 'lucide-react';
 
@@ -106,24 +104,25 @@ const Navigation: React.FC<NavigationProps> = ({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.15 }}
-          className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden"
+          className="absolute top-full right-0 sm:left-0 sm:right-auto mt-2 w-72 sm:w-64 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden"
         >
-            {/* Dashboard */}
-            <div className="p-2">
+                      {/* Dashboard */}
+          <div className="p-1.5 sm:p-2">
               <motion.button
                 whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
-                onClick={() => handleSectionClick('dashboard')}
-                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors duration-200 ${
+                               onClick={() => handleSectionClick('dashboard')}
+               className={`w-full flex items-center space-x-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg transition-colors duration-200 ${
                   currentSection === 'dashboard'
                     ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
                     : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
-                <Home className="h-5 w-5" />
+                <Home className="h-4 w-4 sm:h-5 sm:w-5" />
                 <div className="flex-1 text-left">
                   <div className="font-medium">Dashboard</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
-                    Pantalla principal con resumen
+                    <span className="hidden sm:inline">Pantalla principal con resumen</span>
+                    <span className="sm:hidden">Pantalla principal</span>
                   </div>
                 </div>
               </motion.button>
@@ -132,32 +131,33 @@ const Navigation: React.FC<NavigationProps> = ({
             {/* Separador */}
             <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
 
-            {/* Estadísticas */}
-            <div className="p-2">
+                         {/* Estadísticas */}
+             <div className="p-1.5 sm:p-2">
               <motion.button
                 whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
-                onClick={() => handleSectionClick('statistics')}
-                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors duration-200 ${
+                                 onClick={() => handleSectionClick('statistics')}
+                 className={`w-full flex items-center space-x-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg transition-colors duration-200 ${
                   currentSection === 'statistics'
                     ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
                     : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
-                <BarChart3 className="h-5 w-5" />
-                <div className="flex-1 text-left">
-                  <div className="font-medium">Estadísticas</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    Análisis detallado de tu biblioteca
-                  </div>
-                </div>
+                                  <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
+                                 <div className="flex-1 text-left">
+                   <div className="font-medium">Estadísticas</div>
+                   <div className="text-xs text-slate-500 dark:text-slate-400">
+                     <span className="hidden sm:inline">Análisis detallado de tu biblioteca</span>
+                     <span className="sm:hidden">Análisis de biblioteca</span>
+                   </div>
+                 </div>
               </motion.button>
             </div>
 
             {/* Separador */}
             <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
 
-            {/* Libros */}
-            <div className="p-2">
+                         {/* Libros */}
+             <div className="p-1.5 sm:p-2">
               <div className="mb-2">
                 <div className="flex items-center space-x-2 px-3 py-1">
                   <Book className="h-4 w-4 text-slate-500 dark:text-slate-400" />
@@ -174,19 +174,20 @@ const Navigation: React.FC<NavigationProps> = ({
                   handleSectionClick('books');
                   handleBooksViewClick('list');
                 }}
-                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors duration-200 ml-4 ${
+                className={`w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 ${
                   currentSection === 'books' && currentBooksView === 'list'
                     ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
                 <List className="h-4 w-4" />
-                <div className="flex-1 text-left">
-                  <div className="text-sm font-medium">Vista Lista</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    Listado detallado de libros
-                  </div>
-                </div>
+                               <div className="flex-1 text-left">
+                 <div className="text-sm font-medium">Vista Lista</div>
+                 <div className="text-xs text-slate-500 dark:text-slate-400">
+                   <span className="hidden sm:inline">Listado detallado de libros</span>
+                   <span className="sm:hidden">Listado detallado</span>
+                 </div>
+               </div>
               </motion.button>
 
               {/* Vista Galería */}
@@ -196,19 +197,20 @@ const Navigation: React.FC<NavigationProps> = ({
                   handleSectionClick('books');
                   handleBooksViewClick('gallery');
                 }}
-                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors duration-200 ml-4 mt-1 ${
+                className={`w-full flex items-center space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 ml-2 sm:ml-4 mt-1 ${
                   currentSection === 'books' && currentBooksView === 'gallery'
                     ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
                 <Grid className="h-4 w-4" />
-                <div className="flex-1 text-left">
-                  <div className="text-sm font-medium">Vista Galería</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    Portadas de libros en cuadrícula
-                  </div>
-                </div>
+                               <div className="flex-1 text-left">
+                 <div className="text-sm font-medium">Vista Galería</div>
+                 <div className="text-xs text-slate-500 dark:text-slate-400">
+                   <span className="hidden sm:inline">Portadas de libros en cuadrícula</span>
+                   <span className="sm:hidden">Vista en cuadrícula</span>
+                 </div>
+               </div>
               </motion.button>
             </div>
           </motion.div>
