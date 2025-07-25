@@ -202,20 +202,22 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
   };
 
   const handleDelete = () => {
-    showConfirm(
-      'Eliminar libro',
-      `¿Estás seguro de que quieres eliminar "${book.titulo}" de tu biblioteca?\n\nEsta acción no se puede deshacer.`,
-      () => {
-        if (onDelete) {
-          onDelete(book.id);
-        } else {
+    if (onDelete) {
+      // If onDelete is provided, use it directly (parent will handle confirmation)
+      onDelete(book.id);
+    } else {
+      // Only show confirmation if no onDelete prop is provided
+      showConfirm(
+        'Eliminar libro',
+        `¿Estás seguro de que quieres eliminar "${book.titulo}" de tu biblioteca?\n\nEsta acción no se puede deshacer.`,
+        () => {
           dispatch({ type: 'DELETE_BOOK', payload: book.id });
-        }
-      },
-      undefined,
-      'Eliminar',
-      'Cancelar'
-    );
+        },
+        undefined,
+        'Eliminar',
+        'Cancelar'
+      );
+    }
   };
 
   const handleImageUpdate = (bookId: number, imageUrl: string) => {
@@ -326,6 +328,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
           <div className="aspect-[3/4] mb-3">
             <BookCover
               book={book}
+              context="gallery"
               onImageUpdate={handleImageUpdate}
               className="w-full h-full object-cover rounded-lg"
             />

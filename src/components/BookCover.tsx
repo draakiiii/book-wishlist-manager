@@ -123,14 +123,17 @@ const BookCover: React.FC<BookCoverProps> = ({
   // Placeholder text based on size
   const placeholderText = {
     small: '',
-    medium: 'Sin portada',
+    medium: isGalleryView ? 'Sin portada' : 'Sin portada',
     large: 'Portada no disponible'
   };
+
+  // Check if this is being used in gallery view (compact variant)
+  const isGalleryView = context === 'gallery' || className.includes('compact') || className.includes('gallery');
 
   // Icon size based on component size
   const iconSize = {
     small: 'h-3 w-3',
-    medium: 'h-4 w-4',
+    medium: isGalleryView ? 'h-6 w-6' : 'h-4 w-4',
     large: 'h-8 w-8'
   };
 
@@ -420,7 +423,7 @@ const BookCover: React.FC<BookCoverProps> = ({
           <div className="text-center p-2">
             <BookOpen className={`${iconSize[size]} mx-auto text-slate-400 dark:text-slate-500 ${size !== 'small' ? 'mb-1' : ''}`} />
             {placeholderText[size] && (
-              <span className={`text-slate-400 dark:text-slate-500 leading-none ${size === 'large' ? 'text-sm' : 'text-xs'}`}>
+              <span className={`text-slate-400 dark:text-slate-500 leading-none ${size === 'large' ? 'text-sm' : isGalleryView ? 'text-base' : 'text-xs'}`}>
                 {placeholderText[size]}
               </span>
             )}
