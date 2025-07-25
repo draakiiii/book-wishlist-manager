@@ -7,7 +7,7 @@ interface BookCoverProps {
   book: Libro;
   size?: 'small' | 'medium' | 'large';
   className?: string;
-  context?: 'list' | 'detail'; // Helps determine which image to prioritize
+  context?: 'list' | 'detail' | 'gallery'; // Helps determine which image to prioritize
   onImageUpdate?: (bookId: number, imageUrl: string) => void; // Callback for image updates
 }
 
@@ -43,7 +43,7 @@ const BookCover: React.FC<BookCoverProps> = ({
     }
     
     // Fall back to API images based on context
-    const apiImage = (context === 'detail' || size === 'large') 
+    const apiImage = (context === 'detail' || context === 'gallery' || size === 'large') 
       ? book.thumbnail || book.smallThumbnail 
       : book.smallThumbnail || book.thumbnail;
     
@@ -120,15 +120,15 @@ const BookCover: React.FC<BookCoverProps> = ({
     large: 'w-32 h-44'
   };
 
+  // Check if this is being used in gallery view (compact variant)
+  const isGalleryView = context === 'gallery' || className.includes('compact') || className.includes('gallery');
+
   // Placeholder text based on size
   const placeholderText = {
     small: '',
     medium: isGalleryView ? 'Sin portada' : 'Sin portada',
     large: 'Portada no disponible'
   };
-
-  // Check if this is being used in gallery view (compact variant)
-  const isGalleryView = context === 'gallery' || className.includes('compact') || className.includes('gallery');
 
   // Icon size based on component size
   const iconSize = {
