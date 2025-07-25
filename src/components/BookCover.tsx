@@ -109,7 +109,35 @@ const BookCover: React.FC<BookCoverProps> = ({
     large: 'w-32 h-44'
   };
 
+  // Dynamic size classes for custom sizing
+  const getDynamicSizeClass = () => {
+    if (className.includes('w-full') && className.includes('h-full')) {
+      return 'w-full h-full';
+    }
+    if (className.includes('h-40')) {
+      return 'w-full h-40';
+    }
+    if (className.includes('h-48')) {
+      return 'w-full h-48';
+    }
+    if (className.includes('h-64')) {
+      return 'w-full h-64';
+    }
+    if (className.includes('h-200px') || className.includes('h-200')) {
+      return 'w-full h-200px';
+    }
+    return sizeClasses[size];
+  };
+
   // Placeholder text based on size
+  const getPlaceholderText = () => {
+    const dynamicClass = getDynamicSizeClass();
+    if (dynamicClass.includes('h-40') || dynamicClass.includes('h-48') || dynamicClass.includes('h-64') || dynamicClass.includes('h-200px')) {
+      return 'Sin portada';
+    }
+    return placeholderText[size] || '';
+  };
+
   const placeholderText = {
     small: '',
     medium: 'Sin portada',
@@ -117,6 +145,14 @@ const BookCover: React.FC<BookCoverProps> = ({
   };
 
   // Icon size based on component size
+  const getIconSize = () => {
+    const dynamicClass = getDynamicSizeClass();
+    if (dynamicClass.includes('h-40') || dynamicClass.includes('h-48') || dynamicClass.includes('h-64') || dynamicClass.includes('h-200px')) {
+      return 'h-8 w-8';
+    }
+    return iconSize[size];
+  };
+
   const iconSize = {
     small: 'h-3 w-3',
     medium: 'h-4 w-4',
@@ -365,17 +401,17 @@ const BookCover: React.FC<BookCoverProps> = ({
     return (
       <div className="relative">
         <div 
-          className={`${sizeClasses[size]} ${className} flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-lg border border-slate-300 dark:border-slate-600 ${size !== 'small' ? 'cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors' : ''}`}
+          className={`${getDynamicSizeClass()} ${className} flex items-center justify-center bg-slate-200 dark:bg-slate-700 ${className.includes('rounded-lg') ? 'rounded-lg' : ''} border border-slate-300 dark:border-slate-600 ${size !== 'small' ? 'cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors' : ''}`}
           onClick={handleCoverClick}
         >
-          <div className="text-center p-2">
-            <BookOpen className={`${iconSize[size]} mx-auto text-slate-400 dark:text-slate-500 ${size !== 'small' ? 'mb-1' : ''}`} />
-            {placeholderText[size] && (
-              <span className={`text-slate-400 dark:text-slate-500 leading-none ${size === 'large' ? 'text-sm' : 'text-xs'}`}>
-                {placeholderText[size]}
-              </span>
-            )}
-          </div>
+                      <div className="text-center p-2">
+              <BookOpen className={`${getIconSize()} mx-auto text-slate-400 dark:text-slate-500 ${size !== 'small' ? 'mb-1' : ''}`} />
+              {getPlaceholderText() && (
+                <span className={`text-slate-400 dark:text-slate-500 leading-none ${size === 'large' ? 'text-sm' : 'text-xs'}`}>
+                  {getPlaceholderText()}
+                </span>
+              )}
+            </div>
         </div>
 
         <ContextMenu hasImage={false} />
@@ -386,13 +422,13 @@ const BookCover: React.FC<BookCoverProps> = ({
   return (
     <div className="relative">
       <div 
-        className={`${sizeClasses[size]} ${className} relative overflow-hidden rounded-lg border border-slate-300 dark:border-slate-600 ${size === 'large' ? 'shadow-lg' : 'shadow-sm'} ${size !== 'small' ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
+        className={`${getDynamicSizeClass()} ${className} relative overflow-hidden ${className.includes('rounded-lg') ? 'rounded-lg' : ''} border border-slate-300 dark:border-slate-600 ${size === 'large' ? 'shadow-lg' : 'shadow-sm'} ${size !== 'small' ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
         onClick={handleCoverClick}
       >
         {imageLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-200 dark:bg-slate-700">
             <div className="animate-pulse">
-              <BookOpen className={`${iconSize[size]} text-slate-400`} />
+              <BookOpen className={`${getIconSize()} text-slate-400`} />
             </div>
           </div>
         )}
