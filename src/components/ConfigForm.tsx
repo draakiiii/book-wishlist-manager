@@ -54,6 +54,12 @@ const ConfigForm: React.FC = () => {
 
   const handleBooleanChange = (field: keyof typeof config, value: boolean) => {
     const newConfig = { ...config, [field]: value };
+    
+    // Si se desactiva el sistema de puntos, también ocultar la sección de progreso
+    if (field === 'sistemaPuntosHabilitado' && !value) {
+      newConfig.mostrarSeccionProgreso = false;
+    }
+    
     setConfig(newConfig);
     dispatch({ type: 'SET_CONFIG', payload: newConfig });
   };

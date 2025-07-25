@@ -34,7 +34,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Progress Section */}
-      {state.config.mostrarSeccionProgreso !== false && (
+      {state.config.mostrarSeccionProgreso !== false && state.config.sistemaPuntosHabilitado && (
         <CollapsibleSection
           title="Progreso y Puntos/Dinero"
           icon={<Trophy className="h-5 w-5" />}
