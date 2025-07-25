@@ -123,13 +123,16 @@ const BookCover: React.FC<BookCoverProps> = ({
     if (className.includes('h-64')) {
       return 'w-full h-64';
     }
+    if (className.includes('h-200px') || className.includes('h-200')) {
+      return 'w-full h-200px';
+    }
     return sizeClasses[size];
   };
 
   // Placeholder text based on size
   const getPlaceholderText = () => {
     const dynamicClass = getDynamicSizeClass();
-    if (dynamicClass.includes('h-40') || dynamicClass.includes('h-48') || dynamicClass.includes('h-64')) {
+    if (dynamicClass.includes('h-40') || dynamicClass.includes('h-48') || dynamicClass.includes('h-64') || dynamicClass.includes('h-200px')) {
       return 'Sin portada';
     }
     return placeholderText[size] || '';
@@ -144,7 +147,7 @@ const BookCover: React.FC<BookCoverProps> = ({
   // Icon size based on component size
   const getIconSize = () => {
     const dynamicClass = getDynamicSizeClass();
-    if (dynamicClass.includes('h-40') || dynamicClass.includes('h-48') || dynamicClass.includes('h-64')) {
+    if (dynamicClass.includes('h-40') || dynamicClass.includes('h-48') || dynamicClass.includes('h-64') || dynamicClass.includes('h-200px')) {
       return 'h-8 w-8';
     }
     return iconSize[size];

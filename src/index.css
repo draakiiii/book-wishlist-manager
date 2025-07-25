@@ -229,3 +229,8 @@
     touch-action: pan-y;
   }
 }
+
+/* Custom height for book covers */
+.h-200px {
+  height: 200px !important;
+}

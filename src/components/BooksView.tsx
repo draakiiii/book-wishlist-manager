@@ -629,7 +629,7 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className={viewMode === 'gallery' ? 'h-70 book-card-gallery' : ''}
+              className={viewMode === 'gallery' ? 'h-80' : ''}
             >
               <BookCard
                 book={libro}

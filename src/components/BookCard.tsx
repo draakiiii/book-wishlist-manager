@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import { Libro, BookListType } from '../types';
 import { motion } from 'framer-motion';
-import './BookCard.css';
 import { 
   BookOpen, 
   Trash2, 
@@ -296,58 +295,59 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           whileHover={{ scale: 1.02, y: -2 }}
-          className={`book-card-gallery relative rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${getTypeColor()} group cursor-pointer overflow-hidden`}
+          className={`relative rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${getTypeColor()} group cursor-pointer`}
+          style={{ height: '320px', display: 'flex', flexDirection: 'column' }}
           onClick={handleShowDescription}
         >
           {/* Type Badge */}
-          <div className="type-badge">
-            <div className={`flex items-center space-x-1 ${getTypeColor().split(' ')[0]}`}>
+          <div className="absolute top-2 right-2 z-10">
+            <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium bg-white/95 dark:bg-slate-800/95 border ${getTypeColor().split(' ')[0]}`}>
               {getTypeIcon()}
             </div>
           </div>
           
           {/* Loan Badge */}
           {book.prestado && (
-            <div className="loan-badge">
-              <div className="flex items-center space-x-1">
+            <div className="absolute top-2 left-2 z-10">
+              <div className="flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium bg-purple-500/95 text-white">
                 <Users className="h-3 w-3" />
               </div>
             </div>
           )}
 
           {/* Book Cover - Fixed height */}
-          <div className="book-cover-container w-full relative">
+          <div className="w-full h-200px flex-shrink-0">
             <BookCover
               book={book}
               onImageUpdate={handleImageUpdate}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-lg"
             />
-            {/* Gradient overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
           </div>
 
-          {/* Book Info - Fixed position at bottom */}
-          <div className="book-info">
-            <div className="space-y-1">
-              <h3 className="book-title">
+          {/* Book Info */}
+          <div className="flex-1 p-3 flex flex-col justify-between min-h-0">
+            <div>
+              <h3 className="font-semibold text-sm text-slate-900 dark:text-white line-clamp-2 leading-tight mb-1">
                 {book.titulo}
               </h3>
-              <p className="book-author">
+              <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-1">
                 {book.autor}
               </p>
-              
-              {/* Rating */}
-              {book.calificacion && book.calificacion > 0 && (
-                <div className="book-rating">
-                  <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                  <span>{book.calificacion}</span>
-                </div>
-              )}
             </div>
+            
+            {/* Rating */}
+            {book.calificacion && book.calificacion > 0 && (
+              <div className="flex items-center space-x-1 mt-auto pt-2">
+                <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                <span className="text-xs text-slate-600 dark:text-slate-400">
+                  {book.calificacion}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Actions overlay */}
-          <div className="actions-overlay">
+          <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center z-20">
             <div className="flex space-x-3">
               <motion.button
                 whileHover={{ scale: 1.1 }}
@@ -356,7 +356,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
                   e.stopPropagation();
                   handleShowDescription();
                 }}
-                className="action-button bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+                className="p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors shadow-lg"
               >
                 <Eye className="h-5 w-5" />
               </motion.button>
@@ -369,7 +369,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
                     e.stopPropagation();
                     onEdit(book);
                   }}
-                  className="action-button bg-slate-500 text-white hover:bg-slate-600 transition-colors"
+                  className="p-3 bg-slate-500 text-white rounded-full hover:bg-slate-600 transition-colors shadow-lg"
                 >
                   <Edit3 className="h-5 w-5" />
                 </motion.button>
@@ -382,7 +382,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
                   e.stopPropagation();
                   handleDelete();
                 }}
-                className="action-button bg-red-500 text-white hover:bg-red-600 transition-colors"
+                className="p-3 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
               >
                 <Trash2 className="h-5 w-5" />
               </motion.button>
