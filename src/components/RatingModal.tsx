@@ -178,10 +178,9 @@ const RatingModal: React.FC<RatingModalProps> = ({
             </button>
             <button
               onClick={handleConfirm}
-              disabled={rating === 0}
-              className="flex-1 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium rounded-lg transition-colors duration-200"
             >
-              Confirmar
+              {rating === 0 ? 'Terminar sin calificar' : 'Confirmar'}
             </button>
           </div>
         </div>
