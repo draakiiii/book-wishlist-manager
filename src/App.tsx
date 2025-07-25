@@ -20,9 +20,6 @@ import ConfigForm from './components/ConfigForm';
 import BulkScanModal from './components/BulkScanModal';
 
 import LoginScreen from './components/LoginScreen';
-import DebugFirebase from './debug-firebase';
-import InspectFirebase from './inspect-firebase';
-import SafeDebug from './safe-debug';
 
 import './App.css';
 
@@ -167,11 +164,6 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="theme-transition min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
-      {/* Debug Components */}
-      <SafeDebug />
-      <DebugFirebase />
-      <InspectFirebase />
-      
       {/* Notificaciones de saga completada */}
       {state.sagaNotifications && state.sagaNotifications.map((notification) => (
         <SagaCompletionNotification
