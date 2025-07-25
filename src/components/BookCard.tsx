@@ -202,17 +202,20 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
   };
 
   const handleDelete = () => {
-    const confirmDelete = window.confirm(
-      `¿Estás seguro de que quieres eliminar "${book.titulo}" de tu biblioteca?\n\nEsta acción no se puede deshacer.`
+    showConfirm(
+      'Eliminar libro',
+      `¿Estás seguro de que quieres eliminar "${book.titulo}" de tu biblioteca?\n\nEsta acción no se puede deshacer.`,
+      () => {
+        if (onDelete) {
+          onDelete(book.id);
+        } else {
+          dispatch({ type: 'DELETE_BOOK', payload: book.id });
+        }
+      },
+      undefined,
+      'Eliminar',
+      'Cancelar'
     );
-    
-    if (confirmDelete) {
-      if (onDelete) {
-        onDelete(book.id);
-      } else {
-        dispatch({ type: 'DELETE_BOOK', payload: book.id });
-      }
-    }
   };
 
   const handleImageUpdate = (bookId: number, imageUrl: string) => {
@@ -716,19 +719,31 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
       bookTitle={book.titulo}
     />
 
-    {/* Dialog Component */}
-    <Dialog
-      isOpen={dialog.isOpen}
-      onClose={hideDialog}
-      title={dialog.title}
-      message={dialog.message}
-      type={dialog.type}
-      confirmText={dialog.confirmText}
-      cancelText={dialog.cancelText}
-      onConfirm={dialog.onConfirm}
-      onCancel={dialog.onCancel}
-      showCancel={dialog.showCancel}
-    />
+          {/* Dialog Component */}
+      <Dialog
+        isOpen={dialog.isOpen}
+        onClose={hideDialog}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        confirmText={dialog.confirmText}
+        cancelText={dialog.cancelText}
+        onConfirm={dialog.onConfirm}
+        onCancel={dialog.onCancel}
+        showCancel={dialog.showCancel}
+      />
+
+      {/* Input Modal */}
+      {showInputModal && inputModalConfig && (
+        <InputModal
+          isOpen={showInputModal}
+          onClose={() => setShowInputModal(false)}
+          title={inputModalConfig.title}
+          message={inputModalConfig.message}
+          placeholder={inputModalConfig.placeholder}
+          onConfirm={inputModalConfig.onConfirm}
+        />
+      )}
 
     {/* Input Modal */}
     {inputModalConfig && (

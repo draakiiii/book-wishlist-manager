@@ -227,6 +227,13 @@ const Statistics: React.FC = () => {
       icon: BookOpen,
       color: 'bg-emerald-500',
       description: 'De la colección'
+    },
+    {
+      title: 'Páginas Promedio',
+      value: `${statistics.paginasPromedio.toFixed(0)}`,
+      icon: BookOpen,
+      color: 'bg-orange-500',
+      description: 'Por libro'
     }
   ];
 
@@ -250,7 +257,7 @@ const Statistics: React.FC = () => {
       </div>
 
       {/* Tarjetas de estadísticas principales */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-4">
         {statCards.map((stat, index) => (
           <motion.div
             key={stat.title}
