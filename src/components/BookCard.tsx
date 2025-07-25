@@ -355,7 +355,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
           </div>
 
           {/* Actions overlay */}
-          <div className="absolute inset-0 bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none group-hover:pointer-events-auto">
             <div className="flex space-x-2">
               <motion.button
                 whileHover={{ scale: 1.1 }}
