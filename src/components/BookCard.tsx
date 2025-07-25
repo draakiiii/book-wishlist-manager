@@ -28,12 +28,13 @@ import InputModal from './InputModal';
 
 interface BookCardProps {
   book: Libro;
-  type: BookListType;
+  type?: BookListType;
   onDelete?: (id: number) => void;
   onEdit?: (book: Libro) => void;
+  variant?: 'full' | 'compact';
 }
 
-const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => {
+const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, variant = 'full' }) => {
   const { state, dispatch } = useAppState();
   const { dialog, showError, showConfirm, hideDialog } = useDialog();
   const [showActions, setShowActions] = useState(false);
@@ -286,6 +287,157 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit }) => 
     return book.prestado ? `${baseLabel} (Prestado)` : baseLabel;
   };
 
+  // Vista compacta para galería
+  if (variant === 'compact') {
+    return (
+      <>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.02, y: -2 }}
+          className={`relative rounded-xl border-2 p-3 transition-all duration-300 hover:shadow-lg ${getTypeColor()} group cursor-pointer`}
+          onClick={handleShowDescription}
+        >
+          {/* Type Badge */}
+          <div className="absolute -top-2 -right-2 z-10">
+            <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium bg-white dark:bg-slate-800 border-2 ${getTypeColor().split(' ')[0]}`}>
+              {getTypeIcon()}
+            </div>
+          </div>
+          
+          {/* Loan Badge */}
+          {book.prestado && (
+            <div className="absolute -top-2 -left-2 z-10">
+              <div className="flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium bg-purple-500 text-white">
+                <Users className="h-3 w-3" />
+              </div>
+            </div>
+          )}
+
+          {/* Book Cover */}
+          <div className="aspect-[3/4] mb-3">
+            <BookCover
+              book={book}
+              onImageUpdate={handleImageUpdate}
+              className="w-full h-full object-cover rounded-lg"
+            />
+          </div>
+
+          {/* Book Info */}
+          <div className="space-y-1">
+            <h3 className="font-semibold text-sm text-slate-900 dark:text-white line-clamp-2 leading-tight">
+              {book.titulo}
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-1">
+              {book.autor}
+            </p>
+            
+            {/* Rating */}
+            {book.calificacion && book.calificacion > 0 && (
+              <div className="flex items-center space-x-1">
+                <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                <span className="text-xs text-slate-600 dark:text-slate-400">
+                  {book.calificacion}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Actions overlay */}
+          <div className="absolute inset-0 bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+            <div className="flex space-x-2">
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleShowDescription();
+                }}
+                className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+              >
+                <Eye className="h-4 w-4" />
+              </motion.button>
+              
+              {onEdit && (
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(book);
+                  }}
+                  className="p-2 bg-slate-500 text-white rounded-full hover:bg-slate-600 transition-colors"
+                >
+                  <Edit3 className="h-4 w-4" />
+                </motion.button>
+              )}
+              
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete();
+                }}
+                className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Modals para vista compacta */}
+        <BookDescriptionModal
+          isOpen={showDescriptionModal}
+          onClose={() => setShowDescriptionModal(false)}
+          book={book}
+        />
+
+        <RatingModal
+          isOpen={showRatingModal}
+          onClose={() => setShowRatingModal(false)}
+          onConfirm={handleRatingConfirm}
+          bookTitle={book.titulo}
+          currentRating={book.calificacion || 0}
+          currentReview={book.notas || ''}
+        />
+
+        <LoanModal
+          isOpen={showLoanModal}
+          onClose={() => setShowLoanModal(false)}
+          onConfirm={handleLoanConfirm}
+          bookTitle={book.titulo}
+        />
+
+        <Dialog
+          isOpen={dialog.isOpen}
+          onClose={hideDialog}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          confirmText={dialog.confirmText}
+          cancelText={dialog.cancelText}
+          onConfirm={dialog.onConfirm}
+          onCancel={dialog.onCancel}
+          showCancel={dialog.showCancel}
+        />
+
+        {inputModalConfig && (
+          <InputModal
+            isOpen={showInputModal}
+            onClose={() => setShowInputModal(false)}
+            title={inputModalConfig.title}
+            message={inputModalConfig.message}
+            placeholder={inputModalConfig.placeholder}
+            onConfirm={inputModalConfig.onConfirm}
+          />
+        )}
+      </>
+    );
+  }
+
+  // Vista completa por defecto
   return (
     <>
       <motion.div

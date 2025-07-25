@@ -1,36 +1,19 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppStateProvider, useAppState } from './context/AppStateContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { motion } from 'framer-motion';
 import { 
   BookOpen, 
-  Heart, 
-  Clock, 
-  Trophy, 
   Settings,
-  Search,
-  BarChart3,
-  Database,
-  History,
-  Book,
-  CheckCircle,
-  XCircle,
-  ShoppingCart,
   Users,
-  X,
-  Share2
+  X
 } from 'lucide-react';
-import CollapsibleConfig from './components/CollapsibleConfig';
-import CollapsibleSection from './components/CollapsibleSection';
+import Navigation, { NavigationSection, BooksViewMode } from './components/Navigation';
+import BooksView from './components/BooksView';
+import Dashboard from './components/Dashboard';
+import Statistics from './components/Statistics';
 import Sidebar from './components/Sidebar';
-import ProgressBar from './components/ProgressBar';
-import WishlistForm from './components/WishlistForm';
-import TBRForm from './components/TBRForm';
-import BookList from './components/BookList';
-import SagaList from './components/SagaList';
 import SagaCompletionNotification from './components/SagaCompletionNotification';
-import AdvancedSearch from './components/AdvancedSearch';
-import AdvancedStatistics from './components/AdvancedStatistics';
 import DataExportImport from './components/DataExportImport';
 import ScanHistory from './components/ScanHistory';
 import ConfigForm from './components/ConfigForm';
@@ -45,23 +28,21 @@ const AppContent: React.FC = () => {
   const { user, loading: authLoading, isAuthenticated, logout, migrateData, hasMigratedData } = useAuth();
   const [configSidebarOpen, setConfigSidebarOpen] = React.useState(false);
   const [configModalOpen, setConfigModalOpen] = useState(false);
-  const [searchModalOpen, setSearchModalOpen] = useState(false);
-  const [statisticsModalOpen, setStatisticsModalOpen] = useState(false);
+
   const [exportImportModalOpen, setExportImportModalOpen] = useState(false);
   const [scanHistoryModalOpen, setScanHistoryModalOpen] = useState(false);
   const [bulkScanModalOpen, setBulkScanModalOpen] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  
+  // Estados para navegación
+  const [currentSection, setCurrentSection] = useState<NavigationSection>('dashboard');
+  const [currentBooksView, setCurrentBooksView] = useState<BooksViewMode>('list');
 
 
   console.log('AppContent rendered', { authLoading, isAuthenticated, user: user?.email });
 
-  // Inicializar searchResults con todos los libros cuando se abre el modal
-  useEffect(() => {
-    if (searchModalOpen) {
-      setSearchResults(state.libros);
-    }
-  }, [searchModalOpen, state.libros]);
+
 
   useEffect(() => {
     // Aplicar el modo oscuro al body
@@ -136,27 +117,7 @@ const AppContent: React.FC = () => {
     dispatch({ type: 'REMOVE_SAGA_NOTIFICATION', payload: { id } });
   };
 
-  const handleOpenConfig = () => {
-    // En móvil, abrir el sidebar de configuración
-    // En desktop, abrir el modal de configuración
-    if (window.innerWidth < 768) {
-      setConfigSidebarOpen(true);
-    } else {
-      setConfigModalOpen(true);
-    }
-  };
 
-
-
-  // Filtrar libros por estado
-  const librosTBR = state.libros.filter(libro => libro.estado === 'tbr');
-  const librosLeyendo = state.libros.filter(libro => libro.estado === 'leyendo');
-  const librosLeidos = state.libros.filter(libro => libro.estado === 'leido');
-  const librosAbandonados = state.libros.filter(libro => libro.estado === 'abandonado');
-  const librosWishlist = state.libros.filter(libro => libro.estado === 'wishlist');
-
-  // Libros prestados (para mostrar en resumen, pero no como sección separada)
-  const librosPrestados = state.libros.filter(libro => libro.prestado === true);
 
   // Mostrar loading mientras se autentica
   if (authLoading) {
@@ -229,29 +190,19 @@ const AppContent: React.FC = () => {
                   Mi Biblioteca
                 </h1>
               </div>
+              
+              {/* Navegación */}
+              <div className="hidden md:block ml-8">
+                <Navigation
+                  currentSection={currentSection}
+                  currentBooksView={currentBooksView}
+                  onSectionChange={setCurrentSection}
+                  onBooksViewChange={setCurrentBooksView}
+                />
+              </div>
             </div>
             
             <div className="flex items-center space-x-1 sm:space-x-2">
-              {/* Search and Statistics buttons - visible on all screens */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSearchModalOpen(true)}
-                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200"
-                title="Búsqueda Avanzada"
-              >
-                <Search className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-              </motion.button>
-              
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setStatisticsModalOpen(true)}
-                className="p-1.5 md:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200 mx-1"
-                title="Estadísticas Avanzadas"
-              >
-                <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-slate-600 dark:text-slate-400" />
-              </motion.button>
               
               {/* Botón de Exportar/Importar Datos - DESHABILITADO TEMPORALMENTE */}
               {/* Para habilitar, descomenta las siguientes líneas: */}
@@ -280,6 +231,16 @@ const AppContent: React.FC = () => {
               </motion.button>
               */}
               
+              {/* Mobile Navigation */}
+              <div className="md:hidden">
+                <Navigation
+                  currentSection={currentSection}
+                  currentBooksView={currentBooksView}
+                  onSectionChange={setCurrentSection}
+                  onBooksViewChange={setCurrentBooksView}
+                />
+              </div>
+
               {/* Settings button */}
               <button
                 onClick={() => setConfigSidebarOpen(true)}
@@ -317,125 +278,18 @@ const AppContent: React.FC = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="space-y-4 sm:space-y-6 lg:space-y-8">
-            
-            {/* Configuration Section - Desktop Collapsible */}
-            <div className="hidden lg:block">
-              <CollapsibleConfig />
-            </div>
-
-            {/* Progress Section */}
-            {state.config.mostrarSeccionProgreso !== false && (
-              <CollapsibleSection
-                title="Progreso y Puntos/Dinero"
-                icon={<Trophy className="h-5 w-5" />}
-                iconBgColor="bg-success-100 dark:bg-success-900/30"
-                iconColor="text-success-600 dark:text-success-400"
-              >
-                <ProgressBar />
-              </CollapsibleSection>
-            )}
-
-            {/* Wishlist Section */}
-            {state.config.mostrarSeccionWishlist !== false && (
-              <CollapsibleSection
-                title="Lista de Deseos"
-                icon={<Heart className="h-5 w-5" />}
-                iconBgColor="bg-secondary-100 dark:bg-secondary-900/30"
-                iconColor="text-secondary-600 dark:text-secondary-400"
-              >
-                <WishlistForm />
-                <div className="mt-4 sm:mt-6">
-                  <BookList 
-                    books={librosWishlist}
-                    type="wishlist"
-                    emptyMessage="Tu lista de deseos está vacía."
-                  />
-                </div>
-              </CollapsibleSection>
-            )}
-
-            {/* TBR Section */}
-            {state.config.mostrarSeccionTBR !== false && (
-              <CollapsibleSection
-                title="Pila de Lectura (TBR)"
-                icon={<Clock className="h-5 w-5" />}
-                iconBgColor="bg-warning-100 dark:bg-warning-900/30"
-                iconColor="text-warning-600 dark:text-warning-400"
-              >
-                <TBRForm />
-                <div className="mt-4 sm:mt-6">
-                  <BookList 
-                    books={librosTBR}
-                    type="tbr"
-                    emptyMessage="Tu pila está vacía."
-                  />
-                </div>
-              </CollapsibleSection>
-            )}
-
-            {/* Currently Reading Section */}
-            {state.config.mostrarSeccionLeyendo !== false && (
-              <CollapsibleSection
-                title="Leyendo Actualmente"
-                icon={<BookOpen className="h-5 w-5" />}
-                iconBgColor="bg-primary-100 dark:bg-primary-900/30"
-                iconColor="text-primary-600 dark:text-primary-400"
-              >
-                <BookList 
-                  books={librosLeyendo}
-                  type="leyendo"
-                  emptyMessage="No estás leyendo ningún libro actualmente."
-                />
-              </CollapsibleSection>
-            )}
-
-            {/* Completed Books Section */}
-            {state.config.mostrarSeccionLeidos !== false && (
-              <CollapsibleSection
-                title="Libros Leídos"
-                icon={<CheckCircle className="h-5 w-5" />}
-                iconBgColor="bg-green-100 dark:bg-green-900/30"
-                iconColor="text-green-600 dark:text-green-400"
-              >
-                <BookList 
-                  books={librosLeidos}
-                  type="leido"
-                  emptyMessage="Aún no has terminado ningún libro."
-                />
-              </CollapsibleSection>
-            )}
-
-            {/* Abandoned Books Section */}
-            {state.config.mostrarSeccionAbandonados !== false && (
-              <CollapsibleSection
-                title="Libros Abandonados"
-                icon={<XCircle className="h-5 w-5" />}
-                iconBgColor="bg-red-100 dark:bg-red-900/30"
-                iconColor="text-red-600 dark:text-red-400"
-              >
-                <BookList 
-                  books={librosAbandonados}
-                  type="abandonado"
-                  emptyMessage="No has abandonado ningún libro."
-                />
-              </CollapsibleSection>
-            )}
-
-
-
-            {/* Sagas Section */}
-            {state.config.mostrarSeccionSagas !== false && (
-              <CollapsibleSection
-                title="Mis Sagas"
-                icon={<Trophy className="h-5 w-5" />}
-                iconBgColor="bg-purple-100 dark:bg-purple-900/30"
-                iconColor="text-purple-600 dark:text-purple-400"
-              >
-                <SagaList />
-              </CollapsibleSection>
-            )}
-        </div>
+        {currentSection === 'dashboard' ? (
+          <Dashboard />
+        ) : currentSection === 'books' ? (
+          // Books view content
+          <BooksView 
+            viewMode={currentBooksView}
+            onViewModeChange={setCurrentBooksView}
+          />
+        ) : currentSection === 'statistics' ? (
+          // Statistics view content
+          <Statistics />
+        ) : null}
       </main>
       
       {/* Mobile Configuration Sidebar */}
@@ -484,18 +338,7 @@ const AppContent: React.FC = () => {
         </motion.div>
       )}
 
-      {/* Advanced Search Modal */}
-      <AdvancedSearch
-        isOpen={searchModalOpen}
-        onClose={() => setSearchModalOpen(false)}
-        onSearch={setSearchResults}
-      />
 
-      {/* Advanced Statistics Modal */}
-      <AdvancedStatistics
-        isOpen={statisticsModalOpen}
-        onClose={() => setStatisticsModalOpen(false)}
-      />
 
       {/* Data Export/Import Modal */}
       <DataExportImport
