@@ -1151,19 +1151,31 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
 
   // Cargar estado inicial - SOLO Firebase
   useEffect(() => {
-    console.log('AppStateContext: Starting initialization', { authLoading, isAuthenticated, user: user?.email });
+    console.log('AppStateContext: Starting initialization', { authLoading, isAuthenticated, user: user?.email, userUid: user?.uid });
+    
+    // Resetear estado de inicialización cuando cambia el usuario
+    setIsInitialized(false);
     
     // Solo cargar desde Firebase si está autenticado
     if (isAuthenticated && user && !authLoading) {
       const loadFromFirebase = async () => {
         try {
-          console.log('AppStateContext: Loading from Firebase');
+          console.log('AppStateContext: Loading from Firebase for user:', user.uid);
+          
+          // IMPORTANTE: Primero limpiar el estado actual
+          console.log('AppStateContext: Clearing current state before loading new user data');
+          dispatch({ type: 'IMPORT_DATA', payload: initialState });
+          
           const firebaseState = await loadStateFromFirebase();
           if (firebaseState) {
-            console.log('AppStateContext: Firebase state loaded, updating');
+            console.log('AppStateContext: Firebase state loaded for user, updating', {
+              userUid: user.uid,
+              librosCount: firebaseState.libros.length
+            });
             dispatch({ type: 'IMPORT_DATA', payload: firebaseState });
           } else {
-            console.log('AppStateContext: No Firebase data found, starting with empty state');
+            console.log('AppStateContext: No Firebase data found for user, starting with empty state', user.uid);
+            // Mantener el estado inicial limpio
           }
           setIsInitialized(true);
         } catch (error) {
@@ -1174,25 +1186,38 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
       loadFromFirebase();
     } else if (!isAuthenticated && !authLoading) {
       // Si no está autenticado, empezar con estado vacío
-      console.log('AppStateContext: Not authenticated, starting with empty state');
+      console.log('AppStateContext: Not authenticated, clearing state');
+      dispatch({ type: 'IMPORT_DATA', payload: initialState });
       setIsInitialized(true);
     }
-  }, [isAuthenticated, user, authLoading, dispatch]);
+  }, [isAuthenticated, user?.uid, authLoading, dispatch]); // ¡IMPORTANTE: Cambié user por user?.uid!
 
   // Guardar estado en Firebase cuando esté autenticado
   useEffect(() => {
     console.log('AppStateContext: Save effect triggered', { 
       isAuthenticated, 
       user: user?.email, 
+      userUid: user?.uid,
       isLoading, 
       isInitialized,
       librosCount: state.libros.length 
     });
     
-    if (isAuthenticated && user && !isLoading && isInitialized) {
+    // Solo guardar si:
+    // 1. Está autenticado
+    // 2. Está inicializado (ya cargó los datos del usuario)
+    // 3. No está en proceso de carga
+    // 4. El estado no es el inicial vacío (evitar sobreescribir con estado vacío)
+    const isEmptyInitialState = state.libros.length === 0 && 
+                               state.sagas.length === 0 && 
+                               state.scanHistory.length === 0 &&
+                               state.searchHistory.length === 0;
+    
+    if (isAuthenticated && user && !isLoading && isInitialized && !isEmptyInitialState) {
       const saveToFirebase = async () => {
         try {
           console.log('AppStateContext: Saving to Firebase', { 
+            userUid: user.uid,
             librosCount: state.libros.length,
             wishlistCount: state.libros.filter(l => l.estado === 'wishlist').length,
             tbrCount: state.libros.filter(l => l.estado === 'tbr').length
@@ -1204,8 +1229,10 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
         }
       };
       saveToFirebase();
+    } else if (isAuthenticated && user && isInitialized && isEmptyInitialState) {
+      console.log('AppStateContext: Skipping save - state appears to be empty initial state');
     }
-  }, [state, isAuthenticated, user, isLoading, isInitialized]);
+  }, [state, isAuthenticated, user?.uid, isLoading, isInitialized]);
 
   // Eliminado fallback a localStorage - solo Firebase
 
