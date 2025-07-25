@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, BookOpen, Clock, Star, Plus, Trash2, ExternalLink } from 'lucide-react';
+import { X, BookOpen, Clock, Star, Plus, Trash2, ExternalLink, Edit3 } from 'lucide-react';
 import { Libro, Lectura } from '../types';
 import { useAppState } from '../context/AppStateContext';
 import { openWebReader } from '../utils/webReader';
@@ -16,6 +16,7 @@ interface BookDescriptionModalProps {
 const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpen, onClose }) => {
   const { dispatch } = useAppState();
   const [showAddLectura, setShowAddLectura] = useState(false);
+  const [editingLectura, setEditingLectura] = useState<Lectura | null>(null);
   const [newLectura, setNewLectura] = useState({
     fechaInicio: new Date().toISOString().split('T')[0],
     fechaFin: new Date().toISOString().split('T')[0],
@@ -88,6 +89,59 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
     dispatch({
       type: 'DELETE_LECTURA',
       payload: { libroId: book.id, lecturaId }
+    });
+  };
+
+  const handleEditLectura = (lectura: Lectura) => {
+    setEditingLectura(lectura);
+    setNewLectura({
+      fechaInicio: new Date(lectura.fechaInicio).toISOString().split('T')[0],
+      fechaFin: new Date(lectura.fechaFin).toISOString().split('T')[0],
+      calificacion: lectura.calificacion || 0,
+      reseña: lectura.reseña || '',
+      paginasLeidas: lectura.paginasLeidas || book?.paginas || 0,
+      notas: lectura.notas || ''
+    });
+  };
+
+  const handleUpdateLectura = () => {
+    if (!book || !editingLectura) return;
+    
+    const updates: Partial<Lectura> = {
+      fechaInicio: new Date(newLectura.fechaInicio).getTime(),
+      fechaFin: new Date(newLectura.fechaFin).getTime(),
+      calificacion: newLectura.calificacion > 0 ? newLectura.calificacion : undefined,
+      reseña: newLectura.reseña || undefined,
+      paginasLeidas: newLectura.paginasLeidas || undefined,
+      notas: newLectura.notas || undefined
+    };
+
+    dispatch({
+      type: 'UPDATE_LECTURA',
+      payload: { libroId: book.id, lecturaId: editingLectura.id, updates }
+    });
+
+    // Reset form
+    setNewLectura({
+      fechaInicio: new Date().toISOString().split('T')[0],
+      fechaFin: new Date().toISOString().split('T')[0],
+      calificacion: 0,
+      reseña: '',
+      paginasLeidas: book.paginas || 0,
+      notas: ''
+    });
+    setEditingLectura(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingLectura(null);
+    setNewLectura({
+      fechaInicio: new Date().toISOString().split('T')[0],
+      fechaFin: new Date().toISOString().split('T')[0],
+      calificacion: 0,
+      reseña: '',
+      paginasLeidas: book?.paginas || 0,
+      notas: ''
     });
   };
 
@@ -465,6 +519,112 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
                       </motion.div>
                     )}
 
+                    {/* Formulario para editar lectura */}
+                    {editingLectura && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700"
+                      >
+                        <h5 className="text-sm font-medium text-green-900 dark:text-green-100 mb-3">
+                          Editar Lectura #{book.lecturas.length - book.lecturas.findIndex(l => l.id === editingLectura.id)}
+                        </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-green-800 dark:text-green-200 mb-1">
+                              Fecha de inicio
+                            </label>
+                            <input
+                              type="date"
+                              value={newLectura.fechaInicio}
+                              onChange={(e) => setNewLectura({...newLectura, fechaInicio: e.target.value})}
+                              className="w-full px-2 py-1 text-xs border border-green-300 dark:border-green-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-green-800 dark:text-green-200 mb-1">
+                              Fecha de fin
+                            </label>
+                            <input
+                              type="date"
+                              value={newLectura.fechaFin}
+                              onChange={(e) => setNewLectura({...newLectura, fechaFin: e.target.value})}
+                              className="w-full px-2 py-1 text-xs border border-green-300 dark:border-green-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-green-800 dark:text-green-200 mb-1">
+                              Calificación (1-5)
+                            </label>
+                            <select
+                              value={newLectura.calificacion}
+                              onChange={(e) => setNewLectura({...newLectura, calificacion: parseInt(e.target.value)})}
+                              className="w-full px-2 py-1 text-xs border border-green-300 dark:border-green-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                            >
+                              <option value={0}>Sin calificar</option>
+                              <option value={1}>1 ⭐</option>
+                              <option value={2}>2 ⭐⭐</option>
+                              <option value={3}>3 ⭐⭐⭐</option>
+                              <option value={4}>4 ⭐⭐⭐⭐</option>
+                              <option value={5}>5 ⭐⭐⭐⭐⭐</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-green-800 dark:text-green-200 mb-1">
+                              Páginas leídas
+                            </label>
+                            <input
+                              type="number"
+                              value={newLectura.paginasLeidas}
+                              onChange={(e) => setNewLectura({...newLectura, paginasLeidas: parseInt(e.target.value) || 0})}
+                              className="w-full px-2 py-1 text-xs border border-green-300 dark:border-green-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-3 space-y-2">
+                          <div>
+                            <label className="block text-xs font-medium text-green-800 dark:text-green-200 mb-1">
+                              Reseña
+                            </label>
+                            <textarea
+                              value={newLectura.reseña}
+                              onChange={(e) => setNewLectura({...newLectura, reseña: e.target.value})}
+                              placeholder="Tu opinión sobre esta lectura..."
+                              className="w-full px-2 py-1 text-xs border border-green-300 dark:border-green-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-none"
+                              rows={2}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-green-800 dark:text-green-200 mb-1">
+                              Notas adicionales
+                            </label>
+                            <textarea
+                              value={newLectura.notas}
+                              onChange={(e) => setNewLectura({...newLectura, notas: e.target.value})}
+                              placeholder="Notas personales..."
+                              className="w-full px-2 py-1 text-xs border border-green-300 dark:border-green-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-none"
+                              rows={2}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end space-x-2 mt-3">
+                          <button
+                            onClick={handleCancelEdit}
+                            className="px-3 py-1 text-xs bg-slate-500 hover:bg-slate-600 text-white rounded transition-colors"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            onClick={handleUpdateLectura}
+                            className="px-3 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded transition-colors"
+                          >
+                            Actualizar Lectura
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+
                   {book.lecturas && book.lecturas.length > 0 && (
                     <div className="space-y-3">
                       {book.lecturas
@@ -476,28 +636,32 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
                                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">
                                   Lectura #{book.lecturas.length - index}
                                 </span>
-                                                                 {lectura.calificacion && (
-                                   <div className="flex items-center space-x-1">
-                                     {[...Array(5)].map((_, i) => (
-                                       <Star
-                                         key={i}
-                                         className={`h-3 w-3 ${
-                                           i < (lectura.calificacion || 0)
-                                             ? 'text-yellow-500 fill-current'
-                                             : 'text-slate-300 dark:text-slate-600'
-                                         }`}
-                                       />
-                                     ))}
-                                     <span className="text-xs text-slate-600 dark:text-slate-400">
-                                       {lectura.calificacion}/5
-                                     </span>
-                                   </div>
-                                 )}
+                                {lectura.calificacion && (
+                                  <div className="flex items-center space-x-1">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`h-3 w-3 ${
+                                          i < (lectura.calificacion || 0)
+                                            ? 'text-yellow-500 fill-current'
+                                            : 'text-slate-300 dark:text-slate-600'
+                                        }`}
+                                      />
+                                    ))}
+                                    <span className="text-xs text-slate-600 dark:text-slate-400">
+                                      {lectura.calificacion}/5
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                               <div className="flex items-center space-x-2">
-                                <span className="text-xs text-slate-500 dark:text-slate-400">
-                                  {formatearFecha(lectura.fechaFin)}
-                                </span>
+                                <button
+                                  onClick={() => handleEditLectura(lectura)}
+                                  className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
+                                  title="Editar lectura"
+                                >
+                                  <Edit3 className="h-3 w-3" />
+                                </button>
                                 <button
                                   onClick={() => handleDeleteLectura(lectura.id)}
                                   className="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
@@ -529,8 +693,10 @@ const BookDescriptionModal: React.FC<BookDescriptionModalProps> = ({ book, isOpe
                               )}
                               
                               {lectura.notas && (
-                                <div className="text-xs text-slate-600 dark:text-slate-400">
-                                  <strong>Notas:</strong> {lectura.notas}
+                                <div className="mt-2 p-2 bg-white/50 dark:bg-slate-800/50 rounded border-l-2 border-green-500">
+                                  <p className="text-sm text-slate-800 dark:text-slate-200 italic">
+                                    "{lectura.notas}"
+                                  </p>
                                 </div>
                               )}
                             </div>
