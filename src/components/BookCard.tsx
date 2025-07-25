@@ -106,20 +106,30 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
     // Verificar si el sistema de puntos/dinero está habilitado
     if (state.config.sistemaPuntosHabilitado) {
       if (state.config.modoDinero) {
-        // Modo dinero - usar costo fijo por libro
-        const costoFijo = state.config.dineroParaComprar || 15.0;
+        // Modo dinero - calcular costo por páginas
+        const paginas = book.paginas || 0;
+        const costoPorPagina = state.config.costoPorPagina || 0.25;
+        const costoTotal = paginas * costoPorPagina;
         
-        if (state.dineroActual < costoFijo) {
+        if (costoTotal <= 0) {
+          showError(
+            'Libro sin páginas',
+            'No se puede calcular el costo de un libro sin información de páginas.'
+          );
+          return;
+        }
+        
+        if (state.dineroActual < costoTotal) {
           showError(
             'Dinero insuficiente',
-            `Necesitas $${costoFijo.toFixed(2)} para comprar este libro. Tienes $${state.dineroActual.toFixed(2)}.`
+            `Necesitas $${costoTotal.toFixed(2)} para comprar este libro (${paginas} páginas × $${costoPorPagina.toFixed(2)}/página). Tienes $${state.dineroActual.toFixed(2)}.`
           );
           return;
         }
         
         showConfirm(
           'Comprar libro con dinero',
-          `¿Quieres comprar "${book.titulo}" por $${costoFijo.toFixed(2)}?\n\nDinero actual: $${state.dineroActual.toFixed(2)}\nDinero después de la compra: $${(state.dineroActual - costoFijo).toFixed(2)}`,
+          `¿Quieres comprar "${book.titulo}" por $${costoTotal.toFixed(2)}?\n\nDetalles:\n• Páginas: ${paginas}\n• Costo por página: $${costoPorPagina.toFixed(2)}\n• Costo total: $${costoTotal.toFixed(2)}\n\nDinero actual: $${state.dineroActual.toFixed(2)}\nDinero después de la compra: $${(state.dineroActual - costoTotal).toFixed(2)}`,
           () => {
             dispatch({ 
               type: 'COMPRAR_LIBRO_CON_DINERO', 
@@ -595,7 +605,14 @@ const BookCard: React.FC<BookCardProps> = ({ book, type, onDelete, onEdit, varia
               <span>
                 {state.config.sistemaPuntosHabilitado 
                   ? state.config.modoDinero
-                    ? `Comprar ($${state.config.dineroParaComprar || 15.0})`
+                    ? (() => {
+                        const paginas = book.paginas || 0;
+                        const costoPorPagina = state.config.costoPorPagina || 0.25;
+                        const costoTotal = paginas * costoPorPagina;
+                        return costoTotal > 0 
+                          ? `Comprar ($${costoTotal.toFixed(2)})`
+                          : 'Comprar';
+                      })()
                     : `Comprar (${state.config.puntosParaComprar || 25} pts)`
                   : 'Comprar'
                 }
