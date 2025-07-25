@@ -7,7 +7,7 @@ import Dialog from './Dialog';
 
 const ConfigForm: React.FC = () => {
   const { state, dispatch } = useAppState();
-  const { dialog, showSuccess, showError, hideDialog } = useDialog();
+  const { dialog, showSuccess, showError, showConfirm, hideDialog } = useDialog();
   const [config, setConfig] = useState(state.config);
 
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
@@ -17,16 +17,33 @@ const ConfigForm: React.FC = () => {
 
 
   const handleReset = () => {
-    if (window.confirm('¿Estás seguro de que quieres resetear tu progreso? Esto eliminará todos tus datos de lectura.')) {
-      dispatch({ type: 'IMPORT_DATA', payload: { libros: [], sagas: [] } });
-    }
+    showConfirm(
+      'Resetear Progreso',
+      '¿Estás seguro de que quieres resetear tu progreso? Esto eliminará todos tus datos de lectura, puntos y dinero.',
+      () => {
+        dispatch({ type: 'IMPORT_DATA', payload: { libros: [], sagas: [] } });
+        dispatch({ type: 'RESETEAR_PUNTOS' });
+        dispatch({ type: 'RESETEAR_DINERO' });
+        showSuccess('Progreso reseteado', 'Todos los datos han sido eliminados correctamente.');
+      },
+      undefined,
+      'Resetear',
+      'Cancelar'
+    );
   };
 
   const handleCleanDuplicateSagas = () => {
-    if (window.confirm('¿Estás seguro de que quieres limpiar las sagas duplicadas? Esto eliminará las sagas vacías y duplicadas.')) {
-      dispatch({ type: 'CLEAN_DUPLICATE_SAGAS' });
-      showSuccess('Sagas limpiadas', 'Sagas duplicadas limpiadas correctamente.');
-    }
+    showConfirm(
+      'Limpiar Sagas Duplicadas',
+      '¿Estás seguro de que quieres limpiar las sagas duplicadas? Esto eliminará las sagas vacías y duplicadas.',
+      () => {
+        dispatch({ type: 'CLEAN_DUPLICATE_SAGAS' });
+        showSuccess('Sagas limpiadas', 'Sagas duplicadas limpiadas correctamente.');
+      },
+      undefined,
+      'Limpiar',
+      'Cancelar'
+    );
   };
 
   const handleInputChange = (field: keyof typeof config, value: number) => {

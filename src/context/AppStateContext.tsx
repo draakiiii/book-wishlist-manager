@@ -1068,28 +1068,22 @@ function appReducer(state: AppState, action: Action): AppState {
         return state;
       }
 
-      // Calcular costo basado en páginas del libro
-      const paginas = libro.paginas || 0;
-      const costoPorPagina = state.config.costoPorPagina || 0.25;
-      const costoTotal = paginas * costoPorPagina;
+      // Usar costo fijo por libro
+      const costoFijo = state.config.dineroParaComprar || 15.0;
 
-      if (costoTotal <= 0) {
-        return state; // No se puede comprar un libro sin páginas
-      }
-
-      if (state.dineroActual < costoTotal) {
+      if (state.dineroActual < costoFijo) {
         return state;
       }
 
       // Cambiar el estado del libro de 'wishlist' a 'tbr' (comprado y listo para leer)
       const librosActualizados = state.libros.map(l => 
-        l.id === libroId ? agregarEstadoAlHistorial(l, 'tbr', `Comprado con $${costoTotal.toFixed(2)} (${paginas} páginas × $${costoPorPagina.toFixed(2)}/página)`) : l
+        l.id === libroId ? agregarEstadoAlHistorial(l, 'tbr', `Comprado con $${costoFijo.toFixed(2)}`) : l
       );
 
       return {
         ...state,
         libros: librosActualizados,
-        dineroActual: state.dineroActual - costoTotal,
+        dineroActual: state.dineroActual - costoFijo,
         librosCompradosConDinero: state.librosCompradosConDinero + 1
       };
     }
