@@ -4,6 +4,7 @@ import { Clock, Search, Camera, Loader2, CheckCircle, AlertCircle, Barcode } fro
 import { useAppState } from '../context/AppStateContext';
 import { Libro, BookData } from '../types';
 import { fetchBookData } from '../services/googleBooksAPI';
+import { generateUniqueId } from '../utils/idGenerator';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import SagaAutocomplete from './SagaAutocomplete';
 import ISBNInputModal from './ISBNInputModal';
@@ -100,7 +101,7 @@ const TBRForm: React.FC = () => {
 
   const addBookToTBR = (bookData: BookData) => {
     const nuevoLibro: Libro = {
-      id: Date.now(),
+      id: generateUniqueId(),
       titulo: bookData.titulo,
       autor: bookData.autor,
       paginas: bookData.paginas,

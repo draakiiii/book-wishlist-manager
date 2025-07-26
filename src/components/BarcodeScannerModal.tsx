@@ -4,6 +4,7 @@ import { X, Camera, CameraOff, RotateCcw, AlertCircle, CheckCircle, Loader2, Zap
 import { BrowserMultiFormatReader, Result } from '@zxing/library';
 import { useAppState } from '../context/AppStateContext';
 import { fetchBookData } from '../services/googleBooksAPI';
+import { generateUniqueId } from '../utils/idGenerator';
 import { useDialog } from '../hooks/useDialog';
 import Dialog from './Dialog';
 
@@ -363,7 +364,7 @@ const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose, onSc
               dispatch({
                 type: 'ADD_SCAN_HISTORY',
                 payload: {
-                  id: Date.now(),
+                  id: generateUniqueId(),
                   isbn: scannedCode,
                   titulo: titulo,
                   autor: autor,
