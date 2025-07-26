@@ -275,6 +275,76 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
     );
   };
 
+  const handleBulkFieldChange = (field: keyof Libro, value: any) => {
+    if (selectedBooks.size === 0) return;
+
+    const bookTitles = Array.from(selectedBooks)
+      .map(id => state.libros.find(book => book.id === id)?.titulo)
+      .filter(Boolean)
+      .slice(0, 3)
+      .join(', ');
+
+    const moreBooks = selectedBooks.size > 3 ? ` y ${selectedBooks.size - 3} más` : '';
+
+    const fieldLabels: Record<string, string> = {
+      genero: 'género',
+      idioma: 'idioma',
+      editorial: 'editorial',
+      formato: 'formato',
+      autor: 'autor'
+    };
+
+    const fieldLabel = fieldLabels[field] || field;
+
+    showConfirm(
+      `Cambiar ${fieldLabel} de libros`,
+      `¿Estás seguro de que quieres cambiar el ${fieldLabel} de "${bookTitles}${moreBooks}" a "${value}"?`,
+      () => {
+        selectedBooks.forEach(bookId => {
+          dispatch({ 
+            type: 'UPDATE_BOOK', 
+            payload: { id: bookId, updates: { [field]: value } } 
+          });
+        });
+        setSelectedBooks(new Set());
+        setIsBulkEditMode(false);
+      },
+      undefined,
+      'Cambiar',
+      'Cancelar'
+    );
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedBooks.size === 0) return;
+
+    const bookTitles = Array.from(selectedBooks)
+      .map(id => state.libros.find(book => book.id === id)?.titulo)
+      .filter(Boolean)
+      .slice(0, 3)
+      .join(', ');
+
+    const moreBooks = selectedBooks.size > 3 ? ` y ${selectedBooks.size - 3} más` : '';
+
+    showConfirm(
+      'Eliminar libros',
+      `¿Estás seguro de que quieres eliminar "${bookTitles}${moreBooks}"? Esta acción no se puede deshacer.`,
+      () => {
+        selectedBooks.forEach(bookId => {
+          dispatch({ 
+            type: 'DELETE_BOOK', 
+            payload: bookId 
+          });
+        });
+        setSelectedBooks(new Set());
+        setIsBulkEditMode(false);
+      },
+      undefined,
+      'Eliminar',
+      'Cancelar'
+    );
+  };
+
   const getFilterCount = (estado: FilterState) => {
     if (estado === 'todos') return state.libros.length;
     return state.libros.filter(libro => libro.estado === estado).length;
@@ -413,20 +483,86 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
             </div>
 
             {selectedBooks.size > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-600 dark:text-slate-400">Cambiar estado a:</span>
-                <select
-                  onChange={(e) => handleBulkStateChange(e.target.value as Libro['estado'])}
-                  className="text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                  defaultValue=""
+              <div className="space-y-3">
+                {/* Primera fila: Estado y Formato */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-slate-500" />
+                    <span className="text-sm text-slate-600 dark:text-slate-400">Estado:</span>
+                    <select
+                      onChange={(e) => handleBulkStateChange(e.target.value as Libro['estado'])}
+                      className="text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Seleccionar estado</option>
+                      <option value="tbr">TBR</option>
+                      <option value="leyendo">Leyendo</option>
+                      <option value="leido">Leído</option>
+                      <option value="abandonado">Abandonado</option>
+                      <option value="wishlist">Wishlist</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Hash className="h-4 w-4 text-slate-500" />
+                    <span className="text-sm text-slate-600 dark:text-slate-400">Formato:</span>
+                    <select
+                      onChange={(e) => handleBulkFieldChange('formato', e.target.value)}
+                      className="text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Seleccionar formato</option>
+                      <option value="">Sin formato</option>
+                      <option value="fisico">Físico</option>
+                      <option value="digital">Digital</option>
+                      <option value="audiolibro">Audiolibro</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Segunda fila: Género e Idioma */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Building className="h-4 w-4 text-slate-500" />
+                    <span className="text-sm text-slate-600 dark:text-slate-400">Género:</span>
+                    <select
+                      onChange={(e) => handleBulkFieldChange('genero', e.target.value)}
+                      className="text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Seleccionar género</option>
+                      <option value="">Sin género</option>
+                      {filterOptions.generos.map(genero => (
+                        <option key={genero} value={genero}>{genero}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-slate-500" />
+                    <span className="text-sm text-slate-600 dark:text-slate-400">Idioma:</span>
+                    <select
+                      onChange={(e) => handleBulkFieldChange('idioma', e.target.value)}
+                      className="text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Seleccionar idioma</option>
+                      <option value="">Sin idioma</option>
+                      {filterOptions.idiomas.map(idioma => (
+                        <option key={idioma} value={idioma}>{idioma}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                                  {/* Botón eliminar */}
+                <button
+                  onClick={handleBulkDelete}
+                  className="text-xs px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors flex items-center gap-1"
                 >
-                  <option value="" disabled>Seleccionar estado</option>
-                  <option value="tbr">TBR</option>
-                  <option value="leyendo">Leyendo</option>
-                  <option value="leido">Leído</option>
-                  <option value="abandonado">Abandonado</option>
-                  <option value="wishlist">Wishlist</option>
-                </select>
+                  <BookX className="h-3 w-3" />
+                  Eliminar
+                </button>
+                </div>
               </div>
             )}
           </div>
