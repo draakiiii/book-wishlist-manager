@@ -23,7 +23,8 @@ import {
   Building,
   Edit3,
   CheckSquare,
-  Square
+  Square,
+  Trash2
 } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 import { Libro } from '../types';
@@ -57,7 +58,6 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
   // Edición masiva
   const [isBulkEditMode, setIsBulkEditMode] = useState(false);
   const [selectedBooks, setSelectedBooks] = useState<Set<number>>(new Set());
-  const [showBulkEditModal, setShowBulkEditModal] = useState(false);
   
   // Filtros avanzados
   const [autorFilter, setAutorFilter] = useState('');
@@ -275,6 +275,33 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
     );
   };
 
+  const handleBulkDelete = () => {
+    if (selectedBooks.size === 0) return;
+
+    const bookTitles = Array.from(selectedBooks)
+      .map(id => state.libros.find(book => book.id === id)?.titulo)
+      .filter(Boolean)
+      .slice(0, 3)
+      .join(', ');
+
+    const moreBooks = selectedBooks.size > 3 ? ` y ${selectedBooks.size - 3} más` : '';
+
+    showConfirm(
+      'Eliminar libros',
+      `¿Estás seguro de que quieres eliminar "${bookTitles}${moreBooks}" de tu biblioteca?\n\nEsta acción no se puede deshacer.`,
+      () => {
+        selectedBooks.forEach(bookId => {
+          dispatch({ type: 'DELETE_BOOK', payload: bookId });
+        });
+        setSelectedBooks(new Set());
+        setIsBulkEditMode(false);
+      },
+      undefined,
+      'Eliminar',
+      'Cancelar'
+    );
+  };
+
   const getFilterCount = (estado: FilterState) => {
     if (estado === 'todos') return state.libros.length;
     return state.libros.filter(libro => libro.estado === estado).length;
@@ -427,6 +454,14 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
                   <option value="abandonado">Abandonado</option>
                   <option value="wishlist">Wishlist</option>
                 </select>
+                
+                <button
+                  onClick={handleBulkDelete}
+                  className="text-xs px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors flex items-center gap-1"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  Eliminar
+                </button>
               </div>
             )}
           </div>
