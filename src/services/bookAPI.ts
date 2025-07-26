@@ -182,6 +182,119 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
   }
 };
 
+// Function to get covers from Google Books API specifically
+const getGoogleBooksCovers = async (isbn: string): Promise<{
+  smallThumbnail?: string;
+  thumbnail?: string;
+  largeThumbnail?: string;
+}> => {
+  try {
+    console.log('🔍 Getting covers from Google Books API for ISBN:', isbn);
+    
+    // Clean the ISBN
+    const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
+    
+    // Try multiple ISBN formats
+    const searchQueries = [
+      cleanIsbn,
+      cleanIsbn.replace(/^978/, ''),
+      `978${cleanIsbn}`
+    ];
+
+    for (const query of searchQueries) {
+      try {
+        const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${query}&maxResults=1`;
+        const response = await fetch(url);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.items && data.items.length > 0) {
+            const book = data.items[0];
+            const imageLinks = book.volumeInfo?.imageLinks;
+            
+            if (imageLinks) {
+              console.log('✅ Found Google Books covers for ISBN:', query);
+              return {
+                smallThumbnail: imageLinks.smallThumbnail,
+                thumbnail: imageLinks.thumbnail,
+                largeThumbnail: imageLinks.thumbnail?.replace('zoom=1', 'zoom=0') // Optimize for large view
+              };
+            }
+          }
+        }
+      } catch (error) {
+        console.warn(`Error searching Google Books with ISBN ${query}:`, error);
+        continue;
+      }
+    }
+    
+    console.log('❌ No Google Books covers found for ISBN:', isbn);
+    return {};
+    
+  } catch (error) {
+    console.error('Error getting Google Books covers:', error);
+    return {};
+  }
+};
+
+// Function to get covers from Open Library API specifically
+const getOpenLibraryCovers = async (isbn: string): Promise<{
+  smallThumbnail?: string;
+  thumbnail?: string;
+  largeThumbnail?: string;
+}> => {
+  try {
+    console.log('🔍 Getting covers from Open Library API for ISBN:', isbn);
+    
+    // Clean the ISBN
+    const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
+    
+    // Try /api/books endpoint first
+    const apiBooksUrl = `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`;
+    const apiBooksResponse = await fetch(apiBooksUrl);
+    
+    if (apiBooksResponse.ok) {
+      const apiBooksData = await apiBooksResponse.json();
+      const bookKey = `ISBN:${cleanIsbn}`;
+      
+      if (apiBooksData[bookKey] && apiBooksData[bookKey].cover) {
+        console.log('✅ Found Open Library covers via /api/books for ISBN:', cleanIsbn);
+        return {
+          smallThumbnail: apiBooksData[bookKey].cover.small,
+          thumbnail: apiBooksData[bookKey].cover.medium,
+          largeThumbnail: apiBooksData[bookKey].cover.large
+        };
+      }
+    }
+    
+    // Try /isbn endpoint as fallback
+    const isbnUrl = `https://openlibrary.org/isbn/${cleanIsbn}.json`;
+    const isbnResponse = await fetch(isbnUrl);
+    
+    if (isbnResponse.ok) {
+      const isbnData = await isbnResponse.json();
+      
+      if (isbnData.covers && isbnData.covers.length > 0) {
+        const coverId = isbnData.covers[0];
+        console.log('✅ Found Open Library covers via /isbn for ISBN:', cleanIsbn);
+        return {
+          smallThumbnail: `https://covers.openlibrary.org/b/id/${coverId}-S.jpg`,
+          thumbnail: `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`,
+          largeThumbnail: `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
+        };
+      }
+    }
+    
+    console.log('❌ No Open Library covers found for ISBN:', isbn);
+    return {};
+    
+  } catch (error) {
+    console.error('Error getting Open Library covers:', error);
+    return {};
+  }
+};
+
 // Function to get book covers with fallback
 export const getBookCovers = async (isbn: string): Promise<{
   smallThumbnail?: string;
@@ -195,39 +308,31 @@ export const getBookCovers = async (isbn: string): Promise<{
   
   try {
     // Try primary API first
-    let bookData: BookData | null = null;
+    let covers = {};
     
     if (primaryProvider === 'google') {
-      bookData = await googleBooksAPI.fetchBookData(isbn);
+      covers = await getGoogleBooksCovers(isbn);
     } else {
-      bookData = await openLibraryAPI.fetchBookData(isbn);
+      covers = await getOpenLibraryCovers(isbn);
     }
     
-    if (bookData && (bookData.smallThumbnail || bookData.thumbnail || bookData.largeThumbnail)) {
+    if (covers.smallThumbnail || covers.thumbnail || covers.largeThumbnail) {
       console.log(`✅ Found covers with ${primaryProvider} API`);
-      return {
-        smallThumbnail: bookData.smallThumbnail,
-        thumbnail: bookData.thumbnail,
-        largeThumbnail: bookData.largeThumbnail
-      };
+      return covers;
     }
     
     // If no covers found, try fallback API
     console.log(`No covers found with ${primaryProvider}, trying ${fallbackProvider}`);
     
     if (fallbackProvider === 'google') {
-      bookData = await googleBooksAPI.fetchBookData(isbn);
+      covers = await getGoogleBooksCovers(isbn);
     } else {
-      bookData = await openLibraryAPI.fetchBookData(isbn);
+      covers = await getOpenLibraryCovers(isbn);
     }
     
-    if (bookData && (bookData.smallThumbnail || bookData.thumbnail || bookData.largeThumbnail)) {
+    if (covers.smallThumbnail || covers.thumbnail || covers.largeThumbnail) {
       console.log(`✅ Found covers with ${fallbackProvider} API`);
-      return {
-        smallThumbnail: bookData.smallThumbnail,
-        thumbnail: bookData.thumbnail,
-        largeThumbnail: bookData.largeThumbnail
-      };
+      return covers;
     }
     
     console.log('❌ No covers found with either API');
