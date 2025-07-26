@@ -36,54 +36,98 @@ const BookCover: React.FC<BookCoverProps> = ({
       smallThumbnail: !!book.smallThumbnail
     });
     
-    // Always prioritize custom user image if available
-    if (book.customImage) {
+    // Always prioritize custom user image if available and valid
+    if (book.customImage && isValidImageUrl(book.customImage)) {
       console.log('✅ Using custom image for:', book.titulo);
       return book.customImage;
     }
     
-    // Fall back to API images based on context
-    const apiImage = (context === 'detail' || context === 'gallery' || size === 'large') 
+    // Fall back to API images based on context, but validate them
+    const preferredImage = (context === 'detail' || context === 'gallery' || size === 'large') 
       ? book.thumbnail || book.smallThumbnail 
       : book.smallThumbnail || book.thumbnail;
     
-    console.log('📚 Using API image for:', book.titulo, apiImage ? 'Yes' : 'No');
-    return apiImage;
+    if (preferredImage && isValidImageUrl(preferredImage)) {
+      console.log('📚 Using API image for:', book.titulo, 'Yes (valid)');
+      return preferredImage;
+    }
+    
+    // Try the other image if the preferred one is invalid
+    const fallbackImage = (context === 'detail' || context === 'gallery' || size === 'large') 
+      ? book.smallThumbnail || book.thumbnail 
+      : book.thumbnail || book.smallThumbnail;
+    
+    if (fallbackImage && isValidImageUrl(fallbackImage)) {
+      console.log('📚 Using fallback API image for:', book.titulo, 'Yes (valid)');
+      return fallbackImage;
+    }
+    
+    console.log('❌ No valid image URL found for:', book.titulo);
+    return undefined;
   };
 
   const imageUrl = getImageUrl();
 
   // Optimize Google Books image URLs for better quality
   const optimizeImageUrl = (url: string | undefined): string | undefined => {
-    if (!url) return url;
+    if (!url) {
+      console.log('⚠️ optimizeImageUrl called with empty URL');
+      return url;
+    }
     
     // Check if it's a Google Books URL
     if (url.includes('books.google.com') || url.includes('books.googleusercontent.com')) {
       console.log('🔧 Optimizing Google Books URL:', url);
       
-      // For large view, we want maximum quality
-      // Replace zoom=1 with zoom=0 (larger), zoom=5 with zoom=2 (larger)
-      // Remove edge=curl which can reduce quality
-      // Add maxwidth and maxheight for better scaling
-      let optimizedUrl = url
-        .replace(/zoom=5/g, 'zoom=1')  // Change small thumbnail zoom to larger
-        .replace(/zoom=1/g, 'zoom=0')  // Change thumbnail zoom to maximum
-        .replace(/&edge=curl/g, '')    // Remove curl effect
-        .replace(/edge=curl&/g, '');   // Remove curl effect at start
-      
-      // Add quality parameters if not present
-      if (!optimizedUrl.includes('maxwidth')) {
-        optimizedUrl += '&maxwidth=800';
+      try {
+        // For large view, we want maximum quality
+        // Replace zoom=1 with zoom=0 (larger), zoom=5 with zoom=2 (larger)
+        // Remove edge=curl which can reduce quality
+        // Add maxwidth and maxheight for better scaling
+        let optimizedUrl = url
+          .replace(/zoom=5/g, 'zoom=1')  // Change small thumbnail zoom to larger
+          .replace(/zoom=1/g, 'zoom=0')  // Change thumbnail zoom to maximum
+          .replace(/&edge=curl/g, '')    // Remove curl effect
+          .replace(/edge=curl&/g, '');   // Remove curl effect at start
+        
+        // Add quality parameters if not present
+        if (!optimizedUrl.includes('maxwidth')) {
+          optimizedUrl += '&maxwidth=800';
+        }
+        if (!optimizedUrl.includes('maxheight')) {
+          optimizedUrl += '&maxheight=1200';
+        }
+        
+        console.log('✅ Optimized URL:', optimizedUrl);
+        return optimizedUrl;
+      } catch (error) {
+        console.error('❌ Error optimizing URL:', error);
+        return url; // Return original URL if optimization fails
       }
-      if (!optimizedUrl.includes('maxheight')) {
-        optimizedUrl += '&maxheight=1200';
-      }
-      
-      console.log('✅ Optimized URL:', optimizedUrl);
-      return optimizedUrl;
     }
     
+    console.log('📎 Non-Google Books URL, returning as-is:', url);
     return url;
+  };
+
+  // Validate if a URL is a valid image URL
+  const isValidImageUrl = (url: string | undefined): boolean => {
+    if (!url || url.trim() === '') return false;
+    
+    // Check for data URLs (base64 images)
+    if (url.startsWith('data:image/')) return true;
+    
+    // Check for HTTP/HTTPS URLs
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        new URL(url); // Validate URL format
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    
+    return false;
   };
 
   // Get the best quality image available for the large view modal
@@ -91,26 +135,29 @@ const BookCover: React.FC<BookCoverProps> = ({
     // Priority order for large view: customImage > thumbnail > smallThumbnail
     console.log('🔍 Selecting best quality image for:', book.titulo);
     console.log('📊 Available images:', {
-      customImage: book.customImage ? 'Yes' : 'No',
-      thumbnail: book.thumbnail || 'Not available',
-      smallThumbnail: book.smallThumbnail || 'Not available'
+      customImage: book.customImage ? 'Yes (valid)' : 'No',
+      thumbnail: book.thumbnail ? `Yes (${isValidImageUrl(book.thumbnail) ? 'valid' : 'invalid'})` : 'Not available',
+      smallThumbnail: book.smallThumbnail ? `Yes (${isValidImageUrl(book.smallThumbnail) ? 'valid' : 'invalid'})` : 'Not available'
     });
     
-    if (book.customImage) {
+    if (book.customImage && isValidImageUrl(book.customImage)) {
       console.log('✅ Selected: Custom image');
       return book.customImage;
     }
-    if (book.thumbnail) {
+    if (book.thumbnail && isValidImageUrl(book.thumbnail)) {
       console.log('✅ Selected: High resolution thumbnail');
-      return optimizeImageUrl(book.thumbnail);
+      const optimized = optimizeImageUrl(book.thumbnail);
+      return optimized;
     }
-    if (book.smallThumbnail) {
+    if (book.smallThumbnail && isValidImageUrl(book.smallThumbnail)) {
       console.log('⚠️ Selected: Small thumbnail (fallback) - optimizing...');
-      return optimizeImageUrl(book.smallThumbnail);
+      const optimized = optimizeImageUrl(book.smallThumbnail);
+      return optimized;
     }
-    // Fallback to the current imageUrl (shouldn't happen if we have any image)
-    console.log('❌ Selected: General fallback imageUrl');
-    return optimizeImageUrl(imageUrl);
+    
+    // If we reach here, there's no valid image available
+    console.log('❌ No valid image available for large view');
+    return null;
   };
 
   // Size configurations
@@ -246,6 +293,8 @@ const BookCover: React.FC<BookCoverProps> = ({
   const LargeImageModal = () => {
     if (!showLargeView) return null;
 
+    const bestQualityImage = getBestQualityImage();
+
     const modalContent = (
       <div
         className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
@@ -267,8 +316,21 @@ const BookCover: React.FC<BookCoverProps> = ({
           
           {/* Image container - centered and clean */}
           <div className="relative bg-slate-50 dark:bg-slate-900 flex items-center justify-center min-h-[400px]">
+            {/* No image available state */}
+            {!bestQualityImage && (
+              <div className="flex items-center justify-center p-8">
+                <div className="text-center">
+                  <BookOpen className="h-16 w-16 mx-auto text-slate-400 mb-4" />
+                  <p className="text-slate-600 dark:text-slate-400 text-lg font-medium mb-2">Imagen no disponible</p>
+                  <p className="text-slate-500 dark:text-slate-500 text-sm">
+                    Esta portada no está disponible en alta resolución
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Loading state for large image */}
-            {largeImageLoading && !largeImageError && (
+            {bestQualityImage && largeImageLoading && !largeImageError && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
@@ -278,30 +340,35 @@ const BookCover: React.FC<BookCoverProps> = ({
             )}
             
             {/* Error state for large image */}
-            {largeImageError && (
+            {bestQualityImage && largeImageError && (
               <div className="flex items-center justify-center p-8">
                 <div className="text-center">
                   <BookOpen className="h-16 w-16 mx-auto text-slate-400 mb-4" />
-                  <p className="text-slate-600 dark:text-slate-400">Error al cargar la imagen</p>
+                  <p className="text-slate-600 dark:text-slate-400 text-lg font-medium mb-2">Error al cargar la imagen</p>
+                  <p className="text-slate-500 dark:text-slate-500 text-sm">
+                    No se pudo cargar la imagen en alta resolución
+                  </p>
                 </div>
               </div>
             )}
 
             {/* Large image - clean and centered */}
-            <img
-              src={getBestQualityImage()}
-              alt={`Portada de ${book.titulo}`}
-              className={`max-w-full max-h-[90vh] object-contain rounded-lg ${largeImageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
-              style={{ maxWidth: '100%', maxHeight: '90vh' }}
-              onLoad={() => {
-                setLargeImageLoading(false);
-                setLargeImageError(false);
-              }}
-              onError={() => {
-                setLargeImageLoading(false);
-                setLargeImageError(true);
-              }}
-            />
+            {bestQualityImage && (
+              <img
+                src={bestQualityImage}
+                alt={`Portada de ${book.titulo}`}
+                className={`max-w-full max-h-[90vh] object-contain rounded-lg ${largeImageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+                style={{ maxWidth: '100%', maxHeight: '90vh' }}
+                onLoad={() => {
+                  setLargeImageLoading(false);
+                  setLargeImageError(false);
+                }}
+                onError={() => {
+                  setLargeImageLoading(false);
+                  setLargeImageError(true);
+                }}
+              />
+            )}
           </div>
           
           {/* Minimal book info - only title, small and subtle */}
@@ -339,6 +406,9 @@ const BookCover: React.FC<BookCoverProps> = ({
   const ContextMenu = ({ hasImage }: { hasImage: boolean }) => {
     if (!showMenu || size === 'small') return null;
 
+    // Check if we actually have an image available for large view
+    const hasLargeViewImage = getBestQualityImage() !== null;
+
     return (
       <>
         {/* Backdrop */}
@@ -360,7 +430,7 @@ const BookCover: React.FC<BookCoverProps> = ({
             animation: 'menuAppear 0.2s ease-out forwards'
           }}
         >
-          {hasImage && (
+          {hasLargeViewImage && (
             <button
               onClick={handleViewLarge}
               className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md transition-colors"
