@@ -469,9 +469,14 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
   };
 
   const updateBook = (id: number, updates: Partial<ScannedBook>) => {
-    setScannedBooks(prev => prev.map(book => 
-      book.id === id ? { ...book, ...updates } : book
-    ));
+    setScannedBooks(prev => {
+      const newBooks = prev.map(book => 
+        book.id === id ? { ...book, ...updates } : book
+      );
+      // Update ref for real-time duplicate detection
+      scannedBooksRef.current = newBooks;
+      return newBooks;
+    });
   };
 
   const removeBook = (id: number) => {
