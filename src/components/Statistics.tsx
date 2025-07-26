@@ -50,13 +50,13 @@ const Statistics: React.FC = () => {
       ? librosConCalificacion.reduce((sum, book) => sum + (book.calificacion || 0), 0) / librosConCalificacion.length
       : 0;
     
-    // Calculate total collection value
+    // Calculate total collection value (excluyendo wishlist)
     const valorTotalColeccion = state.libros
-      .filter(book => book.precio && book.precio > 0)
+      .filter(book => book.estado !== 'wishlist' && book.precio && book.precio > 0)
       .reduce((sum, book) => sum + (book.precio || 0), 0);
     
-    // Calculate average book price
-    const librosConPrecio = state.libros.filter(book => book.precio && book.precio > 0);
+    // Calculate average book price (excluyendo wishlist)
+    const librosConPrecio = state.libros.filter(book => book.estado !== 'wishlist' && book.precio && book.precio > 0);
     const precioPromedio = librosConPrecio.length > 0 
       ? librosConPrecio.reduce((sum, book) => sum + (book.precio || 0), 0) / librosConPrecio.length
       : 0;
