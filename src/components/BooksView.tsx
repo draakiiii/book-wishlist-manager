@@ -59,7 +59,6 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
   // Edición masiva
   const [isBulkEditMode, setIsBulkEditMode] = useState(false);
   const [selectedBooks, setSelectedBooks] = useState<Set<number>>(new Set());
-  const [showBulkEditModal, setShowBulkEditModal] = useState(false);
   
   // Filtros avanzados
   const [autorFilter, setAutorFilter] = useState('');
@@ -79,9 +78,9 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
   const filterOptions = useMemo(() => {
     const autores = [...new Set(state.libros.map(l => l.autor).filter(Boolean))].sort();
     const sagas = [...new Set(state.libros.map(l => l.sagaName).filter(Boolean))].sort();
-    const generos = getAllGenres([...new Set(state.libros.map(l => l.genero).filter(Boolean))]);
+    const generos = getAllGenres([...new Set(state.libros.map(l => l.genero).filter(Boolean))] as string[]);
     const editoriales = [...new Set(state.libros.map(l => l.editorial).filter(Boolean))].sort();
-    const idiomas = getAllLanguages([...new Set(state.libros.map(l => l.idioma).filter(Boolean))]);
+    const idiomas = getAllLanguages([...new Set(state.libros.map(l => l.idioma).filter(Boolean))] as string[]);
     const formatos = [...new Set(state.libros.map(l => l.formato).filter(Boolean))].sort();
     
     return { autores, sagas, generos, editoriales, idiomas, formatos };
