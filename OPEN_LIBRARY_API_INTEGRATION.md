@@ -167,13 +167,23 @@ interface BookData {
 - **Request Timeout**: 10 seconds
 - **Max Results**: 10 per search
 
-### User Configuration
-Users can change the API provider in the settings:
+### Multi-API Configuration
+Users can configure different APIs for different purposes:
 1. Go to Settings (Configuración)
 2. Find "Configuración de API" section
-3. Select preferred API provider:
-   - **Open Library (Recomendado)**: Free, no API key required
-   - **Google Books**: May require authentication
+3. Configure each API provider:
+
+#### API para escaneo de ISBN
+- **Open Library (Recomendado)**: Free, no API key required, good for ISBN lookup
+- **Google Books**: May require authentication
+
+#### API para búsqueda por texto
+- **Google Books (Recomendado)**: Better search results and relevance
+- **Open Library**: Free alternative
+
+#### API para portadas de libros
+- **Google Books (Recomendado)**: High-quality covers, automatic fallback to Open Library
+- **Open Library**: Free alternative with fallback to Google Books
 
 ## Benefits of Open Library API
 
@@ -221,9 +231,11 @@ The integration has been tested with:
 - ✅ Cover image generation (S, M, L sizes)
 - ✅ Error handling and fallbacks
 - ✅ Caching system
-- ✅ Configuration switching
+- ✅ Multi-API configuration system
+- ✅ Cover fallback system (Google Books → Open Library)
 - ✅ Real-world ISBN example (9788466657662 - "El camino de los reyes")
 - ✅ Title search with cover_i support (Harry Potter example)
+- ✅ Multi-API configuration test (scan: Open Library, search: Google Books, covers: Google Books with fallback)
 
 ## Optimized Cover Usage
 
@@ -235,15 +247,26 @@ The implementation uses different cover sizes based on context:
 - **Large (L)**: Used in large view modals and high-quality displays
 
 ### Cover Sources Priority
-1. **Direct URLs** from `/api/books` endpoint (best quality)
-2. **Generated URLs** using cover IDs from `/isbn/{isbn}` endpoint
-3. **Generated URLs** using cover_i from search results
-4. **ISBN-based URLs** as fallback
+1. **Primary API** (configurable: Google Books or Open Library)
+2. **Fallback API** (automatic switch if primary fails)
+3. **Direct URLs** from `/api/books` endpoint (Open Library)
+4. **Generated URLs** using cover IDs from `/isbn/{isbn}` endpoint
+5. **Generated URLs** using cover_i from search results
+6. **ISBN-based URLs** as final fallback
 
 ### Component Integration
 - `BookTitleAutocomplete`: Uses small thumbnails for performance
 - `BookCover`: Automatically selects appropriate size based on context
 - All components respect the user's custom uploaded images
+
+### Cover Fallback System
+The system automatically tries multiple sources for book covers:
+1. **Primary API** (user-configurable)
+2. **Fallback API** (automatic switch)
+3. **Multiple URL formats** for each API
+4. **ISBN-based generation** as final option
+
+This ensures maximum coverage of book covers across different APIs and formats.
 
 ## Future Enhancements
 

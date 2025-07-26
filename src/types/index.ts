@@ -186,6 +186,9 @@ export interface Configuracion {
   
   // Configuración de API
   bookApiProvider?: 'google' | 'openlibrary';
+  scanApiProvider?: 'google' | 'openlibrary';
+  searchApiProvider?: 'google' | 'openlibrary';
+  coverApiProvider?: 'google' | 'openlibrary';
 }
 
 export interface AppState {

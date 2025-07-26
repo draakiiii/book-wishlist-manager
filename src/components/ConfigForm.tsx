@@ -342,36 +342,70 @@ const ConfigForm: React.FC = () => {
           </div>
         </div>
 
-        {/* API Configuration */}
-        <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center space-x-2 mb-4">
-            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-              <Globe className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  {/* API Configuration */}
+          <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                <Globe className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
+              <h3 className="text-sm font-medium text-slate-900 dark:text-white">
+                Configuración de API
+              </h3>
             </div>
-            <h3 className="text-sm font-medium text-slate-900 dark:text-white">
-              Configuración de API
-            </h3>
-          </div>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Proveedor de API para búsqueda de libros
-              </label>
-              <select
-                value={config.bookApiProvider || 'openlibrary'}
-                onChange={(e) => handleStringChange('bookApiProvider', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              >
-                <option value="openlibrary">Open Library (Recomendado)</option>
-                <option value="google">Google Books</option>
-              </select>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                Open Library es gratuito y no requiere API key. Google Books puede requerir autenticación.
-              </p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  API para escaneo de ISBN
+                </label>
+                <select
+                  value={config.scanApiProvider || 'openlibrary'}
+                  onChange={(e) => handleStringChange('scanApiProvider', e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  <option value="openlibrary">Open Library (Recomendado)</option>
+                  <option value="google">Google Books</option>
+                </select>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                  API utilizada para escanear códigos de barras ISBN.
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  API para búsqueda por texto
+                </label>
+                <select
+                  value={config.searchApiProvider || 'google'}
+                  onChange={(e) => handleStringChange('searchApiProvider', e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  <option value="google">Google Books (Recomendado)</option>
+                  <option value="openlibrary">Open Library</option>
+                </select>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                  API utilizada para buscar libros por título, autor, etc.
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  API para portadas de libros
+                </label>
+                <select
+                  value={config.coverApiProvider || 'google'}
+                  onChange={(e) => handleStringChange('coverApiProvider', e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  <option value="google">Google Books (Recomendado)</option>
+                  <option value="openlibrary">Open Library</option>
+                </select>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                  API principal para obtener portadas. Si no encuentra, usará la otra API como respaldo.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
         {/* Sistema de Puntos */}
         <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
