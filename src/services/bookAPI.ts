@@ -68,26 +68,43 @@ const getCoverApiProvider = (): 'google' | 'openlibrary' => {
 export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
   const provider = getScanApiProvider();
   console.log(`Using ${provider} API for ISBN scanning:`, isbn);
-  
+
+  let bookData: BookData | null = null;
   try {
     if (provider === 'google') {
-      return await googleBooksAPI.fetchBookData(isbn);
+      bookData = await googleBooksAPI.fetchBookData(isbn);
     } else {
-      return await openLibraryAPI.fetchBookData(isbn);
+      bookData = await openLibraryAPI.fetchBookData(isbn);
     }
+    if (!bookData) return null;
+
+    // Obtener portadas según preferencia del usuario
+    const covers = await getBookCovers(isbn);
+    return {
+      ...bookData,
+      smallThumbnail: covers.smallThumbnail || bookData.smallThumbnail,
+      thumbnail: covers.thumbnail || bookData.thumbnail,
+      largeThumbnail: covers.largeThumbnail || bookData.largeThumbnail,
+    };
   } catch (error) {
     console.error(`Error with ${provider} API:`, error);
-    
     // Fallback to the other API if the primary one fails
     const fallbackProvider = provider === 'google' ? 'openlibrary' : 'google';
     console.log(`Falling back to ${fallbackProvider} API`);
-    
     try {
       if (fallbackProvider === 'google') {
-        return await googleBooksAPI.fetchBookData(isbn);
+        bookData = await googleBooksAPI.fetchBookData(isbn);
       } else {
-        return await openLibraryAPI.fetchBookData(isbn);
+        bookData = await openLibraryAPI.fetchBookData(isbn);
       }
+      if (!bookData) return null;
+      const covers = await getBookCovers(isbn);
+      return {
+        ...bookData,
+        smallThumbnail: covers.smallThumbnail || bookData.smallThumbnail,
+        thumbnail: covers.thumbnail || bookData.thumbnail,
+        largeThumbnail: covers.largeThumbnail || bookData.largeThumbnail,
+      };
     } catch (fallbackError) {
       console.error(`Fallback ${fallbackProvider} API also failed:`, fallbackError);
       throw new Error(`Error al buscar información del libro en ${provider} y ${fallbackProvider}`);
