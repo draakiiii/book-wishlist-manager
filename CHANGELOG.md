@@ -2,6 +2,54 @@
 
 Todos los cambios notables en este proyecto serán documentados en este archivo.
 
+## [7.1.0] - 2024-12-19
+
+### ✨ Nuevas Características
+
+#### 🔍 Búsqueda de Google Images Integrada
+- **Búsqueda de imágenes de Google** directamente desde la app
+- **Modal de búsqueda avanzado** con pestañas para Google y subida local
+- **Búsqueda específica de portadas** con título y autor del libro
+- **Interfaz moderna** con grid de resultados y previews
+- **Compresión automática** de imágenes seleccionadas
+- **Validación de archivos** con límites de tamaño y formato
+- **Configuración flexible** mediante variables de entorno
+- **Manejo de errores** robusto con mensajes informativos
+
+#### 📁 Gestión de Imágenes Mejorada
+- **Dos opciones de modificación**: Google Images o subida local
+- **Compresión inteligente** de imágenes a 800px máximo
+- **Validación de formatos** (JPG, PNG, GIF)
+- **Límite de tamaño** de 5MB por archivo
+- **Optimización automática** de calidad (80%)
+- **Previsualización** de imágenes antes de aplicar
+- **Gestión de errores** con feedback visual
+
+### 🔧 Mejoras Técnicas
+
+#### Nuevos Servicios
+- **GoogleImagesAPI**: Servicio para búsqueda de imágenes de Google
+- **Integración con Google Custom Search API**
+- **Manejo de credenciales** mediante variables de entorno
+- **Validación de configuración** de API
+
+#### Nuevos Componentes
+- **GoogleImagesSearchModal**: Modal completo para búsqueda y subida
+- **Integración en BookCover**: Menú contextual mejorado
+- **Interfaz responsive** con animaciones suaves
+- **Gestión de estados** de carga y error
+
+### 📚 Documentación
+- **Guía completa de configuración** de Google Custom Search API
+- **Instrucciones paso a paso** para setup de credenciales
+- **Solución de problemas** comunes
+- **Limitaciones y costos** de la API
+
+### 🐛 Correcciones de Bugs
+- **Mejora en manejo de errores** de carga de imágenes
+- **Optimización de compresión** de imágenes
+- **Corrección de memoria** en componentes de imagen
+
 ## [7.0.0] - 2024-07-22
 
 ### ✨ Nuevas Características
