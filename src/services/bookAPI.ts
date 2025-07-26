@@ -80,11 +80,15 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
 
     // Obtener portadas según preferencia del usuario
     const covers = await getBookCovers(isbn);
+    
+    // Crear una copia de bookData sin las portadas originales
+    const { smallThumbnail, thumbnail, largeThumbnail, ...bookDataWithoutCovers } = bookData;
+    
     return {
-      ...bookData,
-      smallThumbnail: covers.smallThumbnail || bookData.smallThumbnail,
-      thumbnail: covers.thumbnail || bookData.thumbnail,
-      largeThumbnail: covers.largeThumbnail || bookData.largeThumbnail,
+      ...bookDataWithoutCovers,
+      smallThumbnail: covers.smallThumbnail,
+      thumbnail: covers.thumbnail,
+      largeThumbnail: covers.largeThumbnail,
     };
   } catch (error) {
     console.error(`Error with ${provider} API:`, error);
@@ -99,11 +103,15 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
       }
       if (!bookData) return null;
       const covers = await getBookCovers(isbn);
+      
+      // Crear una copia de bookData sin las portadas originales
+      const { smallThumbnail, thumbnail, largeThumbnail, ...bookDataWithoutCovers } = bookData;
+      
       return {
-        ...bookData,
-        smallThumbnail: covers.smallThumbnail || bookData.smallThumbnail,
-        thumbnail: covers.thumbnail || bookData.thumbnail,
-        largeThumbnail: covers.largeThumbnail || bookData.largeThumbnail,
+        ...bookDataWithoutCovers,
+        smallThumbnail: covers.smallThumbnail,
+        thumbnail: covers.thumbnail,
+        largeThumbnail: covers.largeThumbnail,
       };
     } catch (fallbackError) {
       console.error(`Fallback ${fallbackProvider} API also failed:`, fallbackError);
