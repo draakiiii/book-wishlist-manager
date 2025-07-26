@@ -51,41 +51,51 @@ All components that previously used Google Books API now use the unified `bookAP
 
 ## Open Library API Endpoints Used
 
-### 1. ISBN Lookup
+### 1. Combined ISBN Lookup (Primary Method)
+```
+GET /api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data
+GET /isbn/{isbn}.json
+```
+- Combines data from both endpoints for comprehensive information
+- `/api/books` provides cover URLs, authors, subjects, and links
+- `/isbn/{isbn}` provides detailed metadata like publishers, page count, etc.
+
+### 2. Direct ISBN Lookup (Fallback)
 ```
 GET /isbn/{isbn}.json
 ```
-- Direct lookup by ISBN
+- Direct lookup by ISBN when combined approach fails
 - Returns detailed book information
 
-### 2. Search API
+### 3. Search API
 ```
 GET /search.json?q={query}&limit={limit}
 ```
 - General book search by title, author, or keywords
 - Supports pagination and result limiting
 
-### 3. Author Search
+### 4. Author Search
 ```
 GET /search.json?author={author}&limit={limit}
 ```
 - Search books by specific author
 - Returns books written by the author
 
-### 4. Subject Search
+### 5. Subject Search
 ```
 GET /subjects/{subject}.json?limit={limit}
 ```
 - Search books by subject/topic
 - Returns books categorized under the subject
 
-### 5. Cover Images
+### 6. Cover Images
 ```
 GET /covers/{key_type}/{value}-{size}.jpg
 ```
 - Cover image URLs for books
 - Supports different sizes (S, M, L)
 - Uses ISBN or cover ID as key
+- Direct URLs available from `/api/books` endpoint
 
 ## Data Mapping
 
@@ -96,18 +106,33 @@ The Open Library API response is mapped to the application's `BookData` interfac
 ```typescript
 interface BookData {
   titulo: string;           // title + subtitle
-  autor?: string;          // authors array joined
-  paginas?: number;        // number_of_pages_median or number_of_pages
+  autor?: string;          // authors array joined (from /api/books)
+  paginas?: number;        // number_of_pages
   isbn?: string;           // isbn_13[0] or isbn_10[0]
-  publicacion?: number;    // first_publish_year or publish_date
-  editorial?: string;      // publishers[0].name or publisher
+  publicacion?: number;    // publish_date
+  editorial?: string;      // publishers[0].name or publishers[0]
   descripcion?: string;    // description.value or description
-  categorias?: string[];   // subjects array
+  categorias?: string[];   // subjects array (from /api/books)
   idioma?: string;         // languages[0].key
-  smallThumbnail?: string; // cover image URL (S size)
-  thumbnail?: string;      // cover image URL (M size)
+  smallThumbnail?: string; // cover.small from /api/books or generated URL
+  thumbnail?: string;      // cover.medium from /api/books or generated URL
 }
 ```
+
+### Data Sources Priority
+
+1. **Primary**: Combined data from `/api/books` + `/isbn/{isbn}`
+   - Cover URLs from `/api/books` endpoint
+   - Authors and subjects from `/api/books` endpoint
+   - Detailed metadata from `/isbn/{isbn}` endpoint
+
+2. **Fallback**: Direct `/isbn/{isbn}` endpoint
+   - Basic book information
+   - Generated cover URLs using cover IDs
+
+3. **Last Resort**: Search API
+   - When direct lookups fail
+   - Limited metadata but functional
 
 ## Features
 
@@ -122,8 +147,9 @@ interface BookData {
 - Manual cache clearing functionality
 
 ### 3. Multiple Search Strategies
-- Direct ISBN lookup first
-- Fallback to search API if direct lookup fails
+- Combined `/api/books` + `/isbn/{isbn}` approach first
+- Direct `/isbn/{isbn}` lookup as fallback
+- Search API as last resort
 - Multiple ISBN format attempts (with/without 978 prefix)
 
 ### 4. Error Handling
@@ -186,14 +212,16 @@ Users can change the API provider in the settings:
 ## Testing
 
 The integration has been tested with:
-- ✅ Direct ISBN lookup
+- ✅ Combined `/api/books` + `/isbn/{isbn}` approach
+- ✅ Direct ISBN lookup fallback
 - ✅ General search functionality
 - ✅ Author search
 - ✅ Subject search
-- ✅ Cover image generation
+- ✅ Cover image generation (direct URLs and generated URLs)
 - ✅ Error handling and fallbacks
 - ✅ Caching system
 - ✅ Configuration switching
+- ✅ Real-world ISBN example (9788466657662 - "El camino de los reyes")
 
 ## Future Enhancements
 

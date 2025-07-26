@@ -67,17 +67,13 @@ const extractBookData = (data: any, isbn?: string): BookData | null => {
     
     // Extraer número de páginas
     let pages: number | undefined;
-    if (data.number_of_pages_median) {
-      pages = data.number_of_pages_median;
-    } else if (data.number_of_pages) {
+    if (data.number_of_pages) {
       pages = data.number_of_pages;
     }
     
     // Extraer año de publicación
     let publicationYear: number | undefined;
-    if (data.first_publish_year) {
-      publicationYear = data.first_publish_year;
-    } else if (data.publish_date) {
+    if (data.publish_date) {
       const year = parseInt(data.publish_date.substring(0, 4));
       if (!isNaN(year)) {
         publicationYear = year;
@@ -85,34 +81,59 @@ const extractBookData = (data: any, isbn?: string): BookData | null => {
     }
     
     // Extraer editorial
-    const publisher = data.publishers?.[0]?.name || data.publisher || '';
+    let publisher = '';
+    if (data.publishers && data.publishers.length > 0) {
+      if (typeof data.publishers[0] === 'string') {
+        publisher = data.publishers[0];
+      } else if (data.publishers[0]?.name) {
+        publisher = data.publishers[0].name;
+      }
+    }
     
     // Extraer descripción
     const description = data.description?.value || data.description || '';
     
     // Extraer categorías/subjectos
-    const categories = data.subjects?.map((subject: any) => subject.name || subject) || [];
+    let categories: string[] = [];
+    if (data.subjects && data.subjects.length > 0) {
+      categories = data.subjects.map((subject: any) => {
+        if (typeof subject === 'string') {
+          return subject;
+        } else if (subject.name) {
+          return subject.name;
+        }
+        return '';
+      }).filter(Boolean);
+    }
     
     // Extraer idioma
     const language = data.languages?.[0]?.key?.replace('languages/', '') || '';
     
     // Extraer ISBN si no se proporcionó
     let bookIsbn = isbn;
-    if (!bookIsbn && data.isbn_13) {
+    if (!bookIsbn && data.isbn_13 && data.isbn_13.length > 0) {
       bookIsbn = data.isbn_13[0];
-    } else if (!bookIsbn && data.isbn_10) {
+    } else if (!bookIsbn && data.isbn_10 && data.isbn_10.length > 0) {
       bookIsbn = data.isbn_10[0];
     }
     
-    // Construir URLs de portadas
+    // Construir URLs de portadas usando el formato correcto
     let smallThumbnail: string | undefined;
     let thumbnail: string | undefined;
-    if (data.cover_i) {
-      smallThumbnail = `${API_CONFIG.baseUrl}/covers/i/${data.cover_i}-S.jpg`;
-      thumbnail = `${API_CONFIG.baseUrl}/covers/i/${data.cover_i}-M.jpg`;
+    
+    // Priorizar cover del endpoint /api/books si está disponible
+    if (data.cover) {
+      smallThumbnail = data.cover.small;
+      thumbnail = data.cover.medium;
+    } else if (data.covers && data.covers.length > 0) {
+      // Usar cover ID si está disponible
+      const coverId = data.covers[0];
+      smallThumbnail = `https://covers.openlibrary.org/b/id/${coverId}-S.jpg`;
+      thumbnail = `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`;
     } else if (bookIsbn) {
-      smallThumbnail = `${API_CONFIG.baseUrl}/covers/isbn/${bookIsbn}-S.jpg`;
-      thumbnail = `${API_CONFIG.baseUrl}/covers/isbn/${bookIsbn}-M.jpg`;
+      // Usar ISBN como fallback
+      smallThumbnail = `https://covers.openlibrary.org/b/isbn/${bookIsbn}-S.jpg`;
+      thumbnail = `https://covers.openlibrary.org/b/isbn/${bookIsbn}-M.jpg`;
     }
     
     return {
@@ -159,7 +180,47 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
 
     for (const query of searchQueries) {
       try {
-        // First try direct ISBN lookup
+        // First try /api/books endpoint for additional info like thumbnail_url
+        const apiBooksUrl = `${API_CONFIG.baseUrl}/api/books?bibkeys=ISBN:${query}&format=json&jscmd=data`;
+        const apiBooksResponse = await fetchWithTimeout(apiBooksUrl);
+        
+        if (apiBooksResponse.ok) {
+          const apiBooksData = await apiBooksResponse.json();
+          const bookKey = `ISBN:${query}`;
+          
+          if (apiBooksData[bookKey]) {
+            const apiBook = apiBooksData[bookKey];
+            
+            // Try to get detailed info from /isbn endpoint
+            const isbnUrl = `${API_CONFIG.baseUrl}/isbn/${query}.json`;
+            const isbnResponse = await fetchWithTimeout(isbnUrl);
+            
+            let detailedData = null;
+            if (isbnResponse.ok) {
+              detailedData = await isbnResponse.json();
+            }
+            
+            // Combine data from both endpoints
+            const combinedData = {
+              ...detailedData,
+              // Usar la información de cover del endpoint /api/books
+              cover: apiBook.cover,
+              // Información adicional del endpoint /api/books
+              authors: apiBook.authors,
+              subjects: apiBook.subjects,
+              links: apiBook.links,
+              url: apiBook.url
+            };
+            
+            bookData = extractBookData(combinedData, query);
+            if (bookData) {
+              console.log('Book found via /api/books + /isbn:', bookData);
+              break;
+            }
+          }
+        }
+        
+        // If /api/books fails, try direct ISBN lookup
         const isbnUrl = `${API_CONFIG.baseUrl}/isbn/${query}.json`;
         const isbnResponse = await fetchWithTimeout(isbnUrl);
         
