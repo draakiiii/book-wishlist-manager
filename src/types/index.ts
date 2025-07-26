@@ -182,6 +182,9 @@ export interface Configuracion {
   mostrarSeccionLeidos?: boolean;
   mostrarSeccionAbandonados?: boolean;
   mostrarSeccionSagas?: boolean;
+  
+  // Configuración de API
+  bookApiProvider?: 'google' | 'openlibrary';
 }
 
 export interface AppState {

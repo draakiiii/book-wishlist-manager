@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Search, BookOpen, Loader2, Star } from 'lucide-react';
-import { searchBooksByTitle } from '../services/googleBooksAPI';
+import { searchBooksByTitle } from '../services/bookAPI';
 import { BookData } from '../types';
 
 interface BookTitleAutocompleteProps {
