@@ -25,6 +25,7 @@ const BookCover: React.FC<BookCoverProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [largeImageLoading, setLargeImageLoading] = useState(true);
   const [largeImageError, setLargeImageError] = useState(false);
+  const [fallbackImageUrl, setFallbackImageUrl] = useState<string | null>(null);
 
   // Choose appropriate image URL based on context and size
   // Priority: customImage > API images based on context
@@ -108,6 +109,59 @@ const BookCover: React.FC<BookCoverProps> = ({
     }
     
     return url;
+  };
+
+  // Function to check if a Google Books URL actually has an image
+  const checkImageAvailability = async (url: string): Promise<boolean> => {
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      return response.ok;
+    } catch (error) {
+      console.warn('Error checking image availability:', error);
+      return false;
+    }
+  };
+
+  // Function to get OpenLibrary fallback URL
+  const getOpenLibraryFallback = async (isbn: string): Promise<string | null> => {
+    if (!isbn) return null;
+    
+    try {
+      const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
+      
+      // Try to get cover using cover ID first
+      const bookUrl = `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`;
+      const bookResponse = await fetch(bookUrl);
+      
+      if (bookResponse.ok) {
+        const bookData = await bookResponse.json();
+        const bookKey = `ISBN:${cleanIsbn}`;
+        
+        if (bookData[bookKey] && bookData[bookKey].cover) {
+          const coverInfo = bookData[bookKey].cover;
+          const coverId = coverInfo.medium || coverInfo.large || coverInfo.small;
+          
+          if (coverId) {
+            const coverIdMatch = coverId.match(/\/(\d+)-[SML]\.jpg$/);
+            if (coverIdMatch) {
+              const numericCoverId = coverIdMatch[1];
+              const largeUrl = `https://covers.openlibrary.org/b/id/${numericCoverId}-L.jpg`;
+              console.log('✅ Found OpenLibrary fallback with cover ID:', largeUrl);
+              return largeUrl;
+            }
+          }
+        }
+      }
+      
+      // Fallback to direct ISBN URL
+      const directUrl = `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-L.jpg`;
+      console.log('🔄 Trying direct OpenLibrary fallback:', directUrl);
+      return directUrl;
+      
+    } catch (error) {
+      console.warn('Error getting OpenLibrary fallback:', error);
+      return null;
+    }
   };
 
   // Get the best quality image available for the large view modal
@@ -255,12 +309,13 @@ const BookCover: React.FC<BookCoverProps> = ({
   };
 
   // Handle view large image
-  const handleViewLarge = () => {
+  const handleViewLarge = async () => {
     console.log('🖼️ Opening large view for book:', book.titulo);
     console.log('📊 Image sources available:', {
       customImage: book.customImage ? 'Yes' : 'No',
       thumbnail: book.thumbnail || 'Not available',
-      smallThumbnail: book.smallThumbnail || 'Not available'
+      smallThumbnail: book.smallThumbnail || 'Not available',
+      isbn: book.isbn || 'Not available'
     });
     
     setShowLargeView(true);
@@ -268,6 +323,27 @@ const BookCover: React.FC<BookCoverProps> = ({
     // Reset large image states
     setLargeImageLoading(true);
     setLargeImageError(false);
+    setFallbackImageUrl(null);
+    
+    // Check if we have a Google Books URL that might not have an image
+    const bestImage = getBestQualityImage();
+    if (bestImage && bestImage.includes('books.google.com') && book.isbn) {
+      console.log('🔍 Checking Google Books image availability...');
+      
+      try {
+        const isAvailable = await checkImageAvailability(bestImage);
+        if (!isAvailable) {
+          console.log('⚠️ Google Books image not available, trying OpenLibrary fallback...');
+          const fallbackUrl = await getOpenLibraryFallback(book.isbn);
+          if (fallbackUrl) {
+            console.log('✅ Setting OpenLibrary fallback URL:', fallbackUrl);
+            setFallbackImageUrl(fallbackUrl);
+          }
+        }
+      } catch (error) {
+        console.warn('Error checking image availability:', error);
+      }
+    }
   };
 
   // Handle keyboard events and body scroll
@@ -345,17 +421,35 @@ const BookCover: React.FC<BookCoverProps> = ({
 
             {/* Large image - clean and centered */}
             <img
-              src={getBestQualityImage()}
+              src={fallbackImageUrl || getBestQualityImage()}
               alt={`Portada de ${book.titulo}`}
               className={`max-w-full max-h-[90vh] object-contain rounded-lg ${largeImageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
               style={{ maxWidth: '100%', maxHeight: '90vh' }}
               onLoad={() => {
-                console.log('✅ Large image loaded successfully for:', book.titulo);
+                console.log('✅ Large image loaded successfully for:', book.titulo, fallbackImageUrl ? '(using fallback)' : '');
                 setLargeImageLoading(false);
                 setLargeImageError(false);
               }}
-              onError={(e) => {
+              onError={async (e) => {
                 console.error('❌ Large image failed to load for:', book.titulo, e);
+                
+                // If we don't have a fallback URL yet and we have an ISBN, try to get one
+                if (!fallbackImageUrl && book.isbn && !largeImageError) {
+                  console.log('🔄 Image failed, trying OpenLibrary fallback...');
+                  try {
+                    const fallbackUrl = await getOpenLibraryFallback(book.isbn);
+                    if (fallbackUrl) {
+                      console.log('✅ Got fallback URL, retrying with:', fallbackUrl);
+                      setFallbackImageUrl(fallbackUrl);
+                      setLargeImageLoading(true);
+                      setLargeImageError(false);
+                      return; // Don't set error state, let it retry
+                    }
+                  } catch (fallbackError) {
+                    console.warn('Fallback also failed:', fallbackError);
+                  }
+                }
+                
                 setLargeImageLoading(false);
                 setLargeImageError(true);
               }}
