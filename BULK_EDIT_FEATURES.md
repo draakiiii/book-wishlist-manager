@@ -13,13 +13,15 @@ Se han implementado nuevas funcionalidades de edición masiva para la aplicació
 
 ### 2. Edición Masiva de Género
 - **Nueva funcionalidad**: Permite cambiar el género de múltiples libros
-- **Opciones**: Lista dinámica basada en géneros existentes en la biblioteca
+- **Opciones**: Lista completa de géneros predefinidos + géneros existentes en la biblioteca
 - **Interfaz**: Selector desplegable con opción "Sin género"
+- **Consistencia**: Mismos valores que en la edición individual
 
 ### 3. Edición Masiva de Idioma
 - **Nueva funcionalidad**: Permite cambiar el idioma de múltiples libros
-- **Opciones**: Lista dinámica basada en idiomas existentes en la biblioteca
+- **Opciones**: Lista completa de idiomas predefinidos + idiomas existentes en la biblioteca
 - **Interfaz**: Selector desplegable con opción "Sin idioma"
+- **Consistencia**: Mismos valores que en la edición individual
 
 ### 4. Edición Masiva de Formato
 - **Nueva funcionalidad**: Permite cambiar el formato de múltiples libros
@@ -68,10 +70,10 @@ handleBulkDelete()
 - **DELETE_BOOK**: Para eliminación
 
 ### Campos Editables
-- `estado`: Estado de lectura del libro
-- `genero`: Género literario
-- `idioma`: Idioma del libro
-- `formato`: Formato físico/digital/audiolibro
+- `estado`: Estado de lectura del libro (valores fijos)
+- `genero`: Género literario (predefinidos + existentes)
+- `idioma`: Idioma del libro (predefinidos + existentes)
+- `formato`: Formato físico/digital/audiolibro (valores fijos)
 
 ## Uso de la Funcionalidad
 
@@ -111,7 +113,21 @@ handleBulkDelete()
 ### Flexibilidad
 - **Selección granular**: Combinar selección individual y masiva
 - **Múltiples campos**: Editar diferentes aspectos simultáneamente
-- **Valores dinámicos**: Los selectores se adaptan al contenido de la biblioteca
+- **Valores consistentes**: Los selectores usan los mismos valores que la edición individual
+- **Valores predefinidos**: Géneros e idiomas incluyen listas completas de opciones predefinidas
+
+## Mejoras Implementadas
+
+### Consistencia de Valores
+- **Géneros**: Ahora usa `getAllGenres()` que incluye géneros predefinidos + existentes
+- **Idiomas**: Nuevo archivo `languages.ts` con lista completa de idiomas predefinidos
+- **Edición individual**: Campo idioma cambiado de input libre a selector desplegable
+- **Consistencia total**: Edición masiva e individual usan exactamente los mismos valores
+
+### Archivos Creados/Modificados
+- **Nuevo**: `src/utils/languages.ts` - Lista de idiomas predefinidos
+- **Modificado**: `src/components/BooksView.tsx` - Usa funciones de géneros e idiomas
+- **Modificado**: `src/components/BookEditModal.tsx` - Campo idioma como selector
 
 ## Consideraciones Futuras
 

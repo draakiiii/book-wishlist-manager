@@ -6,6 +6,7 @@ import { Libro, BookListType } from '../types';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import SagaAutocomplete from './SagaAutocomplete';
 import { getAllGenres } from '../utils/genres';
+import { getAllLanguages } from '../utils/languages';
 
 interface BookEditModalProps {
   isOpen: boolean;
@@ -259,13 +260,18 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Idioma
                 </label>
-                <input
-                  type="text"
+                <select
                   value={idioma}
                   onChange={(e) => setIdioma(e.target.value)}
-                  placeholder="Idioma"
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="">Seleccionar Idioma</option>
+                  {getAllLanguages().map((language) => (
+                    <option key={language} value={language}>
+                      {language}
+                    </option>
+                  ))}
+                </select>
               </div>
               
               <div>

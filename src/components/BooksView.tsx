@@ -31,6 +31,8 @@ import BookCard from './BookCard';
 import BookEditModal from './BookEditModal';
 import { useDialog } from '../hooks/useDialog';
 import Dialog from './Dialog';
+import { getAllGenres } from '../utils/genres';
+import { getAllLanguages } from '../utils/languages';
 
 export type BooksViewMode = 'list' | 'gallery';
 
@@ -77,9 +79,9 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
   const filterOptions = useMemo(() => {
     const autores = [...new Set(state.libros.map(l => l.autor).filter(Boolean))].sort();
     const sagas = [...new Set(state.libros.map(l => l.sagaName).filter(Boolean))].sort();
-    const generos = [...new Set(state.libros.map(l => l.genero).filter(Boolean))].sort();
+    const generos = getAllGenres([...new Set(state.libros.map(l => l.genero).filter(Boolean))]);
     const editoriales = [...new Set(state.libros.map(l => l.editorial).filter(Boolean))].sort();
-    const idiomas = [...new Set(state.libros.map(l => l.idioma).filter(Boolean))].sort();
+    const idiomas = getAllLanguages([...new Set(state.libros.map(l => l.idioma).filter(Boolean))]);
     const formatos = [...new Set(state.libros.map(l => l.formato).filter(Boolean))].sort();
     
     return { autores, sagas, generos, editoriales, idiomas, formatos };
