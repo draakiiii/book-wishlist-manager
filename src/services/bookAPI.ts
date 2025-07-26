@@ -308,7 +308,11 @@ export const getBookCovers = async (isbn: string): Promise<{
   
   try {
     // Try primary API first
-    let covers = {};
+    let covers: {
+      smallThumbnail?: string;
+      thumbnail?: string;
+      largeThumbnail?: string;
+    } = {};
     
     if (primaryProvider === 'google') {
       covers = await getGoogleBooksCovers(isbn);
