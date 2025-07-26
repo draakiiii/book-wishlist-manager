@@ -5,6 +5,7 @@ import { useAppState } from '../context/AppStateContext';
 import { Libro, BookListType } from '../types';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import SagaAutocomplete from './SagaAutocomplete';
+import { getAllGenres } from '../utils/genres';
 
 interface BookEditModalProps {
   isOpen: boolean;
@@ -28,10 +29,10 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
   const [notas, setNotas] = useState(book.notas || '');
   const [formato, setFormato] = useState(book.formato || 'fisico');
   const [ubicacion, setUbicacion] = useState(book.ubicacion || '');
-  const [showFloatingSave, setShowFloatingSave] = useState(false);
 
   useEffect(() => {
-    if (isOpen && book) {
+    if (isOpen) {
+      // Reset form state when modal opens
       setTitulo(book.titulo);
       setAutor(book.autor || '');
       setPaginas(book.paginas?.toString() || '');
@@ -45,18 +46,6 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
       setNotas(book.notas || '');
       setFormato(book.formato || 'fisico');
       setUbicacion(book.ubicacion || '');
-      
-      // Check if form is long enough to need floating save button
-      setTimeout(() => {
-        const form = document.querySelector('form');
-        if (form) {
-          const scrollHeight = form.scrollHeight;
-          const clientHeight = form.clientHeight;
-          if (scrollHeight > clientHeight * 1.5) {
-            setShowFloatingSave(true);
-          }
-        }
-      }, 100);
     }
   }, [isOpen, book]);
 
@@ -76,7 +65,7 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
       calificacion: calificacion ? parseInt(calificacion) : undefined,
       notas: notas || undefined,
       formato: formato as 'fisico' | 'digital' | 'audiolibro',
-      ubicacion: ubicacion || undefined
+      ubicacion: ubicacion || undefined,
     };
 
     dispatch({
@@ -283,13 +272,18 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Género
                 </label>
-                <input
-                  type="text"
+                <select
                   value={genero}
                   onChange={(e) => setGenero(e.target.value)}
-                  placeholder="Género"
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="">Seleccionar Género</option>
+                  {getAllGenres().map((genre) => (
+                    <option key={genre} value={genre}>
+                      {genre}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -365,19 +359,6 @@ const BookEditModal: React.FC<BookEditModalProps> = ({ isOpen, onClose, book, li
             <span>Guardar Cambios</span>
           </button>
         </div>
-
-        {/* Floating Save Button */}
-        {showFloatingSave && (
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            onClick={handleSubmit}
-            className="fixed bottom-6 right-6 z-50 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-xl transition-all duration-200 flex items-center space-x-2 font-medium"
-          >
-            <Save className="h-4 w-4" />
-            <span>Guardar</span>
-          </motion.button>
-        )}
       </motion.div>
     </motion.div>
   );

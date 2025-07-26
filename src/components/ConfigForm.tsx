@@ -32,6 +32,23 @@ const ConfigForm: React.FC = () => {
     );
   };
 
+  const handleResetPoints = () => {
+    showConfirm(
+      'Resetear Solo Puntos',
+      '¿Estás seguro de que quieres resetear solo tus puntos/dinero? Esto no afectará tus libros ni sagas.',
+      () => {
+        dispatch({ type: 'RESETEAR_PUNTOS' });
+        if (config.modoDinero) {
+          dispatch({ type: 'RESETEAR_DINERO' });
+        }
+        showSuccess('Puntos reseteados', `${config.modoDinero ? 'Dinero' : 'Puntos'} reseteado correctamente.`);
+      },
+      undefined,
+      'Resetear',
+      'Cancelar'
+    );
+  };
+
   const handleCleanDuplicateSagas = () => {
     showConfirm(
       'Limpiar Sagas Duplicadas',
@@ -695,6 +712,17 @@ const ConfigForm: React.FC = () => {
             >
               <RotateCcw className="h-4 w-4" />
               <span>Resetear Progreso</span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={handleResetPoints}
+              className="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span>Resetear Solo Puntos</span>
             </motion.button>
           </div>
         </div>
