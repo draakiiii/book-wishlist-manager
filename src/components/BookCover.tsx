@@ -53,7 +53,7 @@ const BookCover: React.FC<BookCoverProps> = ({
 
   const imageUrl = getImageUrl();
 
-  // Optimize Google Books image URLs for better quality
+  // Optimize image URLs for better quality based on source
   const optimizeImageUrl = (url: string | undefined): string | undefined => {
     if (!url) return url;
     
@@ -79,7 +79,31 @@ const BookCover: React.FC<BookCoverProps> = ({
         optimizedUrl += '&maxheight=1200';
       }
       
-      console.log('✅ Optimized URL:', optimizedUrl);
+      console.log('✅ Optimized Google Books URL:', optimizedUrl);
+      return optimizedUrl;
+    }
+    
+    // Check if it's an OpenLibrary URL
+    if (url.includes('covers.openlibrary.org')) {
+      console.log('🔧 Optimizing OpenLibrary URL:', url);
+      
+      // For large view, ensure we're using the largest available size
+      // OpenLibrary URLs have format: .../id/12345-S.jpg, .../id/12345-M.jpg, .../id/12345-L.jpg
+      // or .../isbn/1234567890123-S.jpg, etc.
+      
+      // Try to upgrade to larger size if we're not already using the largest
+      let optimizedUrl = url;
+      
+      // If we have a small or medium size, try to get the large version
+      if (url.includes('-S.jpg')) {
+        optimizedUrl = url.replace('-S.jpg', '-L.jpg');
+        console.log('🔄 Upgrading from Small to Large:', optimizedUrl);
+      } else if (url.includes('-M.jpg')) {
+        optimizedUrl = url.replace('-M.jpg', '-L.jpg');
+        console.log('🔄 Upgrading from Medium to Large:', optimizedUrl);
+      }
+      
+      console.log('✅ Optimized OpenLibrary URL:', optimizedUrl);
       return optimizedUrl;
     }
     
@@ -96,18 +120,43 @@ const BookCover: React.FC<BookCoverProps> = ({
       smallThumbnail: book.smallThumbnail || 'Not available'
     });
     
+    // Always prioritize custom user image if available
     if (book.customImage) {
-      console.log('✅ Selected: Custom image');
+      console.log('✅ Selected: Custom image (highest priority)');
       return book.customImage;
     }
+    
+    // For API images, prioritize the highest quality available
+    // Check if we have both thumbnail and smallThumbnail to choose the best
+    if (book.thumbnail && book.smallThumbnail) {
+      // If both are available, choose the one that's likely to be higher quality
+      // Google Books thumbnail is usually better than smallThumbnail
+      // For OpenLibrary, check if thumbnail is already large size
+      if (book.thumbnail.includes('covers.openlibrary.org') && book.thumbnail.includes('-L.jpg')) {
+        console.log('✅ Selected: OpenLibrary Large thumbnail');
+        return book.thumbnail; // Already optimized
+      } else if (book.thumbnail.includes('books.google.com')) {
+        console.log('✅ Selected: Google Books thumbnail (will optimize)');
+        return optimizeImageUrl(book.thumbnail);
+      } else {
+        // For other cases, optimize the thumbnail
+        console.log('✅ Selected: Thumbnail (will optimize)');
+        return optimizeImageUrl(book.thumbnail);
+      }
+    }
+    
+    // If only thumbnail is available
     if (book.thumbnail) {
-      console.log('✅ Selected: High resolution thumbnail');
+      console.log('✅ Selected: Available thumbnail (will optimize)');
       return optimizeImageUrl(book.thumbnail);
     }
+    
+    // If only smallThumbnail is available, try to upgrade it
     if (book.smallThumbnail) {
-      console.log('⚠️ Selected: Small thumbnail (fallback) - optimizing...');
+      console.log('⚠️ Selected: Small thumbnail (will try to upgrade)');
       return optimizeImageUrl(book.smallThumbnail);
     }
+    
     // Fallback to the current imageUrl (shouldn't happen if we have any image)
     console.log('❌ Selected: General fallback imageUrl');
     return optimizeImageUrl(imageUrl);
@@ -207,6 +256,13 @@ const BookCover: React.FC<BookCoverProps> = ({
 
   // Handle view large image
   const handleViewLarge = () => {
+    console.log('🖼️ Opening large view for book:', book.titulo);
+    console.log('📊 Image sources available:', {
+      customImage: book.customImage ? 'Yes' : 'No',
+      thumbnail: book.thumbnail || 'Not available',
+      smallThumbnail: book.smallThumbnail || 'Not available'
+    });
+    
     setShowLargeView(true);
     setShowMenu(false);
     // Reset large image states
@@ -294,10 +350,12 @@ const BookCover: React.FC<BookCoverProps> = ({
               className={`max-w-full max-h-[90vh] object-contain rounded-lg ${largeImageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
               style={{ maxWidth: '100%', maxHeight: '90vh' }}
               onLoad={() => {
+                console.log('✅ Large image loaded successfully for:', book.titulo);
                 setLargeImageLoading(false);
                 setLargeImageError(false);
               }}
-              onError={() => {
+              onError={(e) => {
+                console.error('❌ Large image failed to load for:', book.titulo, e);
                 setLargeImageLoading(false);
                 setLargeImageError(true);
               }}
