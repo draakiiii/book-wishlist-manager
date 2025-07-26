@@ -160,6 +160,11 @@ export interface Configuracion {
   datosAnonimos?: boolean;
   compartirEstadisticas?: boolean;
   
+  // Configuración de APIs separadas por función
+  scanApiProvider?: 'google-books' | 'open-library';
+  searchApiProvider?: 'google-books' | 'open-library';
+  coverApiProvider?: 'google-books' | 'open-library';
+  
   // Configuración del sistema de puntos/dinero
   sistemaPuntosHabilitado?: boolean;
   modoDinero?: boolean; // true = dinero, false = puntos

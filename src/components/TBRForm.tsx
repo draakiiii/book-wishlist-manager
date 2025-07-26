@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Clock, Search, Camera, Loader2, CheckCircle, AlertCircle, Barcode } from 'lucide-react';
 import { useAppState } from '../context/AppStateContext';
 import { Libro, BookData } from '../types';
-import { fetchBookData } from '../services/googleBooksAPI';
+import { fetchBookData } from '../services/bookAPI';
 import { generateUniqueId } from '../utils/idGenerator';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import SagaAutocomplete from './SagaAutocomplete';

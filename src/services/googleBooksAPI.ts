@@ -143,7 +143,23 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
               rawImageLinks: book.imageLinks
             });
           } else {
-            console.log('❌ No imageLinks found in book data');
+            console.log('❌ No imageLinks found in book data, will try Open Library fallback');
+            
+            // Fallback a Open Library para portadas (usando tamaño L para mejor calidad)
+            try {
+              const openLibraryCovers = await getOpenLibraryCovers(cleanIsbn);
+              if (openLibraryCovers.large || openLibraryCovers.medium || openLibraryCovers.small) {
+                // Usar tamaño L para thumbnail (vista principal) y M para smallThumbnail
+                smallThumbnail = openLibraryCovers.medium || openLibraryCovers.small;
+                thumbnail = openLibraryCovers.large || openLibraryCovers.medium;
+                console.log('✅ Got cover fallback from Open Library (using Large size):', {
+                  smallThumbnail,
+                  thumbnail
+                });
+              }
+            } catch (error) {
+              console.warn('⚠️ Open Library cover fallback failed:', error);
+            }
           }
           
           // Extract access information
@@ -293,7 +309,7 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
       return [];
     }
 
-    const results = data.items.map((item: any) => {
+    const results = await Promise.all(data.items.map(async (item: any) => {
       const book = item.volumeInfo;
       
       let title = book.title || '';
@@ -334,6 +350,19 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
       if (book.imageLinks) {
         smallThumbnail = book.imageLinks.smallThumbnail;
         thumbnail = book.imageLinks.thumbnail;
+      } else if (isbn) {
+        // Fallback a Open Library para portadas si no hay en Google Books (usando tamaño L)
+        try {
+          const openLibraryCovers = await getOpenLibraryCovers(isbn);
+          if (openLibraryCovers.large || openLibraryCovers.medium || openLibraryCovers.small) {
+            // Usar tamaño L para thumbnail (vista principal) y M para smallThumbnail
+            smallThumbnail = openLibraryCovers.medium || openLibraryCovers.small;
+            thumbnail = openLibraryCovers.large || openLibraryCovers.medium;
+            console.log('✅ Got cover fallback from Open Library for author search (Large size):', isbn);
+          }
+        } catch (error) {
+          console.warn('⚠️ Open Library cover fallback failed in author search:', error);
+        }
       }
       
       // Extract access information
@@ -360,7 +389,7 @@ export const searchBooksByAuthor = async (author: string): Promise<BookData[]> =
         webReaderLink
         // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
-    });
+    }));
 
     (results as any).timestamp = Date.now();
     searchCache.set(cacheKey, results);
@@ -406,7 +435,7 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
       return [];
     }
 
-    const results = data.items.map((item: any) => {
+    const results = await Promise.all(data.items.map(async (item: any) => {
       const book = item.volumeInfo;
       
       // Extract and clean the title
@@ -464,6 +493,19 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
       if (book.imageLinks) {
         smallThumbnail = book.imageLinks.smallThumbnail;
         thumbnail = book.imageLinks.thumbnail;
+      } else if (isbn) {
+        // Fallback a Open Library para portadas si no hay en Google Books (usando tamaño L)
+        try {
+          const openLibraryCovers = await getOpenLibraryCovers(isbn);
+          if (openLibraryCovers.large || openLibraryCovers.medium || openLibraryCovers.small) {
+            // Usar tamaño L para thumbnail (vista principal) y M para smallThumbnail
+            smallThumbnail = openLibraryCovers.medium || openLibraryCovers.small;
+            thumbnail = openLibraryCovers.large || openLibraryCovers.medium;
+            console.log('✅ Got cover fallback from Open Library for title search (Large size):', isbn);
+          }
+        } catch (error) {
+          console.warn('⚠️ Open Library cover fallback failed in title search:', error);
+        }
       }
       
       // Extract access information
@@ -490,7 +532,7 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
         webReaderLink
         // No asignar calificación automáticamente - el usuario la pondrá cuando termine el libro
       };
-    });
+    }));
 
     // Cache the results
     (results as any).timestamp = Date.now();
@@ -506,4 +548,103 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
     }
     return [];
   }
-}; 
+};
+
+// Función de fallback para obtener portadas de Open Library
+const getOpenLibraryCovers = async (isbn: string) => {
+  const covers = {
+    small: '',
+    medium: '',
+    large: ''
+  };
+
+  try {
+    const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
+    
+    // Intentar primero con los datos del libro para obtener cover ID
+    const bookUrl = `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`;
+    const bookResponse = await fetchWithTimeout(bookUrl);
+    
+    if (bookResponse.ok) {
+      const bookData = await bookResponse.json();
+      const bookKey = `ISBN:${cleanIsbn}`;
+      
+      if (bookData[bookKey] && bookData[bookKey].cover) {
+        const coverInfo = bookData[bookKey].cover;
+        const coverId = coverInfo.medium || coverInfo.large || coverInfo.small;
+        
+        if (coverId) {
+          // Extraer el ID numérico de la URL de portada
+          const coverIdMatch = coverId.match(/\/(\d+)-[SML]\.jpg$/);
+          if (coverIdMatch) {
+            const numericCoverId = coverIdMatch[1];
+            covers.small = `https://covers.openlibrary.org/b/id/${numericCoverId}-S.jpg`;
+            covers.medium = `https://covers.openlibrary.org/b/id/${numericCoverId}-M.jpg`;
+            covers.large = `https://covers.openlibrary.org/b/id/${numericCoverId}-L.jpg`;
+            console.log('📚 Generated Open Library covers using cover ID:', numericCoverId);
+            return covers;
+          }
+        }
+      }
+    }
+    
+    // Si no funciona con cover ID, usar directamente el ISBN
+    covers.small = `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-S.jpg`;
+    covers.medium = `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-M.jpg`;
+    covers.large = `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-L.jpg`;
+    console.log('📚 Generated Open Library covers using ISBN:', cleanIsbn);
+    
+    return covers;
+  } catch (error) {
+    console.error('Error generating Open Library covers:', error);
+    return covers;
+  }
+};
+
+// Función pública para obtener portadas en diferentes tamaños (por defecto Large para mejor calidad)
+export const getBookCoversWithFallback = async (isbn: string, size: 'S' | 'M' | 'L' = 'L') => {
+  try {
+    const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
+    
+    // Intentar primero con Google Books
+    const googleUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanIsbn}`;
+    const googleResponse = await fetchWithTimeout(googleUrl);
+    
+    if (googleResponse.ok) {
+      const googleData = await googleResponse.json();
+      if (googleData.totalItems > 0) {
+        const book = googleData.items[0].volumeInfo;
+        if (book.imageLinks) {
+          const googleCover = size === 'S' ? book.imageLinks.smallThumbnail : 
+                            size === 'M' ? book.imageLinks.thumbnail :
+                            // Para tamaño L, priorizar los tamaños más grandes disponibles
+                            book.imageLinks.extraLarge || book.imageLinks.large || book.imageLinks.thumbnail;
+          
+          if (googleCover) {
+            console.log('✅ Got cover from Google Books:', googleCover);
+            return googleCover;
+          }
+        }
+      }
+    }
+    
+    // Fallback a Open Library
+    console.log('🔄 Google Books cover not found, trying Open Library fallback');
+    const openLibraryCovers = await getOpenLibraryCovers(cleanIsbn);
+    const fallbackCover = size === 'S' ? openLibraryCovers.small :
+                         size === 'L' ? openLibraryCovers.large :
+                         openLibraryCovers.medium;
+    
+    if (fallbackCover) {
+      console.log('✅ Got cover fallback from Open Library:', fallbackCover);
+      return fallbackCover;
+    }
+    
+    console.log('❌ No cover found in either API for ISBN:', cleanIsbn);
+    return null;
+    
+  } catch (error) {
+    console.error('Error getting cover with fallback:', error);
+    return null;
+  }
+};

@@ -272,6 +272,86 @@ const ConfigForm: React.FC = () => {
           </div>
         </div>
 
+        {/* API Configuration */}
+        <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center space-x-2 mb-4">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <Settings className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            </div>
+            <h3 className="text-sm font-medium text-slate-900 dark:text-white">
+              Configuración de API
+            </h3>
+          </div>
+          
+          <div className="space-y-4">
+            {/* Scan API Provider */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                API para escaneo de ISBN
+              </label>
+              <select
+                value={config.scanApiProvider || 'open-library'}
+                onChange={(e) => handleStringChange('scanApiProvider', e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="open-library">Open Library (recomendado para escaneo)</option>
+                <option value="google-books">Google Books</option>
+              </select>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Open Library es gratuito y no requiere API key, ideal para escaneo de códigos ISBN.
+              </p>
+            </div>
+            
+            {/* Search API Provider */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                API para búsqueda por texto
+              </label>
+              <select
+                value={config.searchApiProvider || 'google-books'}
+                onChange={(e) => handleStringChange('searchApiProvider', e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="google-books">Google Books (recomendado para búsqueda)</option>
+                <option value="open-library">Open Library</option>
+              </select>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Google Books ofrece mejores resultados de búsqueda y más información detallada.
+              </p>
+            </div>
+            
+            {/* Cover API Provider */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                API para portadas de libros
+              </label>
+              <select
+                value={config.coverApiProvider || 'google-books'}
+                onChange={(e) => handleStringChange('coverApiProvider', e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="google-books">Google Books con fallback (recomendado)</option>
+                <option value="open-library">Open Library con fallback</option>
+              </select>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                El sistema automáticamente intentará con ambas APIs para obtener portadas de alta calidad.
+              </p>
+            </div>
+            
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <div className="flex items-start space-x-2">
+                <div className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded">
+                  <Settings className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="text-xs text-blue-800 dark:text-blue-200">
+                  <p className="font-medium mb-1">Sistema Multi-API con Fallback</p>
+                  <p>Si la API principal falla, automáticamente se intenta con la alternativa para máxima robustez.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Scanner Settings */}
         <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center space-x-2 mb-4">
