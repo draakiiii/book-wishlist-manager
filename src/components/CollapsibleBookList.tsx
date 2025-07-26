@@ -104,15 +104,6 @@ const CollapsibleBookList: React.FC<CollapsibleBookListProps> = ({
           </motion.div>
         )
       )}
-
-      {/* Si no hay libros, mostrar siempre el mensaje */}
-      {bookCount === 0 && (
-        <BookList 
-          books={books}
-          type={type}
-          emptyMessage={emptyMessage}
-        />
-      )}
     </div>
   );
 };
