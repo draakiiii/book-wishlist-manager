@@ -58,7 +58,6 @@ const BooksView: React.FC<BooksViewProps> = ({ viewMode, onViewModeChange }) => 
   // Edición masiva
   const [isBulkEditMode, setIsBulkEditMode] = useState(false);
   const [selectedBooks, setSelectedBooks] = useState<Set<number>>(new Set());
-  const [showBulkEditModal, setShowBulkEditModal] = useState(false);
   
   // Filtros avanzados
   const [autorFilter, setAutorFilter] = useState('');

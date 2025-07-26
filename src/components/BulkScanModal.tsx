@@ -33,7 +33,7 @@ interface ScannedBook {
   genero?: string;
   editorial?: string;
   idioma?: string;
-  formato?: string;
+  formato?: 'fisico' | 'digital' | 'audiolibro';
   status: 'pending' | 'found' | 'error' | 'loading';
   errorMessage?: string;
   bookData?: BookData;
@@ -552,7 +552,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
         categorias: book.bookData?.categorias,
         publicacion: book.bookData?.publicacion,
         genero: book.genero || book.bookData?.genero,
-        formato: book.formato || book.bookData?.formato
+        formato: (book.formato || book.bookData?.formato) as 'fisico' | 'digital' | 'audiolibro' | undefined
       }));
 
     if (booksToAdd.length > 0) {
@@ -599,9 +599,15 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
     const updatedBooks = Array.from(selectedBooks).map(id => {
       const book = scannedBooks.find(b => b.id === id);
       if (book) {
+        const update: Partial<ScannedBook> = {};
+        if (bulkEditField === 'formato') {
+          update[bulkEditField] = bulkEditValue.trim() as 'fisico' | 'digital' | 'audiolibro';
+        } else {
+          update[bulkEditField] = bulkEditValue.trim();
+        }
         return {
           ...book,
-          [bulkEditField]: bulkEditValue.trim()
+          ...update
         };
       }
       return null;
@@ -1022,7 +1028,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
                               />
                               <select
                                 value={book.formato || ''}
-                                onChange={(e) => updateBook(book.id, { formato: e.target.value })}
+                                onChange={(e) => updateBook(book.id, { formato: e.target.value as 'fisico' | 'digital' | 'audiolibro' })}
                                 className="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                               >
                                 <option value="">Seleccionar formato</option>
