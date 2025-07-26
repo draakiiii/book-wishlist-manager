@@ -26,6 +26,7 @@ const BookCover: React.FC<BookCoverProps> = ({
   const [largeImageLoading, setLargeImageLoading] = useState(true);
   const [largeImageError, setLargeImageError] = useState(false);
   const [fallbackImageUrl, setFallbackImageUrl] = useState<string | null>(null);
+  const [imageReady, setImageReady] = useState(false);
 
   // Choose appropriate image URL based on context and size
   // Priority: customImage > API images based on context
@@ -324,6 +325,7 @@ const BookCover: React.FC<BookCoverProps> = ({
     setLargeImageLoading(true);
     setLargeImageError(false);
     setFallbackImageUrl(null);
+    setImageReady(false);
     
     // Start background verification and fallback process
     startImageVerification();
@@ -336,6 +338,8 @@ const BookCover: React.FC<BookCoverProps> = ({
     // If we have a custom image, no verification needed
     if (book.customImage) {
       console.log('✅ Using custom image, no verification needed');
+      setLargeImageLoading(false); // Show the custom image
+      setImageReady(true); // Ready to show the image
       return;
     }
     
@@ -364,12 +368,21 @@ const BookCover: React.FC<BookCoverProps> = ({
           if (fallbackUrl) {
             console.log('✅ Got OpenLibrary fallback, switching to:', fallbackUrl);
             setFallbackImageUrl(fallbackUrl);
-            // Reset loading state to show the new image
+            // Keep loading state until image loads
             setLargeImageLoading(true);
             setLargeImageError(false);
+            setImageReady(true); // Ready to show the fallback image
+          } else {
+            // No fallback available, show error
+            setLargeImageLoading(false);
+            setLargeImageError(true);
+            setImageReady(false);
           }
         } else {
           console.log('✅ Google Books image is available');
+          // Keep loading state until image loads
+          setLargeImageLoading(true);
+          setImageReady(true); // Ready to show the image
         }
       } catch (error) {
         console.warn('Error in background verification:', error);
@@ -382,8 +395,31 @@ const BookCover: React.FC<BookCoverProps> = ({
             setFallbackImageUrl(fallbackUrl);
             setLargeImageLoading(true);
             setLargeImageError(false);
+            setImageReady(true); // Ready to show the fallback image
+          } else {
+            // No fallback available, show error
+            setLargeImageLoading(false);
+            setLargeImageError(true);
+            setImageReady(false);
           }
+        } else {
+          // No ISBN available, show error
+          setLargeImageLoading(false);
+          setLargeImageError(true);
+          setImageReady(false);
         }
+      }
+    } else {
+      // No Google Books URL or no ISBN, try to show what we have
+      if (bestImage) {
+        console.log('✅ Using available image without verification');
+        setLargeImageLoading(true); // Keep loading until image loads
+        setImageReady(true); // Ready to show the image
+      } else {
+        console.log('❌ No image available');
+        setLargeImageLoading(false);
+        setLargeImageError(true);
+        setImageReady(false);
       }
     }
   };
@@ -469,16 +505,17 @@ const BookCover: React.FC<BookCoverProps> = ({
             )}
 
             {/* Large image - clean and centered */}
-            {!largeImageError && (
+            {!largeImageError && imageReady && (
               <img
                 src={fallbackImageUrl || getBestQualityImage()}
                 alt={`Portada de ${book.titulo}`}
-                className={`max-w-full max-h-[90vh] object-contain rounded-lg ${largeImageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+                className="max-w-full max-h-[90vh] object-contain rounded-lg opacity-100 transition-opacity duration-300"
                 style={{ maxWidth: '100%', maxHeight: '90vh' }}
                 onLoad={() => {
                   console.log('✅ Large image loaded successfully for:', book.titulo, fallbackImageUrl ? '(using fallback)' : '');
                   setLargeImageLoading(false);
                   setLargeImageError(false);
+                  setImageReady(true);
                 }}
                 onError={async (e) => {
                   console.error('❌ Large image failed to load for:', book.titulo, e);
@@ -493,6 +530,7 @@ const BookCover: React.FC<BookCoverProps> = ({
                         setFallbackImageUrl(fallbackUrl);
                         setLargeImageLoading(true);
                         setLargeImageError(false);
+                        setImageReady(false);
                         return; // Don't set error state, let it retry
                       }
                     } catch (fallbackError) {
@@ -502,6 +540,7 @@ const BookCover: React.FC<BookCoverProps> = ({
                   
                   setLargeImageLoading(false);
                   setLargeImageError(true);
+                  setImageReady(false);
                 }}
               />
             )}
