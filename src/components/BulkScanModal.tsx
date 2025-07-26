@@ -701,7 +701,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden"
+        className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[95vh] sm:max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -723,12 +723,12 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
           </button>
         </div>
 
-        <div className="flex flex-col h-[calc(90vh-80px)]">
+        <div className="flex flex-col h-[calc(95vh-80px)] sm:h-[calc(90vh-80px)]">
           {/* Scanner Section */}
           <div className="relative bg-black">
             <video
               ref={videoRef}
-              className="w-full h-64 object-cover"
+              className="w-full h-48 sm:h-64 object-cover"
               muted
             />
             
@@ -820,12 +820,12 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
 
           {/* Controls Section */}
           <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-3">
               {/* Mode Selection */}
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 w-full sm:w-auto">
                 <button
                   onClick={() => setScanMode('single')}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                  className={`flex-1 sm:flex-none px-3 py-1 rounded-lg text-sm font-medium transition-colors duration-200 ${
                     scanMode === 'single' 
                       ? 'bg-primary-500 text-white' 
                       : 'bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300'
@@ -835,7 +835,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
                 </button>
                 <button
                   onClick={() => setScanMode('continuous')}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                  className={`flex-1 sm:flex-none px-3 py-1 rounded-lg text-sm font-medium transition-colors duration-200 ${
                     scanMode === 'continuous' 
                       ? 'bg-primary-500 text-white' 
                       : 'bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300'
@@ -846,10 +846,10 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
               </div>
 
               {/* Scanner Controls */}
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 w-full sm:w-auto">
                 <button
                   onClick={isScanning ? stopScanning : startScanning}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 ${
+                  className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 ${
                     isScanning 
                       ? 'bg-red-500 hover:bg-red-600 text-white' 
                       : 'bg-primary-500 hover:bg-primary-600 text-white'
@@ -870,10 +870,10 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
               </div>
 
               {/* Books List Toggle */}
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 w-full sm:w-auto">
                 <button
                   onClick={() => setShowBooksList(!showBooksList)}
-                  className="px-3 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+                  className="flex-1 sm:flex-none px-3 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
                 >
                   <List className="h-4 w-4" />
                   <span>Lista ({scannedBooks.length})</span>
@@ -891,7 +891,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
               className="border-t border-slate-200 dark:border-slate-700 overflow-hidden"
             >
               <div className="p-4 bg-slate-50 dark:bg-slate-700/50">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                   <h4 className="font-medium text-slate-900 dark:text-white">
                     Libros Escaneados
                   </h4>
@@ -911,7 +911,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400 mb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 text-sm text-slate-600 dark:text-slate-400 mb-3">
                   <span>Seleccionados: {selectedBooks.size}</span>
                   {selectedBooks.size > 0 && (
                     <>
@@ -932,7 +932,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
                 </div>
               </div>
 
-              <div className="max-h-64 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent">
+              <div className="max-h-80 sm:max-h-64 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent">
                 {scannedBooks.length === 0 ? (
                   <div className="text-center py-8">
                     <Barcode className="h-12 w-12 text-slate-400 mx-auto mb-4" />
@@ -1136,16 +1136,17 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
         onClick={() => setShowBulkEditModal(false)}
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6"
+          className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
+          <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
               Edición en Masa
@@ -1219,6 +1220,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
                 Aplicar
               </button>
             </div>
+          </div>
           </div>
         </motion.div>
       </motion.div>
