@@ -325,23 +325,65 @@ const BookCover: React.FC<BookCoverProps> = ({
     setLargeImageError(false);
     setFallbackImageUrl(null);
     
-    // Check if we have a Google Books URL that might not have an image
+    // Start background verification and fallback process
+    startImageVerification();
+  };
+
+  // Background image verification and fallback process
+  const startImageVerification = async () => {
     const bestImage = getBestQualityImage();
+    
+    // If we have a custom image, no verification needed
+    if (book.customImage) {
+      console.log('✅ Using custom image, no verification needed');
+      return;
+    }
+    
+    // If we have a Google Books URL, verify it first
     if (bestImage && bestImage.includes('books.google.com') && book.isbn) {
-      console.log('🔍 Checking Google Books image availability...');
+      console.log('🔍 Starting background verification for Google Books URL...');
       
       try {
-        const isAvailable = await checkImageAvailability(bestImage);
+        // Start verification in background
+        const verificationPromise = checkImageAvailability(bestImage);
+        
+        // Set a timeout to avoid waiting too long
+        const timeoutPromise = new Promise<boolean>((resolve) => {
+          setTimeout(() => {
+            console.log('⏰ Verification timeout, proceeding with fallback...');
+            resolve(false);
+          }, 2000); // 2 second timeout
+        });
+        
+        // Race between verification and timeout
+        const isAvailable = await Promise.race([verificationPromise, timeoutPromise]);
+        
         if (!isAvailable) {
-          console.log('⚠️ Google Books image not available, trying OpenLibrary fallback...');
+          console.log('⚠️ Google Books image not available, getting OpenLibrary fallback...');
           const fallbackUrl = await getOpenLibraryFallback(book.isbn);
           if (fallbackUrl) {
-            console.log('✅ Setting OpenLibrary fallback URL:', fallbackUrl);
+            console.log('✅ Got OpenLibrary fallback, switching to:', fallbackUrl);
             setFallbackImageUrl(fallbackUrl);
+            // Reset loading state to show the new image
+            setLargeImageLoading(true);
+            setLargeImageError(false);
           }
+        } else {
+          console.log('✅ Google Books image is available');
         }
       } catch (error) {
-        console.warn('Error checking image availability:', error);
+        console.warn('Error in background verification:', error);
+        // If verification fails, try fallback anyway
+        if (book.isbn) {
+          console.log('🔄 Verification failed, trying fallback...');
+          const fallbackUrl = await getOpenLibraryFallback(book.isbn);
+          if (fallbackUrl) {
+            console.log('✅ Got OpenLibrary fallback after error:', fallbackUrl);
+            setFallbackImageUrl(fallbackUrl);
+            setLargeImageLoading(true);
+            setLargeImageError(false);
+          }
+        }
       }
     }
   };
@@ -404,7 +446,14 @@ const BookCover: React.FC<BookCoverProps> = ({
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                  <p className="text-slate-600 dark:text-slate-400">Cargando imagen...</p>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    {fallbackImageUrl ? 'Cargando imagen alternativa...' : 'Cargando imagen...'}
+                  </p>
+                  {fallbackImageUrl && (
+                    <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
+                      Buscando la mejor calidad disponible
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -420,40 +469,42 @@ const BookCover: React.FC<BookCoverProps> = ({
             )}
 
             {/* Large image - clean and centered */}
-            <img
-              src={fallbackImageUrl || getBestQualityImage()}
-              alt={`Portada de ${book.titulo}`}
-              className={`max-w-full max-h-[90vh] object-contain rounded-lg ${largeImageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
-              style={{ maxWidth: '100%', maxHeight: '90vh' }}
-              onLoad={() => {
-                console.log('✅ Large image loaded successfully for:', book.titulo, fallbackImageUrl ? '(using fallback)' : '');
-                setLargeImageLoading(false);
-                setLargeImageError(false);
-              }}
-              onError={async (e) => {
-                console.error('❌ Large image failed to load for:', book.titulo, e);
-                
-                // If we don't have a fallback URL yet and we have an ISBN, try to get one
-                if (!fallbackImageUrl && book.isbn && !largeImageError) {
-                  console.log('🔄 Image failed, trying OpenLibrary fallback...');
-                  try {
-                    const fallbackUrl = await getOpenLibraryFallback(book.isbn);
-                    if (fallbackUrl) {
-                      console.log('✅ Got fallback URL, retrying with:', fallbackUrl);
-                      setFallbackImageUrl(fallbackUrl);
-                      setLargeImageLoading(true);
-                      setLargeImageError(false);
-                      return; // Don't set error state, let it retry
+            {!largeImageError && (
+              <img
+                src={fallbackImageUrl || getBestQualityImage()}
+                alt={`Portada de ${book.titulo}`}
+                className={`max-w-full max-h-[90vh] object-contain rounded-lg ${largeImageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+                style={{ maxWidth: '100%', maxHeight: '90vh' }}
+                onLoad={() => {
+                  console.log('✅ Large image loaded successfully for:', book.titulo, fallbackImageUrl ? '(using fallback)' : '');
+                  setLargeImageLoading(false);
+                  setLargeImageError(false);
+                }}
+                onError={async (e) => {
+                  console.error('❌ Large image failed to load for:', book.titulo, e);
+                  
+                  // If we don't have a fallback URL yet and we have an ISBN, try to get one
+                  if (!fallbackImageUrl && book.isbn && !largeImageError) {
+                    console.log('🔄 Image failed, trying OpenLibrary fallback...');
+                    try {
+                      const fallbackUrl = await getOpenLibraryFallback(book.isbn);
+                      if (fallbackUrl) {
+                        console.log('✅ Got fallback URL, retrying with:', fallbackUrl);
+                        setFallbackImageUrl(fallbackUrl);
+                        setLargeImageLoading(true);
+                        setLargeImageError(false);
+                        return; // Don't set error state, let it retry
+                      }
+                    } catch (fallbackError) {
+                      console.warn('Fallback also failed:', fallbackError);
                     }
-                  } catch (fallbackError) {
-                    console.warn('Fallback also failed:', fallbackError);
                   }
-                }
-                
-                setLargeImageLoading(false);
-                setLargeImageError(true);
-              }}
-            />
+                  
+                  setLargeImageLoading(false);
+                  setLargeImageError(true);
+                }}
+              />
+            )}
           </div>
           
           {/* Minimal book info - only title, small and subtle */}
