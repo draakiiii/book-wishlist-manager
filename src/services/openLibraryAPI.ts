@@ -120,36 +120,47 @@ const extractBookData = (data: any, isbn?: string): BookData | null => {
     // Construir URLs de portadas usando el formato correcto
     let smallThumbnail: string | undefined;
     let thumbnail: string | undefined;
+    let largeThumbnail: string | undefined;
     
     // Priorizar cover del endpoint /api/books si está disponible
     if (data.cover) {
       smallThumbnail = data.cover.small;
       thumbnail = data.cover.medium;
+      largeThumbnail = data.cover.large;
     } else if (data.covers && data.covers.length > 0) {
       // Usar cover ID si está disponible
       const coverId = data.covers[0];
       smallThumbnail = `https://covers.openlibrary.org/b/id/${coverId}-S.jpg`;
       thumbnail = `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`;
+      largeThumbnail = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
+    } else if (data.cover_i) {
+      // Usar cover_i del endpoint de búsqueda
+      const coverId = data.cover_i;
+      smallThumbnail = `https://covers.openlibrary.org/b/id/${coverId}-S.jpg`;
+      thumbnail = `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`;
+      largeThumbnail = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
     } else if (bookIsbn) {
       // Usar ISBN como fallback
       smallThumbnail = `https://covers.openlibrary.org/b/isbn/${bookIsbn}-S.jpg`;
       thumbnail = `https://covers.openlibrary.org/b/isbn/${bookIsbn}-M.jpg`;
+      largeThumbnail = `https://covers.openlibrary.org/b/isbn/${bookIsbn}-L.jpg`;
     }
     
-    return {
-      titulo: title,
-      autor: author || undefined,
-      paginas: pages,
-      isbn: bookIsbn,
-      publicacion: publicationYear,
-      editorial: publisher || undefined,
-      descripcion: description || undefined,
-      categorias: categories.length > 0 ? categories : undefined,
-      idioma: language || undefined,
-      smallThumbnail,
-      thumbnail,
-      // Open Library no proporciona viewability ni webReaderLink
-    };
+          return {
+        titulo: title,
+        autor: author || undefined,
+        paginas: pages,
+        isbn: bookIsbn,
+        publicacion: publicationYear,
+        editorial: publisher || undefined,
+        descripcion: description || undefined,
+        categorias: categories.length > 0 ? categories : undefined,
+        idioma: language || undefined,
+        smallThumbnail,
+        thumbnail,
+        largeThumbnail,
+        // Open Library no proporciona viewability ni webReaderLink
+      };
   } catch (error) {
     console.error('Error extracting book data:', error);
     return null;
@@ -401,14 +412,17 @@ export const searchBooksByTitle = async (query: string): Promise<BookData[]> => 
       return [];
     }
 
-    const results = data.docs.map((doc: any) => extractBookData(doc)).filter(Boolean);
+            // Usar directamente los datos de búsqueda, que ya incluyen información básica
+        const results = data.docs.map((doc: any) => extractBookData(doc)).filter(Boolean);
+
+    const validResults = results.filter(Boolean);
 
     // Cache the results
-    (results as any).timestamp = Date.now();
-    searchCache.set(cacheKey, results);
+    (validResults as any).timestamp = Date.now();
+    searchCache.set(cacheKey, validResults);
     
-    console.log(`Found ${results.length} books for query: ${query}`);
-    return results;
+    console.log(`Found ${validResults.length} books for query: ${query}`);
+    return validResults;
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
       console.warn('Search request timeout for query:', query);

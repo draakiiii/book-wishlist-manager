@@ -45,6 +45,7 @@ export interface Libro {
   // Image URLs for optimized loading
   smallThumbnail?: string;
   thumbnail?: string;
+  largeThumbnail?: string;
   // Access info for reading samples
   viewability?: 'NO_PAGES' | 'PARTIAL' | 'ALL_PAGES';
   webReaderLink?: string;
@@ -299,6 +300,7 @@ export interface BookData {
   // Image URLs for optimized loading
   smallThumbnail?: string;
   thumbnail?: string;
+  largeThumbnail?: string;
   // Access info for reading samples
   viewability?: 'NO_PAGES' | 'PARTIAL' | 'ALL_PAGES';
   webReaderLink?: string;

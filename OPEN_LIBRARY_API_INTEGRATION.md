@@ -114,8 +114,9 @@ interface BookData {
   descripcion?: string;    // description.value or description
   categorias?: string[];   // subjects array (from /api/books)
   idioma?: string;         // languages[0].key
-  smallThumbnail?: string; // cover.small from /api/books or generated URL
-  thumbnail?: string;      // cover.medium from /api/books or generated URL
+  smallThumbnail?: string; // cover.small from /api/books or generated URL (S size)
+  thumbnail?: string;      // cover.medium from /api/books or generated URL (M size)
+  largeThumbnail?: string; // cover.large from /api/books or generated URL (L size)
 }
 ```
 
@@ -149,7 +150,7 @@ interface BookData {
 ### 3. Multiple Search Strategies
 - Combined `/api/books` + `/isbn/{isbn}` approach first
 - Direct `/isbn/{isbn}` lookup as fallback
-- Search API as last resort
+- Search API with cover_i support as last resort
 - Multiple ISBN format attempts (with/without 978 prefix)
 
 ### 4. Error Handling
@@ -214,14 +215,35 @@ Users can change the API provider in the settings:
 The integration has been tested with:
 - ✅ Combined `/api/books` + `/isbn/{isbn}` approach
 - ✅ Direct ISBN lookup fallback
-- ✅ General search functionality
+- ✅ General search functionality with cover support
 - ✅ Author search
 - ✅ Subject search
-- ✅ Cover image generation (direct URLs and generated URLs)
+- ✅ Cover image generation (S, M, L sizes)
 - ✅ Error handling and fallbacks
 - ✅ Caching system
 - ✅ Configuration switching
 - ✅ Real-world ISBN example (9788466657662 - "El camino de los reyes")
+- ✅ Title search with cover_i support (Harry Potter example)
+
+## Optimized Cover Usage
+
+The implementation uses different cover sizes based on context:
+
+### Cover Size Selection
+- **Small (S)**: Used in autocomplete dropdowns and compact lists
+- **Medium (M)**: Used in regular book lists and detail views
+- **Large (L)**: Used in large view modals and high-quality displays
+
+### Cover Sources Priority
+1. **Direct URLs** from `/api/books` endpoint (best quality)
+2. **Generated URLs** using cover IDs from `/isbn/{isbn}` endpoint
+3. **Generated URLs** using cover_i from search results
+4. **ISBN-based URLs** as fallback
+
+### Component Integration
+- `BookTitleAutocomplete`: Uses small thumbnails for performance
+- `BookCover`: Automatically selects appropriate size based on context
+- All components respect the user's custom uploaded images
 
 ## Future Enhancements
 
