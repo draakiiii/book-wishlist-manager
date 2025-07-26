@@ -4,6 +4,7 @@ import { getInitialTheme, persistThemePreference } from '../utils/themeConfig';
 import DatabaseService from '../services/databaseService';
 import { useAuth } from './AuthContext';
 import { generateUniqueId } from '../utils/idGenerator';
+import { setConfiguration } from '../services/bookAPI';
 
 const STORAGE_KEY = 'bibliotecaLibrosState_v1_0';
 
@@ -45,7 +46,11 @@ const initialState: AppState = {
     mostrarSeccionLeyendo: true,
     mostrarSeccionLeidos: true,
     mostrarSeccionAbandonados: true,
-    mostrarSeccionSagas: true
+    mostrarSeccionSagas: true,
+    // Configuración de APIs separadas por función
+    scanApiProvider: 'open-library',
+    searchApiProvider: 'google-books',
+    coverApiProvider: 'google-books'
   },
   libros: [],
   sagas: [],
@@ -329,6 +334,8 @@ function agregarEstadoAlHistorial(libro: Libro, nuevoEstado: Libro['estado'], no
 function appReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'SET_CONFIG':
+      // Configurar el servicio de API con la nueva configuración
+      setConfiguration(action.payload);
       return { ...state, config: action.payload };
 
     case 'SET_CAMERA_PREFERENCE':
@@ -1175,9 +1182,12 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
               librosCount: firebaseState.libros.length
             });
             dispatch({ type: 'IMPORT_DATA', payload: firebaseState });
+            // Configurar las APIs con la configuración cargada
+            setConfiguration(firebaseState.config);
           } else {
             console.log('AppStateContext: No Firebase data found for user, starting with empty state', user.uid);
-            // Mantener el estado inicial limpio
+            // Mantener el estado inicial limpio y configurar APIs con valores por defecto
+            setConfiguration(initialState.config);
           }
           setIsInitialized(true);
         } catch (error) {
@@ -1190,6 +1200,8 @@ export const AppStateProvider: React.FC<AppStateProviderProps> = ({
       // Si no está autenticado, empezar con estado vacío
       console.log('AppStateContext: Not authenticated, clearing state');
       dispatch({ type: 'IMPORT_DATA', payload: initialState });
+      // Configurar APIs con valores por defecto
+      setConfiguration(initialState.config);
       setIsInitialized(true);
     }
   }, [isAuthenticated, user?.uid, authLoading, dispatch]); // ¡IMPORTANTE: Cambié user por user?.uid!
