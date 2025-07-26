@@ -30,6 +30,10 @@ interface ScannedBook {
   autor: string;
   paginas: string;
   sagaName: string;
+  genero?: string;
+  editorial?: string;
+  idioma?: string;
+  formato?: string;
   status: 'pending' | 'found' | 'error' | 'loading';
   errorMessage?: string;
   bookData?: BookData;
@@ -63,6 +67,11 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
   const [isInitialized, setIsInitialized] = useState(false);
   const [flashlightEnabled, setFlashlightEnabled] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
+  
+  // Edición en masa
+  const [showBulkEditModal, setShowBulkEditModal] = useState(false);
+  const [bulkEditField, setBulkEditField] = useState<'genero' | 'editorial' | 'idioma' | 'formato'>('genero');
+  const [bulkEditValue, setBulkEditValue] = useState('');
   
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -418,6 +427,10 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
                   titulo: bookData.titulo,
                   autor: bookData.autor || '',
                   paginas: bookData.paginas?.toString() || '',
+                  genero: bookData.genero,
+                  editorial: bookData.editorial,
+                  idioma: bookData.idioma,
+                  formato: bookData.formato,
                   status: 'error',
                   errorMessage: `Duplicado: ${duplicateByTitle.titulo} (${duplicateByTitle.estado})`,
                   bookData
@@ -433,6 +446,10 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
                   titulo: bookData.titulo,
                   autor: bookData.autor || '',
                   paginas: bookData.paginas?.toString() || '',
+                  genero: bookData.genero,
+                  editorial: bookData.editorial,
+                  idioma: bookData.idioma,
+                  formato: bookData.formato,
                   status: 'found',
                   bookData
                 }
@@ -529,12 +546,13 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
         viewability: book.bookData?.viewability,
         webReaderLink: book.bookData?.webReaderLink,
         // Include other book data fields
-        editorial: book.bookData?.editorial,
-        idioma: book.bookData?.idioma,
+        editorial: book.editorial || book.bookData?.editorial,
+        idioma: book.idioma || book.bookData?.idioma,
         descripcion: book.bookData?.descripcion,
         categorias: book.bookData?.categorias,
         publicacion: book.bookData?.publicacion,
-        genero: book.bookData?.genero
+        genero: book.genero || book.bookData?.genero,
+        formato: book.formato || book.bookData?.formato
       }));
 
     if (booksToAdd.length > 0) {
@@ -558,6 +576,48 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
   const clearSelection = () => {
     setSelectedBooks(new Set());
     addFeedback('info', 'Selección limpiada');
+  };
+
+  const handleBulkEdit = () => {
+    if (selectedBooks.size === 0) {
+      addFeedback('warning', 'No hay libros seleccionados para editar');
+      return;
+    }
+
+    if (!bulkEditValue.trim()) {
+      addFeedback('warning', 'Por favor ingresa un valor para editar');
+      return;
+    }
+
+    const fieldLabels = {
+      genero: 'género',
+      editorial: 'editorial',
+      idioma: 'idioma',
+      formato: 'formato'
+    };
+
+    const updatedBooks = Array.from(selectedBooks).map(id => {
+      const book = scannedBooks.find(b => b.id === id);
+      if (book) {
+        return {
+          ...book,
+          [bulkEditField]: bulkEditValue.trim()
+        };
+      }
+      return null;
+    }).filter(Boolean) as ScannedBook[];
+
+    setScannedBooks(prev => 
+      prev.map(book => {
+        const updatedBook = updatedBooks.find(ub => ub.id === book.id);
+        return updatedBook || book;
+      })
+    );
+
+    addFeedback('success', `${selectedBooks.size} libros actualizados con ${fieldLabels[bulkEditField]}: ${bulkEditValue.trim()}`);
+    setSelectedBooks(new Set());
+    setShowBulkEditModal(false);
+    setBulkEditValue('');
   };
 
   const handleCloseModal = async () => {
@@ -585,6 +645,8 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
     setShowBooksList(false);
     setFeedbackMessages([]);
     setFlashlightEnabled(false);
+    setShowBulkEditModal(false);
+    setBulkEditValue('');
     onClose();
   };
 
@@ -846,12 +908,20 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
                 <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400 mb-3">
                   <span>Seleccionados: {selectedBooks.size}</span>
                   {selectedBooks.size > 0 && (
-                    <button
-                      onClick={addSelectedBooks}
-                      className="px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors duration-200"
-                    >
-                      Agregar Seleccionados
-                    </button>
+                    <>
+                      <button
+                        onClick={addSelectedBooks}
+                        className="px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors duration-200"
+                      >
+                        Agregar Seleccionados
+                      </button>
+                      <button
+                        onClick={() => setShowBulkEditModal(true)}
+                        className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors duration-200"
+                      >
+                        Editar en Masa
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -936,6 +1006,30 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
                                 className="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                                 placeholder="Saga"
                               />
+                              <input
+                                type="text"
+                                value={book.genero || ''}
+                                onChange={(e) => updateBook(book.id, { genero: e.target.value })}
+                                className="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                                placeholder="Género"
+                              />
+                              <input
+                                type="text"
+                                value={book.editorial || ''}
+                                onChange={(e) => updateBook(book.id, { editorial: e.target.value })}
+                                className="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                                placeholder="Editorial"
+                              />
+                              <select
+                                value={book.formato || ''}
+                                onChange={(e) => updateBook(book.id, { formato: e.target.value })}
+                                className="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                              >
+                                <option value="">Seleccionar formato</option>
+                                <option value="fisico">Físico</option>
+                                <option value="digital">Digital</option>
+                                <option value="audiolibro">Audiolibro</option>
+                              </select>
                               <div className="flex space-x-2">
                                 <button
                                   onClick={() => setEditingBook(null)}
@@ -957,13 +1051,30 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
                                   {book.autor}
                                 </p>
                               )}
-                              {book.paginas && (
-                                <p className="text-slate-500 dark:text-slate-500 text-xs">
-                                  {book.paginas} páginas
-                                </p>
-                              )}
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {book.paginas && (
+                                  <span className="text-slate-500 dark:text-slate-500 text-xs bg-slate-100 dark:bg-slate-600 px-1 rounded">
+                                    {book.paginas} páginas
+                                  </span>
+                                )}
+                                {book.genero && (
+                                  <span className="text-slate-500 dark:text-slate-500 text-xs bg-blue-100 dark:bg-blue-900/20 px-1 rounded">
+                                    {book.genero}
+                                  </span>
+                                )}
+                                {book.editorial && (
+                                  <span className="text-slate-500 dark:text-slate-500 text-xs bg-green-100 dark:bg-green-900/20 px-1 rounded">
+                                    {book.editorial}
+                                  </span>
+                                )}
+                                {book.formato && (
+                                  <span className="text-slate-500 dark:text-slate-500 text-xs bg-purple-100 dark:bg-purple-900/20 px-1 rounded">
+                                    {book.formato}
+                                  </span>
+                                )}
+                              </div>
                               {book.errorMessage && (
-                                <p className="text-red-600 dark:text-red-400 text-xs">
+                                <p className="text-red-600 dark:text-red-400 text-xs mt-1">
                                   {book.errorMessage}
                                 </p>
                               )}
@@ -1011,6 +1122,100 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
         confirmText={dialog.confirmText}
         cancelText={dialog.cancelText}
       />
+    )}
+
+    {/* Modal de edición en masa */}
+    {showBulkEditModal && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        onClick={() => setShowBulkEditModal(false)}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Edición en Masa
+            </h3>
+            <button
+              onClick={() => setShowBulkEditModal(false)}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
+            >
+              <X className="h-5 w-5 text-slate-500" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Campo a editar
+              </label>
+              <select
+                value={bulkEditField}
+                onChange={(e) => setBulkEditField(e.target.value as 'genero' | 'editorial' | 'idioma' | 'formato')}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+              >
+                <option value="genero">Género</option>
+                <option value="editorial">Editorial</option>
+                <option value="idioma">Idioma</option>
+                <option value="formato">Formato</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Nuevo valor
+              </label>
+              {bulkEditField === 'formato' ? (
+                <select
+                  value={bulkEditValue}
+                  onChange={(e) => setBulkEditValue(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                >
+                  <option value="">Seleccionar formato</option>
+                  <option value="fisico">Físico</option>
+                  <option value="digital">Digital</option>
+                  <option value="audiolibro">Audiolibro</option>
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={bulkEditValue}
+                  onChange={(e) => setBulkEditValue(e.target.value)}
+                  placeholder={`Ingresa el nuevo ${bulkEditField === 'genero' ? 'género' : bulkEditField}`}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                />
+              )}
+            </div>
+
+            <div className="text-sm text-slate-600 dark:text-slate-400">
+              Se aplicará a {selectedBooks.size} libro{selectedBooks.size !== 1 ? 's' : ''} seleccionado{selectedBooks.size !== 1 ? 's' : ''}.
+            </div>
+
+            <div className="flex space-x-3 pt-4">
+              <button
+                onClick={() => setShowBulkEditModal(false)}
+                className="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors duration-200 hover:bg-slate-300 dark:hover:bg-slate-500"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleBulkEdit}
+                className="flex-1 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors duration-200"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
     )}
   </>
   );
