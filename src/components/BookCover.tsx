@@ -311,7 +311,7 @@ const BookCover: React.FC<BookCoverProps> = ({
 
   // Handle view large image
   const handleViewLarge = async () => {
-    console.log('🖼️ Opening large view for book:', book.titulo);
+    console.log('🖼️ Starting large view process for book:', book.titulo);
     console.log('📊 Image sources available:', {
       customImage: book.customImage ? 'Yes' : 'No',
       thumbnail: book.thumbnail || 'Not available',
@@ -319,7 +319,6 @@ const BookCover: React.FC<BookCoverProps> = ({
       isbn: book.isbn || 'Not available'
     });
     
-    setShowLargeView(true);
     setShowMenu(false);
     // Reset large image states
     setLargeImageLoading(true);
@@ -328,7 +327,11 @@ const BookCover: React.FC<BookCoverProps> = ({
     setImageReady(false);
     
     // Start background verification and fallback process
-    startImageVerification();
+    await startImageVerification();
+    
+    // Only open modal after verification is complete
+    console.log('✅ Image verification complete, opening modal');
+    setShowLargeView(true);
   };
 
   // Background image verification and fallback process
@@ -368,8 +371,8 @@ const BookCover: React.FC<BookCoverProps> = ({
           if (fallbackUrl) {
             console.log('✅ Got OpenLibrary fallback, switching to:', fallbackUrl);
             setFallbackImageUrl(fallbackUrl);
-            // Keep loading state until image loads
-            setLargeImageLoading(true);
+            // Image is ready to show
+            setLargeImageLoading(false);
             setLargeImageError(false);
             setImageReady(true); // Ready to show the fallback image
           } else {
@@ -380,8 +383,8 @@ const BookCover: React.FC<BookCoverProps> = ({
           }
         } else {
           console.log('✅ Google Books image is available');
-          // Keep loading state until image loads
-          setLargeImageLoading(true);
+          // Image is ready to show
+          setLargeImageLoading(false);
           setImageReady(true); // Ready to show the image
         }
       } catch (error) {
@@ -393,7 +396,7 @@ const BookCover: React.FC<BookCoverProps> = ({
           if (fallbackUrl) {
             console.log('✅ Got OpenLibrary fallback after error:', fallbackUrl);
             setFallbackImageUrl(fallbackUrl);
-            setLargeImageLoading(true);
+            setLargeImageLoading(false);
             setLargeImageError(false);
             setImageReady(true); // Ready to show the fallback image
           } else {
@@ -413,7 +416,7 @@ const BookCover: React.FC<BookCoverProps> = ({
       // No Google Books URL or no ISBN, try to show what we have
       if (bestImage) {
         console.log('✅ Using available image without verification');
-        setLargeImageLoading(true); // Keep loading until image loads
+        setLargeImageLoading(false); // Image is ready to show
         setImageReady(true); // Ready to show the image
       } else {
         console.log('❌ No image available');
@@ -477,7 +480,7 @@ const BookCover: React.FC<BookCoverProps> = ({
           
           {/* Image container - centered and clean */}
           <div className="relative bg-slate-50 dark:bg-slate-900 flex items-center justify-center min-h-[400px]">
-            {/* Loading state for large image */}
+            {/* Loading state for large image - only show if we're still loading */}
             {largeImageLoading && !largeImageError && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
