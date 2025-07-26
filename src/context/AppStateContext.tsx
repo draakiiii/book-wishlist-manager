@@ -3,6 +3,7 @@ import { AppState, Action, Libro, ScanHistory, Statistics, Saga, EstadoLibro, Le
 import { getInitialTheme, persistThemePreference } from '../utils/themeConfig';
 import DatabaseService from '../services/databaseService';
 import { useAuth } from './AuthContext';
+import { generateUniqueId } from '../utils/idGenerator';
 
 const STORAGE_KEY = 'bibliotecaLibrosState_v1_0';
 
@@ -353,7 +354,7 @@ function appReducer(state: AppState, action: Action): AppState {
       
       const nuevoLibro = {
         ...action.payload,
-        id: Date.now(),
+        id: action.payload.id || generateUniqueId(), // Usar el ID proporcionado o generar uno único
         fechaAgregado: Date.now(),
         historialEstados: [{
           estado: action.payload.estado,
@@ -387,7 +388,7 @@ function appReducer(state: AppState, action: Action): AppState {
           );
         } else {
           const nuevaSaga = {
-            id: Date.now(),
+            id: generateUniqueId(),
             name: nuevoLibro.sagaName.trim(),
             count: 1,
             isComplete: false,
@@ -427,7 +428,7 @@ function appReducer(state: AppState, action: Action): AppState {
         } else if (updates.sagaName.trim()) {
           // Crear nueva saga
           const nuevaSaga = {
-            id: Date.now(),
+            id: generateUniqueId(),
             name: updates.sagaName.trim(),
             count: 0,
             isComplete: false,
@@ -515,7 +516,7 @@ function appReducer(state: AppState, action: Action): AppState {
       
       // Crear nueva lectura
       const nuevaLectura: Lectura = {
-        id: Date.now(),
+        id: generateUniqueId(),
         fechaInicio: libro.fechaInicio || fecha,
         fechaFin: fecha,
         calificacion,
@@ -549,7 +550,7 @@ function appReducer(state: AppState, action: Action): AppState {
         const sagaInfo = estadoConSagas.sagas.find(s => s.id === libro.sagaId);
         if (sagaInfo) {
           estadoConSagas.sagaNotifications.push({
-            id: Date.now(),
+            id: generateUniqueId(),
             sagaName: sagaInfo.name,
             timestamp: Date.now()
           });
@@ -695,7 +696,7 @@ function appReducer(state: AppState, action: Action): AppState {
 
     case 'ADD_SAGA': {
       const nuevaSaga = {
-        id: Date.now(),
+        id: generateUniqueId(),
         name: action.payload.name,
         count: 0,
         isComplete: false,
@@ -798,7 +799,7 @@ function appReducer(state: AppState, action: Action): AppState {
 
     case 'ADD_SAGA_NOTIFICATION': {
       const nuevaNotificacion = {
-        id: Date.now(),
+        id: generateUniqueId(),
         sagaName: action.payload.sagaName,
         timestamp: Date.now()
       };
@@ -821,7 +822,7 @@ function appReducer(state: AppState, action: Action): AppState {
       
       const newScanHistory: ScanHistory = {
         ...action.payload,
-        id: Date.now(),
+        id: generateUniqueId(),
         timestamp: Date.now()
       };
       
@@ -921,7 +922,7 @@ function appReducer(state: AppState, action: Action): AppState {
         if (libro.id === libroId) {
           const nuevaLectura = {
             ...lectura,
-            id: Date.now()
+            id: generateUniqueId()
           };
           return {
             ...libro,

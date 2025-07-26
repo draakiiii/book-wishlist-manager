@@ -20,6 +20,7 @@ import { useAppState } from '../context/AppStateContext';
 import { Libro, BookData } from '../types';
 import { validateISBN, fetchBookData } from '../services/googleBooksAPI';
 import { useDialog } from '../hooks/useDialog';
+import { generateUniqueId } from '../utils/idGenerator';
 import Dialog from './Dialog';
 
 interface ScannedBook {
@@ -371,7 +372,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
     }
 
     const newBook: ScannedBook = {
-      id: Date.now() + Math.random(),
+      id: generateUniqueId(),
       isbn: scannedCode,
       titulo: '',
       autor: '',
@@ -504,7 +505,7 @@ const BulkScanModal: React.FC<BulkScanModalProps> = ({ isOpen, onClose, onBooksA
     const booksToAdd: Libro[] = scannedBooks
       .filter(book => selectedBooks.has(book.id) && book.status === 'found')
       .map(book => ({
-        id: Date.now() + Math.random(),
+        id: generateUniqueId(),
         titulo: book.titulo,
         autor: book.autor,
         paginas: parseInt(book.paginas) || undefined,

@@ -4,6 +4,7 @@ import { Heart, Search, Camera, Loader2, CheckCircle, AlertCircle } from 'lucide
 import { useAppState } from '../context/AppStateContext';
 import { Libro, BookData } from '../types';
 import { fetchBookData } from '../services/googleBooksAPI';
+import { generateUniqueId } from '../utils/idGenerator';
 import BookTitleAutocomplete from './BookTitleAutocomplete';
 import ISBNInputModal from './ISBNInputModal';
 import BarcodeScannerModal from './BarcodeScannerModal';
@@ -99,7 +100,7 @@ const WishlistForm: React.FC<WishlistFormProps> = ({ onOpenConfig }) => {
 
   const addBookToWishlist = (bookData: BookData) => {
     const nuevoLibro: Libro = {
-      id: Date.now(),
+      id: generateUniqueId(),
       titulo: bookData.titulo,
       autor: bookData.autor,
       paginas: bookData.paginas,
