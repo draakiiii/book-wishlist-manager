@@ -44,7 +44,7 @@ const BookCover: React.FC<BookCoverProps> = ({
     
     // Fall back to API images based on context
     const apiImage = (context === 'detail' || context === 'gallery' || size === 'large') 
-      ? book.thumbnail || book.smallThumbnail 
+      ? book.largeThumbnail || book.thumbnail || book.smallThumbnail 
       : book.smallThumbnail || book.thumbnail;
     
     console.log('📚 Using API image for:', book.titulo, apiImage ? 'Yes' : 'No');
@@ -88,10 +88,11 @@ const BookCover: React.FC<BookCoverProps> = ({
 
   // Get the best quality image available for the large view modal
   const getBestQualityImage = () => {
-    // Priority order for large view: customImage > thumbnail > smallThumbnail
+    // Priority order for large view: customImage > largeThumbnail > thumbnail > smallThumbnail
     console.log('🔍 Selecting best quality image for:', book.titulo);
     console.log('📊 Available images:', {
       customImage: book.customImage ? 'Yes' : 'No',
+      largeThumbnail: book.largeThumbnail || 'Not available',
       thumbnail: book.thumbnail || 'Not available',
       smallThumbnail: book.smallThumbnail || 'Not available'
     });
@@ -100,8 +101,12 @@ const BookCover: React.FC<BookCoverProps> = ({
       console.log('✅ Selected: Custom image');
       return book.customImage;
     }
+    if (book.largeThumbnail) {
+      console.log('✅ Selected: Large thumbnail (best quality)');
+      return book.largeThumbnail;
+    }
     if (book.thumbnail) {
-      console.log('✅ Selected: High resolution thumbnail');
+      console.log('✅ Selected: Medium resolution thumbnail');
       return optimizeImageUrl(book.thumbnail);
     }
     if (book.smallThumbnail) {

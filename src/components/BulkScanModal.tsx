@@ -18,7 +18,7 @@ import {
 import { BrowserMultiFormatReader } from '@zxing/library';
 import { useAppState } from '../context/AppStateContext';
 import { Libro, BookData } from '../types';
-import { validateISBN, fetchBookData } from '../services/googleBooksAPI';
+import { validateISBN, fetchBookData } from '../services/bookAPI';
 import { useDialog } from '../hooks/useDialog';
 import { generateUniqueId } from '../utils/idGenerator';
 import Dialog from './Dialog';
