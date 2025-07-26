@@ -10,6 +10,7 @@ import {
 import { useAppState } from '../context/AppStateContext';
 import CollapsibleConfig from './CollapsibleConfig';
 import CollapsibleSection from './CollapsibleSection';
+import CollapsibleBookList from './CollapsibleBookList';
 import ProgressBar from './ProgressBar';
 import WishlistForm from './WishlistForm';
 import TBRForm from './TBRForm';
@@ -54,13 +55,12 @@ const Dashboard: React.FC = () => {
           iconColor="text-secondary-600 dark:text-secondary-400"
         >
           <WishlistForm />
-          <div className="mt-4 sm:mt-6">
-            <BookList 
-              books={librosWishlist}
-              type="wishlist"
-              emptyMessage="Tu lista de deseos está vacía."
-            />
-          </div>
+          <CollapsibleBookList 
+            books={librosWishlist}
+            type="wishlist"
+            emptyMessage="Tu lista de deseos está vacía."
+            sectionName="wishlist"
+          />
         </CollapsibleSection>
       )}
 
@@ -73,13 +73,12 @@ const Dashboard: React.FC = () => {
           iconColor="text-warning-600 dark:text-warning-400"
         >
           <TBRForm />
-          <div className="mt-4 sm:mt-6">
-            <BookList 
-              books={librosTBR}
-              type="tbr"
-              emptyMessage="Tu pila está vacía."
-            />
-          </div>
+          <CollapsibleBookList 
+            books={librosTBR}
+            type="tbr"
+            emptyMessage="Tu pila está vacía."
+            sectionName="tbr"
+          />
         </CollapsibleSection>
       )}
 
@@ -91,10 +90,11 @@ const Dashboard: React.FC = () => {
           iconBgColor="bg-primary-100 dark:bg-primary-900/30"
           iconColor="text-primary-600 dark:text-primary-400"
         >
-          <BookList 
+          <CollapsibleBookList 
             books={librosLeyendo}
             type="leyendo"
             emptyMessage="No estás leyendo ningún libro actualmente."
+            sectionName="leyendo"
           />
         </CollapsibleSection>
       )}
@@ -107,10 +107,11 @@ const Dashboard: React.FC = () => {
           iconBgColor="bg-green-100 dark:bg-green-900/30"
           iconColor="text-green-600 dark:text-green-400"
         >
-          <BookList 
+          <CollapsibleBookList 
             books={librosLeidos}
             type="leido"
             emptyMessage="Aún no has terminado ningún libro."
+            sectionName="leidos"
           />
         </CollapsibleSection>
       )}
@@ -123,10 +124,11 @@ const Dashboard: React.FC = () => {
           iconBgColor="bg-red-100 dark:bg-red-900/30"
           iconColor="text-red-600 dark:text-red-400"
         >
-          <BookList 
+          <CollapsibleBookList 
             books={librosAbandonados}
             type="abandonado"
             emptyMessage="No has abandonado ningún libro."
+            sectionName="abandonados"
           />
         </CollapsibleSection>
       )}

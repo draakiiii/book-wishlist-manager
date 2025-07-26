@@ -31,24 +31,10 @@ const ProgressBar: React.FC = () => {
   const librosParaEstadisticas = libros.filter(l => l.estado !== 'wishlist');
   
   // Calcular valor total de la colección (excluyendo wishlist)
-  const librosConPrecio = librosParaEstadisticas.filter(l => l.precio && l.precio > 0);
-  const valorTotalColeccion = librosConPrecio.reduce((total, libro) => total + (libro.precio || 0), 0);
-  
-  // Debug: mostrar información en consola
-  console.log('Debug valores:', {
-    totalLibros: librosParaEstadisticas.length,
-    librosConPrecio: librosConPrecio.length,
-    valorTotalColeccion,
-    paginasLeidas,
-    librosConPrecioDetalle: librosConPrecio.map(l => ({ titulo: l.titulo, precio: l.precio, estado: l.estado })),
-    librosConPaginas: librosParaEstadisticas.filter(l => l.paginasLeidas || (l.estado === 'leido' && l.paginas)).map(l => ({ 
-      titulo: l.titulo, 
-      estado: l.estado, 
-      paginas: l.paginas, 
-      paginasLeidas: l.paginasLeidas 
-    }))
-  });
-  
+  const valorTotalColeccion = libros
+    .filter(libro => libro.estado !== 'wishlist' && libro.precio && libro.precio > 0)
+    .reduce((total, libro) => total + (libro.precio || 0), 0);
+
   // Objetivos anuales - solo libros, no páginas
   const objetivoLibros = config.objetivoLecturaAnual || 0;
   

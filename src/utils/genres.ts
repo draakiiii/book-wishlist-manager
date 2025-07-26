@@ -1,0 +1,55 @@
+// Lista de géneros literarios predefinidos
+export const PREDEFINED_GENRES = [
+  'Ficción',
+  'No ficción',
+  'Ciencia ficción',
+  'Fantasía',
+  'Romance',
+  'Misterio',
+  'Thriller',
+  'Terror',
+  'Aventura',
+  'Drama',
+  'Histórica',
+  'Biografía',
+  'Autobiografía',
+  'Ensayo',
+  'Poesía',
+  'Teatro',
+  'Juvenil',
+  'Infantil',
+  'Distopía',
+  'Utopía',
+  'Paranormal',
+  'Contemporánea',
+  'Clásica',
+  'Filosófica',
+  'Psicológica',
+  'Política',
+  'Económica',
+  'Técnica',
+  'Académica',
+  'Autoayuda',
+  'Salud',
+  'Deportes',
+  'Cocina',
+  'Viajes',
+  'Arte',
+  'Música',
+  'Historia',
+  'Ciencias',
+  'Tecnología',
+  'Religión',
+  'Espiritualidad',
+  'Humor',
+  'Sátira',
+  'Cómic',
+  'Manga',
+  'Novela gráfica'
+].sort();
+
+// Función para obtener todos los géneros únicos (predefinidos + existentes)
+export const getAllGenres = (existingGenres: string[] = []): string[] => {
+  const combined = [...PREDEFINED_GENRES, ...existingGenres];
+  return [...new Set(combined)].filter(Boolean).sort();
+};
