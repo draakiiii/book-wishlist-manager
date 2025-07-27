@@ -17,11 +17,55 @@ let currentConfig: Configuracion = {};
 
 export const setConfiguration = (config: Configuracion) => {
   currentConfig = config;
+  console.log('⚙️ Configuration updated:', {
+    scanApiProvider: config.scanApiProvider,
+    searchApiProvider: config.searchApiProvider,
+    coverApiProvider: config.coverApiProvider
+  });
+};
+
+// Función para verificar y depurar la configuración actual
+export const debugConfiguration = () => {
+  console.log('🐛 DEBUG: Configuration Status', {
+    currentConfig,
+    defaultConfig: DEFAULT_CONFIG,
+    scanProvider: getScanApiProvider(),
+    searchProvider: getSearchApiProvider(),
+    coverProvider: getCoverApiProvider()
+  });
+  
+  return {
+    currentConfig,
+    defaultConfig: DEFAULT_CONFIG,
+    scanProvider: getScanApiProvider(),
+    searchProvider: getSearchApiProvider(),
+    coverProvider: getCoverApiProvider()
+  };
+};
+
+// Función para forzar la configuración recomendada
+export const forceRecommendedConfiguration = () => {
+  const recommendedConfig = {
+    scanApiProvider: 'open-library' as ApiProvider,
+    searchApiProvider: 'google-books' as ApiProvider,
+    coverApiProvider: 'google-books' as ApiProvider
+  };
+  
+  currentConfig = { ...currentConfig, ...recommendedConfig };
+  console.log('🔧 Forced recommended configuration:', recommendedConfig);
+  
+  return currentConfig;
 };
 
 // Función para obtener el proveedor de API para escaneo
 export const getScanApiProvider = (): ApiProvider => {
-  return currentConfig.scanApiProvider || DEFAULT_CONFIG.scanApiProvider;
+  const provider = currentConfig.scanApiProvider || DEFAULT_CONFIG.scanApiProvider;
+  console.log('🔍 Getting scan API provider:', {
+    fromCurrentConfig: currentConfig.scanApiProvider,
+    fromDefaultConfig: DEFAULT_CONFIG.scanApiProvider,
+    finalProvider: provider
+  });
+  return provider;
 };
 
 // Función para obtener el proveedor de API para búsqueda
@@ -39,6 +83,11 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
   const provider = getScanApiProvider();
   
   console.log(`📚 Fetching book data for ISBN ${isbn} using ${provider}`);
+  console.log('🔧 Current configuration:', {
+    currentConfig,
+    defaultConfig: DEFAULT_CONFIG,
+    scanProvider: provider
+  });
   
   try {
     if (provider === 'open-library') {
@@ -286,3 +335,18 @@ export const getAllCacheStats = () => {
 // Exportar funciones específicas de cada API para uso directo si es necesario
 export const GoogleBooks = GoogleBooksAPI;
 export const OpenLibrary = OpenLibraryAPI;
+
+// Exportar funciones de debugging para desarrollo
+export const Debug = {
+  debugConfiguration,
+  forceRecommendedConfiguration,
+  getScanApiProvider,
+  getSearchApiProvider,
+  getCoverApiProvider
+};
+
+// Hacer las funciones de debug disponibles globalmente en desarrollo
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  (window as any).BookAPIDebug = Debug;
+  console.log('🚀 BookAPIDebug functions available in console:', Object.keys(Debug));
+}
