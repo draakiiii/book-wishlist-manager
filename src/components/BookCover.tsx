@@ -57,7 +57,10 @@ const BookCover: React.FC<BookCoverProps> = ({
 
   // Optimize image URLs for better quality based on source
   const optimizeImageUrl = (url: string | undefined): string | undefined => {
-    if (!url) return url;
+    if (!url) {
+      console.log('⚠️ No URL provided to optimize for book:', book.titulo);
+      return url;
+    }
     
     // Check if it's a Google Books URL
     if (url.includes('books.google.com') || url.includes('books.googleusercontent.com')) {
@@ -123,45 +126,33 @@ const BookCover: React.FC<BookCoverProps> = ({
     }
   };
 
-  // Function to get OpenLibrary fallback URL
+  // Function to get OpenLibrary fallback URL - now using the improved API
   const getOpenLibraryFallback = async (isbn: string): Promise<string | null> => {
     if (!isbn) return null;
     
     try {
-      const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
+      // Import the improved function from OpenLibrary API
+      const { getBestAvailableCover } = await import('../services/openLibraryAPI');
       
-      // Try to get cover using cover ID first
-      const bookUrl = `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`;
-      const bookResponse = await fetch(bookUrl);
+      // Try to get the large size cover for the best quality
+      const coverUrl = await getBestAvailableCover(isbn, 'L');
       
-      if (bookResponse.ok) {
-        const bookData = await bookResponse.json();
-        const bookKey = `ISBN:${cleanIsbn}`;
-        
-        if (bookData[bookKey] && bookData[bookKey].cover) {
-          const coverInfo = bookData[bookKey].cover;
-          const coverId = coverInfo.medium || coverInfo.large || coverInfo.small;
-          
-          if (coverId) {
-            const coverIdMatch = coverId.match(/\/(\d+)-[SML]\.jpg$/);
-            if (coverIdMatch) {
-              const numericCoverId = coverIdMatch[1];
-              const largeUrl = `https://covers.openlibrary.org/b/id/${numericCoverId}-L.jpg`;
-              console.log('✅ Found OpenLibrary fallback with cover ID:', largeUrl);
-              return largeUrl;
-            }
-          }
-        }
+      if (coverUrl) {
+        console.log('✅ Got OpenLibrary fallback using improved API:', coverUrl);
+        return coverUrl;
       }
       
-      // Fallback to direct ISBN URL
-      const directUrl = `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-L.jpg`;
-      console.log('🔄 Trying direct OpenLibrary fallback:', directUrl);
-      return directUrl;
+      console.log('❌ No OpenLibrary fallback found for ISBN:', isbn);
+      return null;
       
     } catch (error) {
       console.warn('Error getting OpenLibrary fallback:', error);
-      return null;
+      
+      // Fallback to the old method if the new API fails
+      const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
+      const directUrl = `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-L.jpg`;
+      console.log('🔄 Using direct OpenLibrary fallback as last resort:', directUrl);
+      return directUrl;
     }
   };
 
