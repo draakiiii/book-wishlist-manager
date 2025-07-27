@@ -72,7 +72,7 @@ const fetchAuthorData = async (authorKey: string): Promise<string> => {
 };
 
 // Función para generar URLs de portadas
-const generateCoverUrls = (coverId: number | string, isbn?: string) => {
+const generateCoverUrls = (coverId: number | string | null, isbn?: string) => {
   const urls = {
     smallThumbnail: '',
     thumbnail: ''
@@ -81,10 +81,12 @@ const generateCoverUrls = (coverId: number | string, isbn?: string) => {
   if (coverId) {
     urls.smallThumbnail = `${API_CONFIG.coversBaseUrl}/id/${coverId}-S.jpg`;
     urls.thumbnail = `${API_CONFIG.coversBaseUrl}/id/${coverId}-M.jpg`;
+    console.log('📸 Generated cover URLs using cover ID:', coverId);
   } else if (isbn) {
     const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
     urls.smallThumbnail = `${API_CONFIG.coversBaseUrl}/isbn/${cleanIsbn}-S.jpg`;
     urls.thumbnail = `${API_CONFIG.coversBaseUrl}/isbn/${cleanIsbn}-M.jpg`;
+    console.log('📸 Generated cover URLs using ISBN:', cleanIsbn);
   }
 
   return urls;
@@ -158,8 +160,24 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
     // Extract subjects/categories
     const categories = book.subjects ? book.subjects.map((s: any) => s.name || s) : [];
     
-    // Extract covers
-    const coverUrls = generateCoverUrls(book.cover?.medium || book.cover?.large, cleanIsbn);
+    // Extract covers - handle different OpenLibrary response formats
+    let coverUrls = { smallThumbnail: '', thumbnail: '' };
+    
+    if (book.cover) {
+      // OpenLibrary returns direct URLs in the cover object
+      coverUrls.smallThumbnail = book.cover.small || '';
+      coverUrls.thumbnail = book.cover.medium || book.cover.large || '';
+      console.log('✅ Using direct cover URLs from OpenLibrary API response');
+    } else {
+      // Fallback to generating URLs based on ISBN
+      coverUrls = generateCoverUrls(null, cleanIsbn);
+      console.log('📖 Generated fallback cover URLs based on ISBN');
+    }
+    
+    // Additional validation - ensure we have at least one URL
+    if (!coverUrls.smallThumbnail && !coverUrls.thumbnail) {
+      console.warn('⚠️ No cover URLs could be generated for book:', book.title || 'Unknown title');
+    }
     
     const bookData: BookData = {
       titulo: title,
@@ -179,6 +197,11 @@ export const fetchBookData = async (isbn: string): Promise<BookData | null> => {
     bookCache.set(cacheKey, bookData);
     
     console.log('Open Library book data found and cached:', bookData);
+    console.log('📸 Cover URLs extracted:', {
+      smallThumbnail: coverUrls.smallThumbnail || 'Not available',
+      thumbnail: coverUrls.thumbnail || 'Not available',
+      hasCoverObject: !!book.cover
+    });
     return bookData;
     
   } catch (error) {
@@ -474,5 +497,60 @@ export const getBookCovers = async (isbn?: string, olid?: string, coverId?: stri
   } catch (error) {
     console.error('Error generating cover URLs:', error);
     return covers;
+  }
+};
+
+// Función para verificar si una imagen de portada existe
+export const checkCoverExists = async (url: string): Promise<boolean> => {
+  try {
+    const response = await fetchWithTimeout(url, { method: 'HEAD' }, 5000);
+    return response.ok;
+  } catch (error) {
+    console.warn('Error checking cover existence:', error);
+    return false;
+  }
+};
+
+// Función mejorada para obtener la mejor portada disponible
+export const getBestAvailableCover = async (isbn: string, size: 'S' | 'M' | 'L' = 'M'): Promise<string | null> => {
+  try {
+    const cleanIsbn = isbn.replace(/[^0-9X]/gi, '');
+    
+    // 1. Primero intenta obtener datos del libro completo para ver si tiene cover ID
+    const bookUrl = `${API_CONFIG.baseUrl}${API_CONFIG.booksEndpoint}?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`;
+    const response = await fetchWithTimeout(bookUrl);
+    
+    if (response.ok) {
+      const data = await response.json();
+      const bookKey = `ISBN:${cleanIsbn}`;
+      
+      if (data[bookKey] && data[bookKey].cover) {
+        const cover = data[bookKey].cover;
+        const coverUrl = size === 'S' ? cover.small : size === 'L' ? cover.large : cover.medium;
+        
+        if (coverUrl) {
+          console.log(`✅ Found cover with ID-based URL (${size}):`, coverUrl);
+          return coverUrl;
+        }
+      }
+    }
+    
+    // 2. Fallback a URLs basadas en ISBN
+    const fallbackUrl = `${API_CONFIG.coversBaseUrl}/isbn/${cleanIsbn}-${size}.jpg`;
+    console.log(`📖 Trying ISBN-based fallback URL (${size}):`, fallbackUrl);
+    
+    // Verificar si existe
+    const exists = await checkCoverExists(fallbackUrl);
+    if (exists) {
+      console.log(`✅ ISBN-based cover confirmed to exist (${size}):`, fallbackUrl);
+      return fallbackUrl;
+    }
+    
+    console.log(`❌ No cover found for ISBN ${cleanIsbn} in size ${size}`);
+    return null;
+    
+  } catch (error) {
+    console.error('Error getting best available cover:', error);
+    return null;
   }
 };
