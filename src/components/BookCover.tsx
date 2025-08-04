@@ -1,7 +1,8 @@
 import React, { useState, Fragment, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { BookOpen, Eye, Upload, X } from 'lucide-react';
+import { BookOpen, Eye, Upload, X, Search } from 'lucide-react';
 import { Libro } from '../types';
+import GoogleImagesSearchModal from './GoogleImagesSearchModal';
 
 interface BookCoverProps {
   book: Libro;
@@ -22,6 +23,7 @@ const BookCover: React.FC<BookCoverProps> = ({
   const [imageLoading, setImageLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [showLargeView, setShowLargeView] = useState(false);
+  const [showGoogleImagesModal, setShowGoogleImagesModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [largeImageLoading, setLargeImageLoading] = useState(true);
   const [largeImageError, setLargeImageError] = useState(false);
@@ -300,6 +302,13 @@ const BookCover: React.FC<BookCoverProps> = ({
     }
   };
 
+  // Handle image selection from Google Images search
+  const handleGoogleImageSelect = (imageUrl: string) => {
+    if (onImageUpdate) {
+      onImageUpdate(book.id, imageUrl);
+    }
+  };
+
   // Handle view large image
   const handleViewLarge = async () => {
     console.log('🖼️ Starting large view process for book:', book.titulo);
@@ -428,13 +437,16 @@ const BookCover: React.FC<BookCoverProps> = ({
         if (showLargeView) {
           setShowLargeView(false);
         }
+        if (showGoogleImagesModal) {
+          setShowGoogleImagesModal(false);
+        }
       }
     };
 
-    if (showMenu || showLargeView) {
+    if (showMenu || showLargeView || showGoogleImagesModal) {
       document.addEventListener('keydown', handleKeyDown);
       // Prevent body scroll when modal is open
-      if (showLargeView) {
+      if (showLargeView || showGoogleImagesModal) {
         document.body.style.overflow = 'hidden';
       }
     }
@@ -444,7 +456,7 @@ const BookCover: React.FC<BookCoverProps> = ({
       // Restore body scroll
       document.body.style.overflow = '';
     };
-  }, [showMenu, showLargeView]);
+  }, [showMenu, showLargeView, showGoogleImagesModal]);
 
   // Large Image Modal Component
   const LargeImageModal = () => {
@@ -589,7 +601,7 @@ const BookCover: React.FC<BookCoverProps> = ({
         
         {/* Menu */}
         <div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 p-2 min-w-[160px]"
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 p-2 min-w-[180px]"
           style={{ 
             opacity: 0,
             transform: 'translate(-50%, -50%) scale(0.95)',
@@ -607,6 +619,14 @@ const BookCover: React.FC<BookCoverProps> = ({
           )}
           
           <button
+            onClick={() => setShowGoogleImagesModal(true)}
+            className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md transition-colors"
+          >
+            <Search className="h-4 w-4" />
+            <span>Buscar en Google</span>
+          </button>
+          
+          <button
             onClick={() => {
               document.getElementById(`file-input-${book.id}`)?.click();
             }}
@@ -614,7 +634,7 @@ const BookCover: React.FC<BookCoverProps> = ({
             className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md transition-colors disabled:opacity-50"
           >
             <Upload className="h-4 w-4" />
-            <span>{isUploading ? 'Subiendo...' : 'Modificar portada'}</span>
+            <span>{isUploading ? 'Subiendo...' : 'Subir archivo'}</span>
           </button>
           
           <input
@@ -700,6 +720,14 @@ const BookCover: React.FC<BookCoverProps> = ({
       <ContextMenu hasImage={true} />
 
       <LargeImageModal />
+
+      {/* Google Images Search Modal */}
+      <GoogleImagesSearchModal
+        isOpen={showGoogleImagesModal}
+        onClose={() => setShowGoogleImagesModal(false)}
+        book={book}
+        onImageSelect={handleGoogleImageSelect}
+      />
     </div>
   );
 };

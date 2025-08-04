@@ -1,8 +1,27 @@
-# Guardián de Compras - Versión 7.0
+# Guardián de Compras - Versión 7.1
 
 Una aplicación avanzada para gestionar tu biblioteca personal, con sistema de recompensas, seguimiento de lectura y herramientas avanzadas de gestión.
 
-## 🚀 Nuevas Características - Versión 7.0
+## 🚀 Nuevas Características - Versión 7.1
+
+### 🔍 Búsqueda de Google Images Integrada
+- **Búsqueda de imágenes de Google** directamente desde la app
+- **Modal de búsqueda avanzado** con pestañas para Google y subida local
+- **Búsqueda específica de portadas** con título y autor del libro
+- **Interfaz moderna** con grid de resultados y previews
+- **Compresión automática** de imágenes seleccionadas
+- **Validación de archivos** con límites de tamaño y formato
+- **Configuración flexible** mediante variables de entorno
+
+### 📁 Gestión de Imágenes Mejorada
+- **Dos opciones de modificación**: Google Images o subida local
+- **Compresión inteligente** de imágenes a 800px máximo
+- **Validación de formatos** (JPG, PNG, GIF)
+- **Límite de tamaño** de 5MB por archivo
+- **Optimización automática** de calidad (80%)
+- **Previsualización** de imágenes antes de aplicar
+
+## 🚀 Características - Versión 7.0
 
 ### 🔍 Búsqueda y Filtros Avanzados
 - **Búsqueda en tiempo real** con debounce para mejor rendimiento
@@ -128,6 +147,20 @@ npm run build
 5. **Historial completo** de escaneos
 
 ## 🔧 Configuración
+
+### Configuración de Google Images Search
+Para habilitar la búsqueda de imágenes de Google, configura las variables de entorno:
+
+1. **Copia el archivo de ejemplo**:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Configura las credenciales** en el archivo `.env`:
+   - `REACT_APP_GOOGLE_SEARCH_API_KEY`: Tu API Key de Google Cloud Console
+   - `REACT_APP_GOOGLE_SEARCH_ENGINE_ID`: Tu Search Engine ID
+
+3. **Consulta la guía completa** en `GOOGLE_IMAGES_SEARCH_SETUP.md`
 
 ### Configuración del Escáner
 - **Preferencia de cámara**: Selecciona cámara frontal/trasera
