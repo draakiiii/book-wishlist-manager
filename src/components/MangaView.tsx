@@ -25,6 +25,8 @@ const MangaView: React.FC = () => {
   const [selectedColeccion, setSelectedColeccion] = useState<ColeccionManga | null>(null);
   const [filter, setFilter] = useState<MangaListType>('todos');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'titulo' | 'autor' | 'fechaCreacion' | 'totalTomos' | 'progreso'>('titulo');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [quickAddInputs, setQuickAddInputs] = useState<{ [key: number]: string }>({});
   const [showEstadoDialog, setShowEstadoDialog] = useState(false);
   const [tomosPendientes, setTomosPendientes] = useState<{
@@ -34,14 +36,58 @@ const MangaView: React.FC = () => {
     rangoFin: number;
   } | null>(null);
 
-  const filteredColecciones = state.coleccionesManga.filter(coleccion => {
-    const matchesSearch = coleccion.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (coleccion.autor && coleccion.autor.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    if (filter === 'todos') return matchesSearch;
-    
-    return matchesSearch && coleccion.tomos.some(tomo => tomo.estado === filter);
-  });
+  const filteredAndSortedColecciones = state.coleccionesManga
+    .filter(coleccion => {
+      const matchesSearch = coleccion.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (coleccion.autor && coleccion.autor.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                           (coleccion.genero && coleccion.genero.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      if (filter === 'todos') return matchesSearch;
+      
+      return matchesSearch && coleccion.tomos.some(tomo => tomo.estado === filter);
+    })
+    .sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+      
+      switch (sortBy) {
+        case 'titulo':
+          aValue = a.titulo.toLowerCase();
+          bValue = b.titulo.toLowerCase();
+          break;
+        case 'autor':
+          aValue = (a.autor || '').toLowerCase();
+          bValue = (b.autor || '').toLowerCase();
+          break;
+        case 'fechaCreacion':
+          aValue = a.fechaCreacion || 0;
+          bValue = b.fechaCreacion || 0;
+          break;
+        case 'totalTomos':
+          aValue = a.totalTomos;
+          bValue = b.totalTomos;
+          break;
+        case 'progreso':
+          const progresoA = a.tomos.length > 0 ? (a.tomosLeidos / a.tomos.length) * 100 : 0;
+          const progresoB = b.tomos.length > 0 ? (b.tomosLeidos / b.tomos.length) * 100 : 0;
+          aValue = progresoA;
+          bValue = progresoB;
+          break;
+        default:
+          aValue = a.titulo.toLowerCase();
+          bValue = b.titulo.toLowerCase();
+      }
+      
+      if (sortOrder === 'asc') {
+        if (aValue < bValue) return -1;
+        if (aValue > bValue) return 1;
+        return 0;
+      } else {
+        if (aValue > bValue) return -1;
+        if (aValue < bValue) return 1;
+        return 0;
+      }
+    });
 
   const handleEditColeccion = (coleccion: ColeccionManga) => {
     setEditingColeccion(coleccion);
@@ -66,6 +112,15 @@ const MangaView: React.FC = () => {
       type: 'CHANGE_TOMO_MANGA_STATE', 
       payload: { coleccionId, tomoId, newState: newEstado } 
     });
+  };
+
+  const handleSortChange = (newSortBy: typeof sortBy) => {
+    if (sortBy === newSortBy) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder('asc');
+    }
   };
 
   const handleConfirmAddTomos = (estado: 'comprado' | 'leyendo' | 'leido') => {
@@ -231,37 +286,96 @@ const MangaView: React.FC = () => {
         </button>
       </div>
 
-      {/* Filtros y búsqueda */}
-      <div className="mb-6 space-y-4">
-        <div className="flex flex-wrap gap-4">
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value as MangaListType)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          >
-            <option value="todos">Todas las colecciones</option>
-            <option value="wishlist">Wishlist</option>
-            <option value="tbr">TBR</option>
-            <option value="comprado">Comprado</option>
-            <option value="leyendo">Leyendo</option>
-            <option value="leido">Leído</option>
-            <option value="abandonado">Abandonado</option>
-            <option value="prestado">Prestado</option>
-          </select>
-          
-          <input
-            type="text"
-            placeholder="Buscar por título o autor..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white flex-1 min-w-64"
-          />
+      {/* Filtros y Ordenación */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Búsqueda */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Buscar
+            </label>
+            <input
+              type="text"
+              placeholder="Título, autor o género..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Filtro por Estado */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Filtrar por Estado
+            </label>
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as MangaListType)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="todos">Todos los estados</option>
+              <option value="wishlist">Wishlist</option>
+              <option value="tbr">Por leer</option>
+              <option value="comprado">Comprado</option>
+              <option value="leyendo">Leyendo</option>
+              <option value="leido">Leído</option>
+              <option value="abandonado">Abandonado</option>
+            </select>
+          </div>
+
+          {/* Ordenar por */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Ordenar por
+            </label>
+            <select
+              value={sortBy}
+              onChange={(e) => handleSortChange(e.target.value as typeof sortBy)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="titulo">Título</option>
+              <option value="autor">Autor</option>
+              <option value="fechaCreacion">Fecha de creación</option>
+              <option value="totalTomos">Total de tomos</option>
+              <option value="progreso">Progreso de lectura</option>
+            </select>
+          </div>
+
+          {/* Orden */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Orden
+            </label>
+            <button
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-center space-x-2"
+            >
+              <span>{sortOrder === 'asc' ? 'Ascendente' : 'Descendente'}</span>
+              <svg
+                className={`w-4 h-4 transition-transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Información de resultados */}
+        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Mostrando {filteredAndSortedColecciones.length} de {state.coleccionesManga.length} colecciones
+            {searchTerm && ` que coinciden con "${searchTerm}"`}
+            {filter !== 'todos' && ` con estado "${filter}"`}
+          </p>
         </div>
       </div>
 
       {/* Lista de colecciones */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredColecciones.map(coleccion => (
+        {filteredAndSortedColecciones.map(coleccion => (
           <div
             key={coleccion.id}
             className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
@@ -469,7 +583,7 @@ const MangaView: React.FC = () => {
         ))}
       </div>
 
-      {filteredColecciones.length === 0 && (
+      {filteredAndSortedColecciones.length === 0 && (
         <div className="text-center py-12">
           <BookOpen className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
