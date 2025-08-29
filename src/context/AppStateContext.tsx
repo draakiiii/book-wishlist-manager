@@ -1147,11 +1147,13 @@ function appReducer(state: AppState, action: Action): AppState {
                 notas
               };
               
-              return {
+              const tomoActualizado: TomoManga = {
                 ...tomo,
                 estado: newState,
                 historialEstados: [...tomo.historialEstados, nuevoEstado]
               };
+              
+              return tomoActualizado;
             }
             return tomo;
           });
@@ -1183,7 +1185,7 @@ function appReducer(state: AppState, action: Action): AppState {
         if (coleccion.id === coleccionId) {
           const tomosActualizados = coleccion.tomos.map(tomo => {
             if (tomo.id === tomoId) {
-              return {
+              const tomoActualizado: TomoManga = {
                 ...tomo,
                 estado: 'comprado',
                 fechaCompra: fecha,
@@ -1193,6 +1195,7 @@ function appReducer(state: AppState, action: Action): AppState {
                   notas: precio ? `Comprado por $${precio}` : 'Comprado'
                 }]
               };
+              return tomoActualizado;
             }
             return tomo;
           });
@@ -1220,11 +1223,14 @@ function appReducer(state: AppState, action: Action): AppState {
 
     case 'LEER_TOMO_MANGA': {
       const { coleccionId, tomoId, fecha = Date.now(), calificacion, notas } = action.payload;
+      let puntosGanados = 0;
+      let dineroGanado = 0;
+      
       const coleccionesActualizadas = state.coleccionesManga.map(coleccion => {
         if (coleccion.id === coleccionId) {
           const tomosActualizados = coleccion.tomos.map(tomo => {
             if (tomo.id === tomoId) {
-              const tomoActualizado = {
+              const tomoActualizado: TomoManga = {
                 ...tomo,
                 estado: 'leido',
                 fechaLectura: fecha,
@@ -1238,14 +1244,11 @@ function appReducer(state: AppState, action: Action): AppState {
               };
               
               // Sistema de puntos/dinero por completar tomo
-              let puntosGanados = 0;
-              let dineroGanado = 0;
-              
               if (state.config.sistemaPuntosHabilitado) {
                 if (state.config.modoDinero) {
-                  dineroGanado = state.config.dineroPorTomoManga || 2.5;
+                  dineroGanado += state.config.dineroPorTomoManga || 2.5;
                 } else {
-                  puntosGanados = state.config.puntosPorTomoManga || 5;
+                  puntosGanados += state.config.puntosPorTomoManga || 5;
                 }
               }
               

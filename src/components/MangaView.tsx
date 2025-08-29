@@ -40,7 +40,7 @@ const MangaView: React.FC = () => {
   };
 
   const handleDeleteColeccion = (id: number) => {
-    if (confirm('¿Estás seguro de que quieres eliminar esta colección?')) {
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta colección?')) {
       dispatch({ type: 'DELETE_COLECCION_MANGA', payload: id });
     }
   };
@@ -51,7 +51,7 @@ const MangaView: React.FC = () => {
   };
 
   const handleDeleteTomo = (coleccionId: number, tomoId: number) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este tomo?')) {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este tomo?')) {
       dispatch({ type: 'DELETE_TOMO_MANGA', payload: { coleccionId, tomoId } });
     }
   };
@@ -63,32 +63,33 @@ const MangaView: React.FC = () => {
     });
   };
 
-  const handleComprarTomo = (coleccionId: number, tomoId: number) => {
-    const precio = prompt('Introduce el precio del tomo (opcional):');
-    const precioNum = precio ? parseFloat(precio) : undefined;
-    
-    dispatch({ 
-      type: 'COMPRAR_TOMO_MANGA', 
-      payload: { coleccionId, tomoId, precio: precioNum } 
-    });
-  };
+  // Funciones para futuras implementaciones de compra y lectura directa
+  // const handleComprarTomo = (coleccionId: number, tomoId: number) => {
+  //   const precio = prompt('Introduce el precio del tomo (opcional):');
+  //   const precioNum = precio ? parseFloat(precio) : undefined;
+  //   
+  //   dispatch({ 
+  //     type: 'COMPRAR_TOMO_MANGA', 
+  //     payload: { coleccionId, tomoId, precio: precioNum } 
+  //   });
+  // };
 
-  const handleLeerTomo = (coleccionId: number, tomoId: number) => {
-    const calificacion = prompt('Introduce tu calificación (1-5, opcional):');
-    const notas = prompt('Introduce tus notas (opcional):');
-    
-    const calificacionNum = calificacion ? parseInt(calificacion) : undefined;
-    
-    dispatch({ 
-      type: 'LEER_TOMO_MANGA', 
-      payload: { 
-        coleccionId, 
-        tomoId, 
-        calificacion: calificacionNum,
-        notas: notas || undefined
-      } 
-    });
-  };
+  // const handleLeerTomo = (coleccionId: number, tomoId: number) => {
+  //   const calificacion = prompt('Introduce tu calificación (1-5, opcional):');
+  //   const notas = prompt('Introduce tus notas (opcional):');
+  //   
+  //   const calificacionNum = calificacion ? parseInt(calificacion) : undefined;
+  //   
+  //   dispatch({ 
+  //     type: 'LEER_TOMO_MANGA', 
+  //     payload: { 
+  //       coleccionId, 
+  //       tomoId, 
+  //       calificacion: calificacionNum,
+  //       notas: notas || undefined
+  //     } 
+  //   });
+  // };
 
   const getEstadoColor = (estado: TomoManga['estado']) => {
     switch (estado) {

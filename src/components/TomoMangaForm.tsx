@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TomoManga } from '../types';
 import { useAppState } from '../context/AppStateContext';
-import { generateUniqueId } from '../utils/idGenerator';
+// import { generateUniqueId } from '../utils/idGenerator';
 
 interface TomoMangaFormProps {
   onClose: () => void;
