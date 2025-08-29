@@ -8,6 +8,42 @@ export interface Lectura {
   notas?: string;
 }
 
+export interface TomoManga {
+  id: number;
+  numero: number;
+  fechaCompra?: number;
+  fechaLectura?: number;
+  calificacion?: number;
+  reseña?: string;
+  notas?: string;
+  estado: 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado' | 'prestado';
+  historialEstados: EstadoLibro[];
+}
+
+export interface ColeccionManga {
+  id: number;
+  titulo: string;
+  autor?: string;
+  editorial?: string;
+  genero?: string;
+  idioma?: string;
+  descripcion?: string;
+  totalTomos: number;
+  tomosComprados: number;
+  tomosLeidos: number;
+  isComplete: boolean;
+  fechaCreacion?: number;
+  fechaCompletado?: number;
+  precioTotal?: number;
+  precioPorTomo?: number;
+  // Image URLs for optimized loading
+  smallThumbnail?: string;
+  thumbnail?: string;
+  // Custom user-uploaded image (takes priority over API images)
+  customImage?: string;
+  tomos: TomoManga[];
+}
+
 export interface Libro {
   id: number;
   titulo: string;
@@ -129,6 +165,13 @@ export interface Statistics {
   librosPorFormato: Array<{ formato: string; count: number }>;
   librosPrestados: number;
   valorTotalBiblioteca: number;
+  // Estadísticas de manga
+  totalColeccionesManga: number;
+  coleccionesMangaCompletadas: number;
+  totalTomosManga: number;
+  tomosMangaLeidos: number;
+  tomosMangaComprados: number;
+  valorTotalManga: number;
 }
 
 export interface Configuracion {
@@ -179,6 +222,13 @@ export interface Configuracion {
   dineroParaComprar?: number;
   costoPorPagina?: number; // Costo por página al comprar libros
   
+  // Configuración de manga
+  puntosPorTomoManga?: number;
+  puntosPorColeccionManga?: number;
+  dineroPorTomoManga?: number;
+  dineroPorColeccionManga?: number;
+  costoPorTomoManga?: number; // Costo por tomo al comprar manga
+  
   // Configuración de visibilidad de secciones
   mostrarSeccionProgreso?: boolean;
   mostrarSeccionWishlist?: boolean;
@@ -187,12 +237,14 @@ export interface Configuracion {
   mostrarSeccionLeidos?: boolean;
   mostrarSeccionAbandonados?: boolean;
   mostrarSeccionSagas?: boolean;
+  mostrarSeccionManga?: boolean;
 }
 
 export interface AppState {
   config: Configuracion;
   libros: Libro[];
   sagas: Saga[];
+  coleccionesManga: ColeccionManga[];
   sagaNotifications: SagaNotification[];
   darkMode: boolean;
   scanHistory: ScanHistory[];
@@ -255,6 +307,17 @@ export type Action =
   | { type: 'REMOVE_SAGA_NOTIFICATION'; payload: { id: number } }
   | { type: 'CLEAN_DUPLICATE_SAGAS' }
   
+  // Acciones de manga
+  | { type: 'ADD_COLECCION_MANGA'; payload: ColeccionManga }
+  | { type: 'UPDATE_COLECCION_MANGA'; payload: { id: number; updates: Partial<ColeccionManga> } }
+  | { type: 'DELETE_COLECCION_MANGA'; payload: number }
+  | { type: 'ADD_TOMO_MANGA'; payload: { coleccionId: number; tomo: Omit<TomoManga, 'id'> } }
+  | { type: 'UPDATE_TOMO_MANGA'; payload: { coleccionId: number; tomoId: number; updates: Partial<TomoManga> } }
+  | { type: 'DELETE_TOMO_MANGA'; payload: { coleccionId: number; tomoId: number } }
+  | { type: 'CHANGE_TOMO_MANGA_STATE'; payload: { coleccionId: number; tomoId: number; newState: TomoManga['estado']; notas?: string } }
+  | { type: 'COMPRAR_TOMO_MANGA'; payload: { coleccionId: number; tomoId: number; precio?: number; fecha?: number } }
+  | { type: 'LEER_TOMO_MANGA'; payload: { coleccionId: number; tomoId: number; fecha?: number; calificacion?: number; notas?: string } }
+  
   // Acciones de historial
   | { type: 'ADD_SCAN_HISTORY'; payload: ScanHistory }
   | { type: 'CLEAR_SCAN_HISTORY' }
@@ -262,7 +325,7 @@ export type Action =
   | { type: 'CLEAR_SEARCH_HISTORY' }
   
   // Acciones de datos
-  | { type: 'IMPORT_DATA'; payload: { libros: Libro[]; sagas: Saga[]; config?: Configuracion; scanHistory?: ScanHistory[]; searchHistory?: string[]; lastBackup?: number; puntosActuales?: number; puntosGanados?: number; librosCompradosConPuntos?: number; dineroActual?: number; dineroGanado?: number; librosCompradosConDinero?: number } }
+  | { type: 'IMPORT_DATA'; payload: { libros: Libro[]; sagas: Saga[]; coleccionesManga?: ColeccionManga[]; config?: Configuracion; scanHistory?: ScanHistory[]; searchHistory?: string[]; lastBackup?: number; puntosActuales?: number; puntosGanados?: number; librosCompradosConPuntos?: number; dineroActual?: number; dineroGanado?: number; librosCompradosConDinero?: number } }
   | { type: 'EXPORT_DATA' }
   | { type: 'SET_LAST_BACKUP'; payload: number }
   
@@ -281,6 +344,8 @@ export type Action =
   | { type: 'MIGRATE_FROM_OLD_VERSION'; payload: any };
 
 export type BookListType = 'todos' | 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado' | 'prestado';
+
+export type MangaListType = 'todos' | 'tbr' | 'leyendo' | 'leido' | 'abandonado' | 'wishlist' | 'comprado' | 'prestado';
 
 export interface BookData {
   titulo: string;
@@ -312,6 +377,7 @@ export interface ExportData {
   config: Configuracion;
   libros: Libro[];
   sagas: Saga[];
+  coleccionesManga: ColeccionManga[];
   scanHistory: ScanHistory[];
   searchHistory: string[];
   lastBackup?: number;

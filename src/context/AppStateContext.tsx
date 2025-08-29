@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode, useEffect, useState } from 'react';
-import { AppState, Action, Libro, ScanHistory, Statistics, Saga, EstadoLibro, Lectura } from '../types';
+import { AppState, Action, Libro, ScanHistory, Statistics, Saga, EstadoLibro, Lectura, ColeccionManga, TomoManga } from '../types';
 import { getInitialTheme, persistThemePreference } from '../utils/themeConfig';
 import DatabaseService from '../services/databaseService';
 import { useAuth } from './AuthContext';
@@ -50,10 +50,18 @@ const initialState: AppState = {
     // Configuración de APIs separadas por función
     scanApiProvider: 'open-library',
     searchApiProvider: 'google-books',
-    coverApiProvider: 'google-books'
+    coverApiProvider: 'google-books',
+    // Configuración de manga
+    puntosPorTomoManga: 5,
+    puntosPorColeccionManga: 25,
+    dineroPorTomoManga: 2.5,
+    dineroPorColeccionManga: 12.5,
+    costoPorTomoManga: 0.5, // $0.50 por tomo al comprar manga
+    mostrarSeccionManga: true
   },
   libros: [],
   sagas: [],
+  coleccionesManga: [],
   sagaNotifications: [],
   darkMode: getInitialTheme(),
   scanHistory: [],
@@ -81,24 +89,25 @@ async function loadStateFromFirebase(): Promise<AppState | null> {
         return migrateFromOldVersion(firebaseState);
       }
       
-      // Asegurar que todas las propiedades del estado inicial estén presentes
-      const completeState = {
-        ...initialState,
-        ...firebaseState,
-        sagaNotifications: firebaseState.sagaNotifications || [],
-        darkMode: firebaseState.darkMode || false,
-        sagas: firebaseState.sagas || [],
-        scanHistory: firebaseState.scanHistory || [],
-        searchHistory: firebaseState.searchHistory || [],
-        // Sistema de puntos/dinero
-        puntosActuales: firebaseState.puntosActuales || 0,
-        puntosGanados: firebaseState.puntosGanados || 0,
-        librosCompradosConPuntos: firebaseState.librosCompradosConPuntos || 0,
-        // Sistema de dinero
-        dineroActual: firebaseState.dineroActual || 0,
-        dineroGanado: firebaseState.dineroGanado || 0,
-        librosCompradosConDinero: firebaseState.librosCompradosConDinero || 0,
-      };
+              // Asegurar que todas las propiedades del estado inicial estén presentes
+        const completeState = {
+          ...initialState,
+          ...firebaseState,
+          sagaNotifications: firebaseState.sagaNotifications || [],
+          darkMode: firebaseState.darkMode || false,
+          sagas: firebaseState.sagas || [],
+          coleccionesManga: firebaseState.coleccionesManga || [],
+          scanHistory: firebaseState.scanHistory || [],
+          searchHistory: firebaseState.searchHistory || [],
+          // Sistema de puntos/dinero
+          puntosActuales: firebaseState.puntosActuales || 0,
+          puntosGanados: firebaseState.puntosGanados || 0,
+          librosCompradosConPuntos: firebaseState.librosCompradosConPuntos || 0,
+          // Sistema de dinero
+          dineroActual: firebaseState.dineroActual || 0,
+          dineroGanado: firebaseState.dineroGanado || 0,
+          librosCompradosConDinero: firebaseState.librosCompradosConDinero || 0,
+        };
       
       console.log('loadStateFromFirebase: Complete state after merge:', {
         librosCount: completeState.libros.length,
@@ -134,6 +143,7 @@ function loadStateFromStorage(): AppState | null {
         sagaNotifications: parsedState.sagaNotifications || [],
         darkMode: parsedState.darkMode || false,
         sagas: parsedState.sagas || [],
+        coleccionesManga: parsedState.coleccionesManga || [],
         scanHistory: parsedState.scanHistory || [],
         searchHistory: parsedState.searchHistory || [],
         // Sistema de puntos/dinero
@@ -867,7 +877,7 @@ function appReducer(state: AppState, action: Action): AppState {
     }
 
     case 'IMPORT_DATA': {
-      const { libros, sagas, config, scanHistory, searchHistory, lastBackup, puntosActuales, puntosGanados, librosCompradosConPuntos, dineroActual, dineroGanado, librosCompradosConDinero } = action.payload;
+      const { libros, sagas, coleccionesManga, config, scanHistory, searchHistory, lastBackup, puntosActuales, puntosGanados, librosCompradosConPuntos, dineroActual, dineroGanado, librosCompradosConDinero } = action.payload;
       
       let newState = { ...state };
       
@@ -877,6 +887,10 @@ function appReducer(state: AppState, action: Action): AppState {
       
       if (sagas) {
         newState.sagas = sagas;
+      }
+      
+      if (coleccionesManga) {
+        newState.coleccionesManga = coleccionesManga;
       }
       
       if (config) {
@@ -992,6 +1006,307 @@ function appReducer(state: AppState, action: Action): AppState {
 
     case 'CLEAN_DUPLICATE_SAGAS':
       return limpiarSagasHuerfanas(state);
+
+    // Acciones de manga
+    case 'ADD_COLECCION_MANGA': {
+      const nuevaColeccion: ColeccionManga = {
+        ...action.payload,
+        id: action.payload.id || generateUniqueId(),
+        fechaCreacion: Date.now(),
+        tomos: action.payload.tomos || [],
+        tomosComprados: action.payload.tomosComprados || 0,
+        tomosLeidos: action.payload.tomosLeidos || 0,
+        isComplete: action.payload.isComplete || false
+      };
+      
+      return {
+        ...state,
+        coleccionesManga: [...state.coleccionesManga, nuevaColeccion]
+      };
+    }
+
+    case 'UPDATE_COLECCION_MANGA': {
+      const { id, updates } = action.payload;
+      const coleccionesActualizadas = state.coleccionesManga.map(coleccion => 
+        coleccion.id === id ? { ...coleccion, ...updates } : coleccion
+      );
+      
+      return {
+        ...state,
+        coleccionesManga: coleccionesActualizadas
+      };
+    }
+
+    case 'DELETE_COLECCION_MANGA': {
+      const coleccionesFiltradas = state.coleccionesManga.filter(coleccion => coleccion.id !== action.payload);
+      return {
+        ...state,
+        coleccionesManga: coleccionesFiltradas
+      };
+    }
+
+    case 'ADD_TOMO_MANGA': {
+      const { coleccionId, tomo } = action.payload;
+      const coleccionesActualizadas = state.coleccionesManga.map(coleccion => {
+        if (coleccion.id === coleccionId) {
+          const nuevoTomo: TomoManga = {
+            ...tomo,
+            id: generateUniqueId(),
+            historialEstados: [{
+              estado: tomo.estado,
+              fecha: Date.now()
+            }]
+          };
+          
+          const tomosActualizados = [...coleccion.tomos, nuevoTomo];
+          const tomosComprados = tomosActualizados.filter(t => t.estado === 'comprado').length;
+          const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
+          const isComplete = tomosActualizados.length === coleccion.totalTomos;
+          
+          return {
+            ...coleccion,
+            tomos: tomosActualizados,
+            tomosComprados,
+            tomosLeidos,
+            isComplete
+          };
+        }
+        return coleccion;
+      });
+      
+      return {
+        ...state,
+        coleccionesManga: coleccionesActualizadas
+      };
+    }
+
+    case 'UPDATE_TOMO_MANGA': {
+      const { coleccionId, tomoId, updates } = action.payload;
+      const coleccionesActualizadas = state.coleccionesManga.map(coleccion => {
+        if (coleccion.id === coleccionId) {
+          const tomosActualizados = coleccion.tomos.map(tomo => 
+            tomo.id === tomoId ? { ...tomo, ...updates } : tomo
+          );
+          
+          const tomosComprados = tomosActualizados.filter(t => t.estado === 'comprado').length;
+          const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
+          const isComplete = tomosActualizados.length === coleccion.totalTomos;
+          
+          return {
+            ...coleccion,
+            tomos: tomosActualizados,
+            tomosComprados,
+            tomosLeidos,
+            isComplete
+          };
+        }
+        return coleccion;
+      });
+      
+      return {
+        ...state,
+        coleccionesManga: coleccionesActualizadas
+      };
+    }
+
+    case 'DELETE_TOMO_MANGA': {
+      const { coleccionId, tomoId } = action.payload;
+      const coleccionesActualizadas = state.coleccionesManga.map(coleccion => {
+        if (coleccion.id === coleccionId) {
+          const tomosFiltrados = coleccion.tomos.filter(tomo => tomo.id !== tomoId);
+          const tomosComprados = tomosFiltrados.filter(t => t.estado === 'comprado').length;
+          const tomosLeidos = tomosFiltrados.filter(t => t.estado === 'leido').length;
+          const isComplete = tomosFiltrados.length === coleccion.totalTomos;
+          
+          return {
+            ...coleccion,
+            tomos: tomosFiltrados,
+            tomosComprados,
+            tomosLeidos,
+            isComplete
+          };
+        }
+        return coleccion;
+      });
+      
+      return {
+        ...state,
+        coleccionesManga: coleccionesActualizadas
+      };
+    }
+
+    case 'CHANGE_TOMO_MANGA_STATE': {
+      const { coleccionId, tomoId, newState, notas } = action.payload;
+      const coleccionesActualizadas = state.coleccionesManga.map(coleccion => {
+        if (coleccion.id === coleccionId) {
+          const tomosActualizados = coleccion.tomos.map(tomo => {
+            if (tomo.id === tomoId) {
+              const nuevoEstado: EstadoLibro = {
+                estado: newState,
+                fecha: Date.now(),
+                notas
+              };
+              
+              return {
+                ...tomo,
+                estado: newState,
+                historialEstados: [...tomo.historialEstados, nuevoEstado]
+              };
+            }
+            return tomo;
+          });
+          
+          const tomosComprados = tomosActualizados.filter(t => t.estado === 'comprado').length;
+          const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
+          const isComplete = tomosActualizados.length === coleccion.totalTomos;
+          
+          return {
+            ...coleccion,
+            tomos: tomosActualizados,
+            tomosComprados,
+            tomosLeidos,
+            isComplete
+          };
+        }
+        return coleccion;
+      });
+      
+      return {
+        ...state,
+        coleccionesManga: coleccionesActualizadas
+      };
+    }
+
+    case 'COMPRAR_TOMO_MANGA': {
+      const { coleccionId, tomoId, precio, fecha = Date.now() } = action.payload;
+      const coleccionesActualizadas = state.coleccionesManga.map(coleccion => {
+        if (coleccion.id === coleccionId) {
+          const tomosActualizados = coleccion.tomos.map(tomo => {
+            if (tomo.id === tomoId) {
+              return {
+                ...tomo,
+                estado: 'comprado',
+                fechaCompra: fecha,
+                historialEstados: [...tomo.historialEstados, {
+                  estado: 'comprado',
+                  fecha: Date.now(),
+                  notas: precio ? `Comprado por $${precio}` : 'Comprado'
+                }]
+              };
+            }
+            return tomo;
+          });
+          
+          const tomosComprados = tomosActualizados.filter(t => t.estado === 'comprado').length;
+          const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
+          const isComplete = tomosActualizados.length === coleccion.totalTomos;
+          
+          return {
+            ...coleccion,
+            tomos: tomosActualizados,
+            tomosComprados,
+            tomosLeidos,
+            isComplete
+          };
+        }
+        return coleccion;
+      });
+      
+      return {
+        ...state,
+        coleccionesManga: coleccionesActualizadas
+      };
+    }
+
+    case 'LEER_TOMO_MANGA': {
+      const { coleccionId, tomoId, fecha = Date.now(), calificacion, notas } = action.payload;
+      const coleccionesActualizadas = state.coleccionesManga.map(coleccion => {
+        if (coleccion.id === coleccionId) {
+          const tomosActualizados = coleccion.tomos.map(tomo => {
+            if (tomo.id === tomoId) {
+              const tomoActualizado = {
+                ...tomo,
+                estado: 'leido',
+                fechaLectura: fecha,
+                calificacion: calificacion || tomo.calificacion,
+                reseña: notas || tomo.reseña,
+                historialEstados: [...tomo.historialEstados, {
+                  estado: 'leido',
+                  fecha: Date.now(),
+                  notas
+                }]
+              };
+              
+              // Sistema de puntos/dinero por completar tomo
+              let puntosGanados = 0;
+              let dineroGanado = 0;
+              
+              if (state.config.sistemaPuntosHabilitado) {
+                if (state.config.modoDinero) {
+                  dineroGanado = state.config.dineroPorTomoManga || 2.5;
+                } else {
+                  puntosGanados = state.config.puntosPorTomoManga || 5;
+                }
+              }
+              
+              return tomoActualizado;
+            }
+            return tomo;
+          });
+          
+          const tomosComprados = tomosActualizados.filter(t => t.estado === 'comprado').length;
+          const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
+          const isComplete = tomosActualizados.length === coleccion.totalTomos;
+          
+          // Verificar si la colección se completó
+          const coleccionPreviaCompleta = coleccion.isComplete;
+          const coleccionAhoraCompleta = isComplete;
+          
+          // Otorgar puntos/dinero por completar colección
+          if (coleccionAhoraCompleta && !coleccionPreviaCompleta && state.config.sistemaPuntosHabilitado) {
+            if (state.config.modoDinero) {
+              dineroGanado += state.config.dineroPorColeccionManga || 12.5;
+            } else {
+              puntosGanados += state.config.puntosPorColeccionManga || 25;
+            }
+          }
+          
+          return {
+            ...coleccion,
+            tomos: tomosActualizados,
+            tomosComprados,
+            tomosLeidos,
+            isComplete,
+            fechaCompletado: isComplete ? Date.now() : coleccion.fechaCompletado
+          };
+        }
+        return coleccion;
+      });
+      
+      // Aplicar puntos/dinero ganados
+      let estadoFinal = {
+        ...state,
+        coleccionesManga: coleccionesActualizadas
+      };
+      
+      if (puntosGanados > 0) {
+        estadoFinal = {
+          ...estadoFinal,
+          puntosActuales: estadoFinal.puntosActuales + puntosGanados,
+          puntosGanados: estadoFinal.puntosGanados + puntosGanados
+        };
+      }
+      
+      if (dineroGanado > 0) {
+        estadoFinal = {
+          ...estadoFinal,
+          dineroActual: estadoFinal.dineroActual + dineroGanado,
+          dineroGanado: estadoFinal.dineroGanado + dineroGanado
+        };
+      }
+      
+      return estadoFinal;
+    }
 
     case 'MIGRATE_FROM_OLD_VERSION':
       return migrateFromOldVersion(action.payload);

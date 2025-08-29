@@ -151,6 +151,16 @@ const Statistics: React.FC = () => {
     const objetivoAnual = state.config.objetivoLecturaAnual || 0;
     const progresoObjetivo = objetivoAnual > 0 ? (librosLeidos / objetivoAnual) * 100 : 0;
     
+    // Estadísticas de manga
+    const totalColeccionesManga = state.coleccionesManga.length;
+    const coleccionesMangaCompletadas = state.coleccionesManga.filter(c => c.isComplete).length;
+    const totalTomosManga = state.coleccionesManga.reduce((sum, c) => sum + c.totalTomos, 0);
+    const tomosMangaLeidos = state.coleccionesManga.reduce((sum, c) => sum + c.tomosLeidos, 0);
+    const tomosMangaComprados = state.coleccionesManga.reduce((sum, c) => sum + c.tomosComprados, 0);
+    const valorTotalManga = state.coleccionesManga
+      .filter(c => c.precioTotal && c.precioTotal > 0)
+      .reduce((sum, c) => sum + (c.precioTotal || 0), 0);
+    
     return {
       totalLibros,
       librosTBR,
@@ -174,9 +184,16 @@ const Statistics: React.FC = () => {
       velocidadLectura,
       librosPorFormato,
       paginasPromedio,
-      generosConMejorTasa
+      generosConMejorTasa,
+      // Estadísticas de manga
+      totalColeccionesManga,
+      coleccionesMangaCompletadas,
+      totalTomosManga,
+      tomosMangaLeidos,
+      tomosMangaComprados,
+      valorTotalManga
     };
-  }, [state.libros, state.sagas, state.config.objetivoLecturaAnual]);
+  }, [state.libros, state.sagas, state.coleccionesManga, state.config.objetivoLecturaAnual]);
 
   const statCards = [
     {
@@ -234,6 +251,34 @@ const Statistics: React.FC = () => {
       icon: BookOpen,
       color: 'bg-orange-500',
       description: 'Por libro'
+    },
+    {
+      title: 'Colecciones de Manga',
+      value: statistics.totalColeccionesManga,
+      icon: BookOpen,
+      color: 'bg-indigo-500',
+      description: 'En tu biblioteca'
+    },
+    {
+      title: 'Tomos de Manga',
+      value: statistics.totalTomosManga,
+      icon: BookOpen,
+      color: 'bg-cyan-500',
+      description: 'Total de tomos'
+    },
+    {
+      title: 'Tomos Leídos',
+      value: statistics.tomosMangaLeidos,
+      icon: CheckCircle,
+      color: 'bg-teal-500',
+      description: 'Manga completado'
+    },
+    {
+      title: 'Valor Total Manga',
+      value: `${statistics.valorTotalManga.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`,
+      icon: BookOpen,
+      color: 'bg-violet-500',
+      description: 'De la colección'
     }
   ];
 

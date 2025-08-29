@@ -12,6 +12,7 @@ import Navigation, { NavigationSection, BooksViewMode } from './components/Navig
 import BooksView from './components/BooksView';
 import Dashboard from './components/Dashboard';
 import Statistics from './components/Statistics';
+import MangaView from './components/MangaView';
 import Sidebar from './components/Sidebar';
 import SagaCompletionNotification from './components/SagaCompletionNotification';
 import DataExportImport from './components/DataExportImport';
@@ -286,6 +287,9 @@ const AppContent: React.FC = () => {
             viewMode={currentBooksView}
             onViewModeChange={setCurrentBooksView}
           />
+        ) : currentSection === 'manga' ? (
+          // Manga view content
+          <MangaView />
         ) : currentSection === 'statistics' ? (
           // Statistics view content
           <Statistics />
