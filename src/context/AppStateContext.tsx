@@ -1016,7 +1016,8 @@ function appReducer(state: AppState, action: Action): AppState {
         tomos: action.payload.tomos || [],
         tomosComprados: action.payload.tomosComprados || 0,
         tomosLeidos: action.payload.tomosLeidos || 0,
-        isComplete: action.payload.isComplete || false
+        isComplete: action.payload.isComplete || false,
+        valorTotal: (action.payload.tomosComprados || 0) * (action.payload.precioPorTomo || 0)
       };
       
       return {
@@ -1027,9 +1028,19 @@ function appReducer(state: AppState, action: Action): AppState {
 
     case 'UPDATE_COLECCION_MANGA': {
       const { id, updates } = action.payload;
-      const coleccionesActualizadas = state.coleccionesManga.map(coleccion => 
-        coleccion.id === id ? { ...coleccion, ...updates } : coleccion
-      );
+      const coleccionesActualizadas = state.coleccionesManga.map(coleccion => {
+        if (coleccion.id === id) {
+          const coleccionActualizada = { ...coleccion, ...updates };
+          // Recalcular valor total si se actualizó precioPorTomo o tomosComprados
+          if (updates.precioPorTomo !== undefined || updates.tomosComprados !== undefined) {
+            const tomosComprados = updates.tomosComprados !== undefined ? updates.tomosComprados : coleccion.tomosComprados;
+            const precioPorTomo = updates.precioPorTomo !== undefined ? updates.precioPorTomo : coleccion.precioPorTomo;
+            coleccionActualizada.valorTotal = tomosComprados * (precioPorTomo || 0);
+          }
+          return coleccionActualizada;
+        }
+        return coleccion;
+      });
       
       return {
         ...state,

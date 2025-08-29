@@ -154,7 +154,7 @@ const Statistics: React.FC = () => {
     // Estadísticas de manga
     const totalColeccionesManga = state.coleccionesManga.length;
     const coleccionesMangaCompletadas = state.coleccionesManga.filter(c => c.isComplete).length;
-    const totalTomosManga = state.coleccionesManga.reduce((sum, c) => sum + c.totalTomos, 0);
+    const totalTomosManga = state.coleccionesManga.reduce((sum, c) => sum + c.tomos.length, 0); // Tomos que realmente tienes
     const tomosMangaLeidos = state.coleccionesManga.reduce((sum, c) => sum + c.tomosLeidos, 0);
     const tomosMangaComprados = state.coleccionesManga.reduce((sum, c) => sum + c.tomosComprados, 0);
     const valorTotalManga = state.coleccionesManga
