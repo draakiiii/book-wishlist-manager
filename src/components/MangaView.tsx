@@ -65,33 +65,80 @@ const MangaView: React.FC = () => {
   };
 
   const handleQuickAddTomo = (coleccionId: number) => {
-    const numero = parseInt(quickAddInputs[coleccionId] || '');
-    if (numero && numero > 0) {
-      // Verificar que no existe ya
-      const coleccion = state.coleccionesManga.find(c => c.id === coleccionId);
-      if (coleccion) {
-        const tomoExistente = coleccion.tomos.find(t => t.numero === numero);
-        if (tomoExistente) {
-          alert(`El tomo #${numero} ya existe`);
-          return;
+    const input = quickAddInputs[coleccionId] || '';
+    const coleccion = state.coleccionesManga.find(c => c.id === coleccionId);
+    
+    if (!coleccion) return;
+    
+    // Verificar si es un rango (formato: x-y)
+    if (input.includes('-')) {
+      const [startStr, endStr] = input.split('-');
+      const start = parseInt(startStr);
+      const end = parseInt(endStr);
+      
+      if (start && end && start > 0 && end >= start) {
+        const tomosAAñadir = [];
+        
+        for (let numero = start; numero <= end; numero++) {
+          // Verificar que no existe ya
+          const tomoExistente = coleccion.tomos.find(t => t.numero === numero);
+          if (!tomoExistente) {
+            tomosAAñadir.push({
+              numero,
+              estado: 'wishlist' as const,
+              historialEstados: []
+            });
+          }
         }
         
-        // Añadir tomo rápidamente
-        dispatch({
+        if (tomosAAñadir.length > 0) {
+          // Añadir todos los tomos del rango
+          tomosAAñadir.forEach(tomo => {
+            dispatch({
+              type: 'ADD_TOMO_MANGA',
+              payload: {
+                coleccionId,
+                tomo
+              }
+            });
+          });
+          
+          alert(`Se añadieron ${tomosAAñadir.length} tomos del ${start} al ${end}`);
+        } else {
+          alert(`Todos los tomos del ${start} al ${end} ya existen`);
+        }
+        
+        // Limpiar input
+        setQuickAddInputs(prev => ({ ...prev, [coleccionId]: '' }));
+        return;
+      }
+    }
+    
+    // Si no es rango, añadir tomo individual
+    const numero = parseInt(input);
+    if (numero && numero > 0) {
+      // Verificar que no existe ya
+      const tomoExistente = coleccion.tomos.find(t => t.numero === numero);
+      if (tomoExistente) {
+        alert(`El tomo #${numero} ya existe`);
+        return;
+      }
+      
+      // Añadir tomo rápidamente
+              dispatch({
           type: 'ADD_TOMO_MANGA',
           payload: {
             coleccionId,
             tomo: {
               numero,
-              estado: 'wishlist',
+              estado: 'wishlist' as const,
               historialEstados: []
             }
           }
         });
-        
-        // Limpiar input
-        setQuickAddInputs(prev => ({ ...prev, [coleccionId]: '' }));
-      }
+      
+      // Limpiar input
+      setQuickAddInputs(prev => ({ ...prev, [coleccionId]: '' }));
     }
   };
 
@@ -251,9 +298,8 @@ const MangaView: React.FC = () => {
                   {/* Añadir tomo rápido */}
                   <div className="flex items-center space-x-1">
                     <input
-                      type="number"
-                      placeholder="#"
-                      min="1"
+                      type="text"
+                      placeholder="# o #-#"
                       value={quickAddInputs[coleccion.id] || ''}
                       onChange={(e) => setQuickAddInputs(prev => ({ ...prev, [coleccion.id]: e.target.value }))}
                       onKeyPress={(e) => {
@@ -261,7 +307,7 @@ const MangaView: React.FC = () => {
                           handleQuickAddTomo(coleccion.id);
                         }
                       }}
-                      className="w-16 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                      className="w-20 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
                     />
                     <button
                       onClick={() => handleQuickAddTomo(coleccion.id)}

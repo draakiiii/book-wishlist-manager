@@ -1063,12 +1063,16 @@ function appReducer(state: AppState, action: Action): AppState {
           const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
           const isComplete = tomosActualizados.length === coleccion.totalTomos;
           
+          // Calcular valor total basado en los tomos que realmente tienes
+          const valorTotal = tomosComprados * (coleccion.precioPorTomo || 0);
+          
           return {
             ...coleccion,
             tomos: tomosActualizados,
             tomosComprados,
             tomosLeidos,
-            isComplete
+            isComplete,
+            valorTotal
           };
         }
         return coleccion;
@@ -1092,12 +1096,16 @@ function appReducer(state: AppState, action: Action): AppState {
           const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
           const isComplete = tomosActualizados.length === coleccion.totalTomos;
           
+          // Calcular valor total basado en los tomos que realmente tienes
+          const valorTotal = tomosComprados * (coleccion.precioPorTomo || 0);
+          
           return {
             ...coleccion,
             tomos: tomosActualizados,
             tomosComprados,
             tomosLeidos,
-            isComplete
+            isComplete,
+            valorTotal
           };
         }
         return coleccion;
@@ -1118,12 +1126,16 @@ function appReducer(state: AppState, action: Action): AppState {
           const tomosLeidos = tomosFiltrados.filter(t => t.estado === 'leido').length;
           const isComplete = tomosFiltrados.length === coleccion.totalTomos;
           
+          // Calcular valor total basado en los tomos que realmente tienes
+          const valorTotal = tomosComprados * (coleccion.precioPorTomo || 0);
+          
           return {
             ...coleccion,
             tomos: tomosFiltrados,
             tomosComprados,
             tomosLeidos,
-            isComplete
+            isComplete,
+            valorTotal
           };
         }
         return coleccion;
@@ -1161,13 +1173,17 @@ function appReducer(state: AppState, action: Action): AppState {
               const tomosComprados = tomosActualizados.filter(t => t.fechaCompra).length;
               const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
               const isComplete = tomosActualizados.length === coleccion.totalTomos;
+              
+              // Calcular valor total basado en los tomos que realmente tienes
+              const valorTotal = tomosComprados * (coleccion.precioPorTomo || 0);
           
           return {
             ...coleccion,
             tomos: tomosActualizados,
             tomosComprados,
             tomosLeidos,
-            isComplete
+            isComplete,
+            valorTotal
           };
         }
         return coleccion;
@@ -1204,12 +1220,16 @@ function appReducer(state: AppState, action: Action): AppState {
           const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
           const isComplete = tomosActualizados.length === coleccion.totalTomos;
           
+          // Calcular valor total basado en los tomos que realmente tienes
+          const valorTotal = tomosComprados * (coleccion.precioPorTomo || 0);
+          
           return {
             ...coleccion,
             tomos: tomosActualizados,
             tomosComprados,
             tomosLeidos,
-            isComplete
+            isComplete,
+            valorTotal
           };
         }
         return coleccion;
@@ -1257,9 +1277,12 @@ function appReducer(state: AppState, action: Action): AppState {
             return tomo;
           });
           
-          const tomosComprados = tomosActualizados.filter(t => t.estado === 'comprado').length;
+          const tomosComprados = tomosActualizados.filter(t => t.fechaCompra).length;
           const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
           const isComplete = tomosActualizados.length === coleccion.totalTomos;
+          
+          // Calcular valor total basado en los tomos que realmente tienes
+          const valorTotal = tomosComprados * (coleccion.precioPorTomo || 0);
           
           // Verificar si la colección se completó
           const coleccionPreviaCompleta = coleccion.isComplete;
@@ -1280,6 +1303,7 @@ function appReducer(state: AppState, action: Action): AppState {
             tomosComprados,
             tomosLeidos,
             isComplete,
+            valorTotal,
             fechaCompletado: isComplete ? Date.now() : coleccion.fechaCompletado
           };
         }

@@ -158,8 +158,8 @@ const Statistics: React.FC = () => {
     const tomosMangaLeidos = state.coleccionesManga.reduce((sum, c) => sum + c.tomosLeidos, 0);
     const tomosMangaComprados = state.coleccionesManga.reduce((sum, c) => sum + c.tomosComprados, 0);
     const valorTotalManga = state.coleccionesManga
-      .filter(c => c.precioTotal && c.precioTotal > 0)
-      .reduce((sum, c) => sum + (c.precioTotal || 0), 0);
+      .filter(c => c.valorTotal && c.valorTotal > 0)
+      .reduce((sum, c) => sum + (c.valorTotal || 0), 0);
     
     return {
       totalLibros,

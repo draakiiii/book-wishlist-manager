@@ -36,6 +36,7 @@ export interface ColeccionManga {
   fechaCompletado?: number;
   precioTotal?: number;
   precioPorTomo?: number;
+  valorTotal?: number; // Valor total calculado basado en tomos comprados
   // Image URLs for optimized loading
   smallThumbnail?: string;
   thumbnail?: string;
