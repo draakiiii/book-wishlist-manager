@@ -1070,17 +1070,23 @@ function appReducer(state: AppState, action: Action): AppState {
           };
           
           const tomosActualizados = [...coleccion.tomos, nuevoTomo];
-          const tomosComprados = tomosActualizados.filter(t => t.fechaCompra).length;
+          // Contar tomos que realmente tienes (con fechaCompra o en estado comprado/leido/leyendo)
+          const tomosReales = tomosActualizados.filter(t => 
+            t.fechaCompra || 
+            t.estado === 'comprado' || 
+            t.estado === 'leido' || 
+            t.estado === 'leyendo'
+          ).length;
           const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
           const isComplete = tomosActualizados.length === coleccion.totalTomos;
           
           // Calcular valor total basado en los tomos que realmente tienes
-          const valorTotal = tomosComprados * (coleccion.precioPorTomo || 0);
+          const valorTotal = tomosReales * (coleccion.precioPorTomo || 0);
           
           return {
             ...coleccion,
             tomos: tomosActualizados,
-            tomosComprados,
+            tomosComprados: tomosReales,
             tomosLeidos,
             isComplete,
             valorTotal
@@ -1103,17 +1109,23 @@ function appReducer(state: AppState, action: Action): AppState {
             tomo.id === tomoId ? { ...tomo, ...updates } : tomo
           );
           
-          const tomosComprados = tomosActualizados.filter(t => t.fechaCompra).length;
+          // Contar tomos que realmente tienes (con fechaCompra o en estado comprado/leido/leyendo)
+          const tomosReales = tomosActualizados.filter(t => 
+            t.fechaCompra || 
+            t.estado === 'comprado' || 
+            t.estado === 'leido' || 
+            t.estado === 'leyendo'
+          ).length;
           const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
           const isComplete = tomosActualizados.length === coleccion.totalTomos;
           
           // Calcular valor total basado en los tomos que realmente tienes
-          const valorTotal = tomosComprados * (coleccion.precioPorTomo || 0);
+          const valorTotal = tomosReales * (coleccion.precioPorTomo || 0);
           
           return {
             ...coleccion,
             tomos: tomosActualizados,
-            tomosComprados,
+            tomosComprados: tomosReales,
             tomosLeidos,
             isComplete,
             valorTotal
@@ -1133,17 +1145,23 @@ function appReducer(state: AppState, action: Action): AppState {
       const coleccionesActualizadas = state.coleccionesManga.map(coleccion => {
         if (coleccion.id === coleccionId) {
           const tomosFiltrados = coleccion.tomos.filter(tomo => tomo.id !== tomoId);
-          const tomosComprados = tomosFiltrados.filter(t => t.fechaCompra).length;
+          // Contar tomos que realmente tienes (con fechaCompra o en estado comprado/leido/leyendo)
+          const tomosReales = tomosFiltrados.filter(t => 
+            t.fechaCompra || 
+            t.estado === 'comprado' || 
+            t.estado === 'leido' || 
+            t.estado === 'leyendo'
+          ).length;
           const tomosLeidos = tomosFiltrados.filter(t => t.estado === 'leido').length;
           const isComplete = tomosFiltrados.length === coleccion.totalTomos;
           
           // Calcular valor total basado en los tomos que realmente tienes
-          const valorTotal = tomosComprados * (coleccion.precioPorTomo || 0);
+          const valorTotal = tomosReales * (coleccion.precioPorTomo || 0);
           
           return {
             ...coleccion,
             tomos: tomosFiltrados,
-            tomosComprados,
+            tomosComprados: tomosReales,
             tomosLeidos,
             isComplete,
             valorTotal
@@ -1181,17 +1199,23 @@ function appReducer(state: AppState, action: Action): AppState {
                 return tomo;
               });
               
-              const tomosComprados = tomosActualizados.filter(t => t.fechaCompra).length;
+              // Contar tomos que realmente tienes (con fechaCompra o en estado comprado/leido/leyendo)
+              const tomosReales = tomosActualizados.filter(t => 
+                t.fechaCompra || 
+                t.estado === 'comprado' || 
+                t.estado === 'leido' || 
+                t.estado === 'leyendo'
+              ).length;
               const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
               const isComplete = tomosActualizados.length === coleccion.totalTomos;
               
               // Calcular valor total basado en los tomos que realmente tienes
-              const valorTotal = tomosComprados * (coleccion.precioPorTomo || 0);
+              const valorTotal = tomosReales * (coleccion.precioPorTomo || 0);
           
           return {
             ...coleccion,
             tomos: tomosActualizados,
-            tomosComprados,
+            tomosComprados: tomosReales,
             tomosLeidos,
             isComplete,
             valorTotal
@@ -1227,17 +1251,23 @@ function appReducer(state: AppState, action: Action): AppState {
             return tomo;
           });
           
-          const tomosComprados = tomosActualizados.filter(t => t.fechaCompra).length;
+          // Contar tomos que realmente tienes (con fechaCompra o en estado comprado/leido/leyendo)
+          const tomosReales = tomosActualizados.filter(t => 
+            t.fechaCompra || 
+            t.estado === 'comprado' || 
+            t.estado === 'leido' || 
+            t.estado === 'leyendo'
+          ).length;
           const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
           const isComplete = tomosActualizados.length === coleccion.totalTomos;
           
           // Calcular valor total basado en los tomos que realmente tienes
-          const valorTotal = tomosComprados * (coleccion.precioPorTomo || 0);
+          const valorTotal = tomosReales * (coleccion.precioPorTomo || 0);
           
           return {
             ...coleccion,
             tomos: tomosActualizados,
-            tomosComprados,
+            tomosComprados: tomosReales,
             tomosLeidos,
             isComplete,
             valorTotal
@@ -1288,12 +1318,18 @@ function appReducer(state: AppState, action: Action): AppState {
             return tomo;
           });
           
-          const tomosComprados = tomosActualizados.filter(t => t.fechaCompra).length;
+          // Contar tomos que realmente tienes (con fechaCompra o en estado comprado/leido/leyendo)
+          const tomosReales = tomosActualizados.filter(t => 
+            t.fechaCompra || 
+            t.estado === 'comprado' || 
+            t.estado === 'leido' || 
+            t.estado === 'leyendo'
+          ).length;
           const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
           const isComplete = tomosActualizados.length === coleccion.totalTomos;
           
           // Calcular valor total basado en los tomos que realmente tienes
-          const valorTotal = tomosComprados * (coleccion.precioPorTomo || 0);
+          const valorTotal = tomosReales * (coleccion.precioPorTomo || 0);
           
           // Verificar si la colección se completó
           const coleccionPreviaCompleta = coleccion.isComplete;
@@ -1311,7 +1347,7 @@ function appReducer(state: AppState, action: Action): AppState {
           return {
             ...coleccion,
             tomos: tomosActualizados,
-            tomosComprados,
+            tomosComprados: tomosReales,
             tomosLeidos,
             isComplete,
             valorTotal,

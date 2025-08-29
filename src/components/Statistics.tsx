@@ -157,9 +157,20 @@ const Statistics: React.FC = () => {
     const totalTomosManga = state.coleccionesManga.reduce((sum, c) => sum + c.tomos.length, 0); // Tomos que realmente tienes
     const tomosMangaLeidos = state.coleccionesManga.reduce((sum, c) => sum + c.tomosLeidos, 0);
     const tomosMangaComprados = state.coleccionesManga.reduce((sum, c) => sum + c.tomosComprados, 0);
-    const valorTotalManga = state.coleccionesManga
-      .filter(c => c.valorTotal && c.valorTotal > 0)
-      .reduce((sum, c) => sum + (c.valorTotal || 0), 0);
+    // Calcular valor total de manga basado en los tomos que realmente tienes
+    const valorTotalManga = state.coleccionesManga.reduce((sum, coleccion) => {
+      if (coleccion.precioPorTomo && coleccion.precioPorTomo > 0) {
+        // Contar tomos que realmente tienes (con fechaCompra o en estado comprado/leido/leyendo)
+        const tomosReales = coleccion.tomos.filter(tomo => 
+          tomo.fechaCompra || 
+          tomo.estado === 'comprado' || 
+          tomo.estado === 'leido' || 
+          tomo.estado === 'leyendo'
+        ).length;
+        return sum + (tomosReales * coleccion.precioPorTomo);
+      }
+      return sum;
+    }, 0);
     
     return {
       totalLibros,
