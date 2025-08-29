@@ -49,6 +49,7 @@ const DataExportImport: React.FC<DataExportImportProps> = ({ isOpen, onClose }) 
         config: state.config,
         libros: state.libros, // New unified book list
         sagas: state.sagas,
+        coleccionesManga: state.coleccionesManga,
         scanHistory: state.scanHistory,
         searchHistory: state.searchHistory,
         lastBackup: state.lastBackup,

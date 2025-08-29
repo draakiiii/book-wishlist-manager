@@ -603,6 +603,94 @@ const ConfigForm: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Configuración de manga - Puntos */}
+            {config.sistemaPuntosHabilitado && !config.modoDinero && (
+              <div className="space-y-4">
+                <h4 className="text-lg font-medium text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">
+                  Configuración de Manga - Sistema de Puntos
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Puntos por tomo completado
+                    </label>
+                    <input
+                      type="number"
+                      value={config.puntosPorTomoManga || 5}
+                      onChange={(e) => handleInputChange('puntosPorTomoManga', parseInt(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      min="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Puntos por colección completada
+                    </label>
+                    <input
+                      type="number"
+                      value={config.puntosPorColeccionManga || 25}
+                      onChange={(e) => handleInputChange('puntosPorColeccionManga', parseInt(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Configuración de manga - Dinero */}
+            {config.sistemaPuntosHabilitado && config.modoDinero && (
+              <div className="space-y-4">
+                <h4 className="text-lg font-medium text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">
+                  Configuración de Manga - Sistema de Dinero
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Dinero por tomo completado (€)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={config.dineroPorTomoManga || 2.5}
+                      onChange={(e) => handleInputChange('dineroPorTomoManga', parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      min="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Dinero por colección completada (€)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={config.dineroPorColeccionManga || 12.5}
+                      onChange={(e) => handleInputChange('dineroPorColeccionManga', parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      min="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Costo por tomo al comprar (€)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={config.costoPorTomoManga || 0.5}
+                      onChange={(e) => handleInputChange('costoPorTomoManga', parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -752,6 +840,26 @@ const ConfigForm: React.FC = () => {
                   type="checkbox"
                   checked={config.mostrarSeccionSagas !== false}
                   onChange={(e) => handleBooleanChange('mostrarSeccionSagas', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Colecciones de Manga
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Gestión de manga y tomos
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.mostrarSeccionManga !== false}
+                  onChange={(e) => handleBooleanChange('mostrarSeccionManga', e.target.checked)}
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>

@@ -6,11 +6,12 @@ import {
   ChevronDown,
   List,
   Grid,
-  BarChart3
+  BarChart3,
+  BookOpen
 } from 'lucide-react';
 
-// Navigation component with dropdown menu for dashboard, books, and statistics sections
-export type NavigationSection = 'dashboard' | 'books' | 'statistics';
+// Navigation component with dropdown menu for dashboard, books, manga, and statistics sections
+export type NavigationSection = 'dashboard' | 'books' | 'manga' | 'statistics';
 export type BooksViewMode = 'list' | 'gallery';
 
 interface NavigationProps {
@@ -59,6 +60,8 @@ const Navigation: React.FC<NavigationProps> = ({
         return 'Dashboard';
       case 'books':
         return `Libros (${currentBooksView === 'list' ? 'Lista' : 'Galería'})`;
+      case 'manga':
+        return 'Manga';
       case 'statistics':
         return 'Estadísticas';
       default:
@@ -72,6 +75,8 @@ const Navigation: React.FC<NavigationProps> = ({
         return <Home className="h-4 w-4" />;
       case 'books':
         return <Book className="h-4 w-4" />;
+      case 'manga':
+        return <BookOpen className="h-4 w-4" />;
       case 'statistics':
         return <BarChart3 className="h-4 w-4" />;
       default:
@@ -156,8 +161,33 @@ const Navigation: React.FC<NavigationProps> = ({
             {/* Separador */}
             <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
 
-                         {/* Libros */}
-             <div className="p-1.5 sm:p-2">
+            {/* Manga */}
+            <div className="p-1.5 sm:p-2">
+              <motion.button
+                whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
+                onClick={() => handleSectionClick('manga')}
+                className={`w-full flex items-center space-x-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg transition-colors duration-200 ${
+                  currentSection === 'manga'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Manga</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    <span className="hidden sm:inline">Gestiona tus colecciones de manga</span>
+                    <span className="sm:hidden">Colecciones de manga</span>
+                  </div>
+                </div>
+              </motion.button>
+            </div>
+
+            {/* Separador */}
+            <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
+
+            {/* Libros */}
+            <div className="p-1.5 sm:p-2">
               <div className="mb-2">
                 <div className="flex items-center space-x-2 px-3 py-1">
                   <Book className="h-4 w-4 text-slate-500 dark:text-slate-400" />
