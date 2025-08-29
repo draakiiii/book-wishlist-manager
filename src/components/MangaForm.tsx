@@ -198,7 +198,7 @@ const MangaForm: React.FC<MangaFormProps> = ({ onClose, coleccion, isEditing = f
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Precio por tomo ($)
+              Precio por tomo (€)
             </label>
             <input
               type="number"
@@ -214,7 +214,7 @@ const MangaForm: React.FC<MangaFormProps> = ({ onClose, coleccion, isEditing = f
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Precio total de la colección ($)
+              Precio total de la colección (€)
             </label>
             <input
               type="number"
@@ -228,7 +228,7 @@ const MangaForm: React.FC<MangaFormProps> = ({ onClose, coleccion, isEditing = f
               readOnly
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Calculado automáticamente: ${(formData.precioPorTomo * formData.totalTomos).toFixed(2)}
+              Calculado automáticamente: €{(formData.precioPorTomo * formData.totalTomos).toFixed(2)}
             </p>
           </div>
 

@@ -1059,7 +1059,7 @@ function appReducer(state: AppState, action: Action): AppState {
           };
           
           const tomosActualizados = [...coleccion.tomos, nuevoTomo];
-          const tomosComprados = tomosActualizados.filter(t => t.estado === 'comprado').length;
+          const tomosComprados = tomosActualizados.filter(t => t.fechaCompra).length;
           const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
           const isComplete = tomosActualizados.length === coleccion.totalTomos;
           
@@ -1088,7 +1088,7 @@ function appReducer(state: AppState, action: Action): AppState {
             tomo.id === tomoId ? { ...tomo, ...updates } : tomo
           );
           
-          const tomosComprados = tomosActualizados.filter(t => t.estado === 'comprado').length;
+          const tomosComprados = tomosActualizados.filter(t => t.fechaCompra).length;
           const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
           const isComplete = tomosActualizados.length === coleccion.totalTomos;
           
@@ -1114,7 +1114,7 @@ function appReducer(state: AppState, action: Action): AppState {
       const coleccionesActualizadas = state.coleccionesManga.map(coleccion => {
         if (coleccion.id === coleccionId) {
           const tomosFiltrados = coleccion.tomos.filter(tomo => tomo.id !== tomoId);
-          const tomosComprados = tomosFiltrados.filter(t => t.estado === 'comprado').length;
+          const tomosComprados = tomosFiltrados.filter(t => t.fechaCompra).length;
           const tomosLeidos = tomosFiltrados.filter(t => t.estado === 'leido').length;
           const isComplete = tomosFiltrados.length === coleccion.totalTomos;
           
@@ -1139,28 +1139,28 @@ function appReducer(state: AppState, action: Action): AppState {
       const { coleccionId, tomoId, newState, notas } = action.payload;
       const coleccionesActualizadas = state.coleccionesManga.map(coleccion => {
         if (coleccion.id === coleccionId) {
-          const tomosActualizados = coleccion.tomos.map(tomo => {
-            if (tomo.id === tomoId) {
-              const nuevoEstado: EstadoLibro = {
-                estado: newState,
-                fecha: Date.now(),
-                notas
-              };
+                        const tomosActualizados = coleccion.tomos.map(tomo => {
+                if (tomo.id === tomoId) {
+                  const nuevoEstado: EstadoLibro = {
+                    estado: newState,
+                    fecha: Date.now(),
+                    notas
+                  };
+                  
+                  const tomoActualizado: TomoManga = {
+                    ...tomo,
+                    estado: newState,
+                    historialEstados: [...tomo.historialEstados, nuevoEstado]
+                  };
+                  
+                  return tomoActualizado;
+                }
+                return tomo;
+              });
               
-              const tomoActualizado: TomoManga = {
-                ...tomo,
-                estado: newState,
-                historialEstados: [...tomo.historialEstados, nuevoEstado]
-              };
-              
-              return tomoActualizado;
-            }
-            return tomo;
-          });
-          
-          const tomosComprados = tomosActualizados.filter(t => t.estado === 'comprado').length;
-          const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
-          const isComplete = tomosActualizados.length === coleccion.totalTomos;
+              const tomosComprados = tomosActualizados.filter(t => t.fechaCompra).length;
+              const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
+              const isComplete = tomosActualizados.length === coleccion.totalTomos;
           
           return {
             ...coleccion,
@@ -1192,7 +1192,7 @@ function appReducer(state: AppState, action: Action): AppState {
                 historialEstados: [...tomo.historialEstados, {
                   estado: 'comprado',
                   fecha: Date.now(),
-                  notas: precio ? `Comprado por $${precio}` : 'Comprado'
+                  notas: precio ? `Comprado por €${precio}` : 'Comprado'
                 }]
               };
               return tomoActualizado;
@@ -1200,7 +1200,7 @@ function appReducer(state: AppState, action: Action): AppState {
             return tomo;
           });
           
-          const tomosComprados = tomosActualizados.filter(t => t.estado === 'comprado').length;
+          const tomosComprados = tomosActualizados.filter(t => t.fechaCompra).length;
           const tomosLeidos = tomosActualizados.filter(t => t.estado === 'leido').length;
           const isComplete = tomosActualizados.length === coleccion.totalTomos;
           

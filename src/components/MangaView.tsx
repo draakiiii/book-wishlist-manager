@@ -24,6 +24,7 @@ const MangaView: React.FC = () => {
   const [selectedColeccion, setSelectedColeccion] = useState<ColeccionManga | null>(null);
   const [filter, setFilter] = useState<MangaListType>('todos');
   const [searchTerm, setSearchTerm] = useState('');
+  const [quickAddInputs, setQuickAddInputs] = useState<{ [key: number]: string }>({});
 
   const filteredColecciones = state.coleccionesManga.filter(coleccion => {
     const matchesSearch = coleccion.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -61,6 +62,37 @@ const MangaView: React.FC = () => {
       type: 'CHANGE_TOMO_MANGA_STATE', 
       payload: { coleccionId, tomoId, newState: newEstado } 
     });
+  };
+
+  const handleQuickAddTomo = (coleccionId: number) => {
+    const numero = parseInt(quickAddInputs[coleccionId] || '');
+    if (numero && numero > 0) {
+      // Verificar que no existe ya
+      const coleccion = state.coleccionesManga.find(c => c.id === coleccionId);
+      if (coleccion) {
+        const tomoExistente = coleccion.tomos.find(t => t.numero === numero);
+        if (tomoExistente) {
+          alert(`El tomo #${numero} ya existe`);
+          return;
+        }
+        
+        // Añadir tomo rápidamente
+        dispatch({
+          type: 'ADD_TOMO_MANGA',
+          payload: {
+            coleccionId,
+            tomo: {
+              numero,
+              estado: 'wishlist',
+              historialEstados: []
+            }
+          }
+        });
+        
+        // Limpiar input
+        setQuickAddInputs(prev => ({ ...prev, [coleccionId]: '' }));
+      }
+    }
   };
 
   // Funciones para futuras implementaciones de compra y lectura directa
@@ -215,15 +247,41 @@ const MangaView: React.FC = () => {
             <div className="p-4">
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-medium text-gray-900 dark:text-white">Tomos</h4>
-                <button
-                  onClick={() => {
-                    setSelectedColeccion(coleccion);
-                    setShowTomoForm(true);
-                  }}
-                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
-                >
-                  + Añadir tomo
-                </button>
+                <div className="flex items-center space-x-2">
+                  {/* Añadir tomo rápido */}
+                  <div className="flex items-center space-x-1">
+                    <input
+                      type="number"
+                      placeholder="#"
+                      min="1"
+                      value={quickAddInputs[coleccion.id] || ''}
+                      onChange={(e) => setQuickAddInputs(prev => ({ ...prev, [coleccion.id]: e.target.value }))}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleQuickAddTomo(coleccion.id);
+                        }
+                      }}
+                      className="w-16 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                    />
+                    <button
+                      onClick={() => handleQuickAddTomo(coleccion.id)}
+                      className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors duration-200"
+                    >
+                      +
+                    </button>
+                  </div>
+                  
+                  {/* Añadir tomo con formulario completo */}
+                  <button
+                    onClick={() => {
+                      setSelectedColeccion(coleccion);
+                      setShowTomoForm(true);
+                    }}
+                    className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
+                  >
+                    + Formulario
+                  </button>
+                </div>
               </div>
               
               <div className="space-y-2">
@@ -267,13 +325,34 @@ const MangaView: React.FC = () => {
                         <button
                           onClick={() => handleEditTomo(coleccion, tomo)}
                           className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-1"
+                          title="Editar tomo"
                         >
                           <Edit className="w-3 h-3" />
                         </button>
                         
+                        {/* Botón rápido para marcar como comprado */}
+                        {!tomo.fechaCompra && (
+                          <button
+                            onClick={() => {
+                              const precio = prompt('Introduce el precio del tomo (opcional):');
+                              const precioNum = precio ? parseFloat(precio) : undefined;
+                              
+                              dispatch({ 
+                                type: 'COMPRAR_TOMO_MANGA', 
+                                payload: { coleccionId: coleccion.id, tomoId: tomo.id, precio: precioNum } 
+                              });
+                            }}
+                            className="text-gray-400 hover:text-green-600 dark:hover:text-green-400 p-1"
+                            title="Marcar como comprado"
+                          >
+                            <ShoppingCart className="w-3 h-3" />
+                          </button>
+                        )}
+                        
                         <button
                           onClick={() => handleDeleteTomo(coleccion.id, tomo.id)}
                           className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 p-1"
+                          title="Eliminar tomo"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -306,7 +385,7 @@ const MangaView: React.FC = () => {
                   {coleccion.precioTotal && (
                     <span className="flex items-center">
                       <DollarSign className="w-3 h-3 mr-1" />
-                      ${coleccion.precioTotal.toFixed(2)}
+                      €{coleccion.precioTotal.toFixed(2)}
                     </span>
                   )}
                   {coleccion.fechaCreacion && (
