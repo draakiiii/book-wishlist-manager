@@ -3,6 +3,7 @@ import { ColeccionManga, TomoManga, MangaListType } from '../types';
 import { useAppState } from '../context/AppStateContext';
 import MangaForm from './MangaForm';
 import TomoMangaForm from './TomoMangaForm';
+import EstadoTomoDialog from './EstadoTomoDialog';
 import { 
   Plus, 
   Edit, 
@@ -25,6 +26,13 @@ const MangaView: React.FC = () => {
   const [filter, setFilter] = useState<MangaListType>('todos');
   const [searchTerm, setSearchTerm] = useState('');
   const [quickAddInputs, setQuickAddInputs] = useState<{ [key: number]: string }>({});
+  const [showEstadoDialog, setShowEstadoDialog] = useState(false);
+  const [tomosPendientes, setTomosPendientes] = useState<{
+    coleccionId: number;
+    tomos: Array<{ numero: number; estado: 'comprado' | 'leyendo' | 'leido'; historialEstados: any[] }>;
+    rangoInicio: number;
+    rangoFin: number;
+  } | null>(null);
 
   const filteredColecciones = state.coleccionesManga.filter(coleccion => {
     const matchesSearch = coleccion.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -41,9 +49,7 @@ const MangaView: React.FC = () => {
   };
 
   const handleDeleteColeccion = (id: number) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar esta colección?')) {
-      dispatch({ type: 'DELETE_COLECCION_MANGA', payload: id });
-    }
+    dispatch({ type: 'DELETE_COLECCION_MANGA', payload: id });
   };
 
   const handleEditTomo = (coleccion: ColeccionManga, tomo: TomoManga) => {
@@ -52,9 +58,7 @@ const MangaView: React.FC = () => {
   };
 
   const handleDeleteTomo = (coleccionId: number, tomoId: number) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este tomo?')) {
-      dispatch({ type: 'DELETE_TOMO_MANGA', payload: { coleccionId, tomoId } });
-    }
+    dispatch({ type: 'DELETE_TOMO_MANGA', payload: { coleccionId, tomoId } });
   };
 
   const handleEstadoChange = (coleccionId: number, tomoId: number, newEstado: TomoManga['estado']) => {
@@ -62,6 +66,28 @@ const MangaView: React.FC = () => {
       type: 'CHANGE_TOMO_MANGA_STATE', 
       payload: { coleccionId, tomoId, newState: newEstado } 
     });
+  };
+
+  const handleConfirmAddTomos = (estado: 'comprado' | 'leyendo' | 'leido') => {
+    if (tomosPendientes) {
+      // Añadir todos los tomos del rango con el estado seleccionado
+      tomosPendientes.tomos.forEach(tomo => {
+        dispatch({
+          type: 'ADD_TOMO_MANGA',
+          payload: {
+            coleccionId: tomosPendientes.coleccionId,
+            tomo: {
+              ...tomo,
+              estado
+            }
+          }
+        });
+      });
+      
+      // Limpiar estado
+      setTomosPendientes(null);
+      setShowEstadoDialog(false);
+    }
   };
 
   const handleQuickAddTomo = (coleccionId: number) => {
@@ -85,25 +111,21 @@ const MangaView: React.FC = () => {
           if (!tomoExistente) {
             tomosAAñadir.push({
               numero,
-              estado: 'wishlist' as const,
+              estado: 'comprado' as const, // Estado temporal, se cambiará en el diálogo
               historialEstados: []
             });
           }
         }
         
         if (tomosAAñadir.length > 0) {
-          // Añadir todos los tomos del rango
-          tomosAAñadir.forEach(tomo => {
-            dispatch({
-              type: 'ADD_TOMO_MANGA',
-              payload: {
-                coleccionId,
-                tomo
-              }
-            });
+          // Mostrar diálogo para seleccionar estado
+          setTomosPendientes({
+            coleccionId,
+            tomos: tomosAAñadir,
+            rangoInicio: start,
+            rangoFin: end
           });
-          
-          alert(`Se añadieron ${tomosAAñadir.length} tomos del ${start} al ${end}`);
+          setShowEstadoDialog(true);
         } else {
           alert(`Todos los tomos del ${start} al ${end} ya existen`);
         }
@@ -492,6 +514,21 @@ const MangaView: React.FC = () => {
           coleccionId={editingTomo?.coleccion.id || selectedColeccion?.id || 0}
           tomo={editingTomo?.tomo}
           isEditing={!!editingTomo}
+        />
+      )}
+
+      {/* Diálogo para seleccionar estado de tomos */}
+      {showEstadoDialog && tomosPendientes && (
+        <EstadoTomoDialog
+          isOpen={showEstadoDialog}
+          onClose={() => {
+            setShowEstadoDialog(false);
+            setTomosPendientes(null);
+          }}
+          onConfirm={handleConfirmAddTomos}
+          cantidadTomos={tomosPendientes.tomos.length}
+          rangoInicio={tomosPendientes.rangoInicio}
+          rangoFin={tomosPendientes.rangoFin}
         />
       )}
     </div>
